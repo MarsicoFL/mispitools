@@ -4,7 +4,7 @@
 \alias{makeLRsims}
 \title{Make likelihoods ratio (LRs) simulations: a function for obtaining expected LRs under relatedness and unrelatedness kinship hypothesis.}
 \usage{
-makeLRsims(reference, missing, numsims, verbose = TRUE)
+makeLRsims(reference, missing, numsims, seed)
 }
 \arguments{
 \item{reference}{Reference pedigree. It could be an input from read_fam() function or a pedigree built with pedtools.}
@@ -13,7 +13,7 @@ makeLRsims(reference, missing, numsims, verbose = TRUE)
 
 \item{numsims}{Number of simulations performed.}
 
-\item{verbose}{Output}
+\item{seed}{Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123}
 }
 \value{
 A dataframe with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
@@ -29,6 +29,6 @@ Make likelihoods ratio (LRs) simulations: a function for obtaining expected LRs 
 # x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 # x = profileSim(x, N = 1, ids = 2)[[1]]
 # plot(x)
-# makeLRsims(x, missing = 5, 10)
+# datasim = makeLRsims(x, missing = 5, 10)
 
 }
