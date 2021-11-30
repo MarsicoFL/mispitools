@@ -10,7 +10,7 @@
 #' #x = linearPed(2)
 #' #x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 #' #x = profileSim(x, N = 1, ids = 2)[[1]]
-#' #datasim = makeLRsims(x, missing = 5, 1000)
+#' #datasim = makeLRsims(x, missing = 5, 1000, 123)
 #' #LRdist(datasim)
 #' @import plotly
 #' @import dplyr
