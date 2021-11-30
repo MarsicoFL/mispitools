@@ -3,7 +3,7 @@
 #' @param reference Reference pedigree. It could be an input from read_fam() function or a pedigree built with pedtools.
 #' @param missing Missing person ID/label indicated in the pedigree.
 #' @param numsims Number of simulations performed.
-#' @param verbose Output
+#' @param seed Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123
 #'
 #' @return A dataframe with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
 #' @export
@@ -18,17 +18,18 @@
 #' # x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 #' # x = profileSim(x, N = 1, ids = 2)[[1]]
 #' # plot(x)
-#' # makeLRsims(x, missing = 5, 10)
+#' # datasim = makeLRsims(x, missing = 5, 10)
 
 
 
 
-makeLRsims = function(reference, missing, numsims, verbose = TRUE) {
+makeLRsims = function(reference, missing, numsims, seed) {
   st = base::Sys.time()
 
   if(!pedtools::is.ped(reference))
     base::stop("Expecting a connected pedigree as H1")
 
+set.seed(seed)
 
 ### Person of interest 1: Unrelated
 poi1 = pedtools::singleton("poi1")
