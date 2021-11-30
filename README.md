@@ -5,12 +5,6 @@ making in missing person identification cases. You can install the
 released version of mispitools from [CRAN](https://CRAN.R-project.org)
 with:
 
-    ## Registered S3 method overwritten by 'quantmod':
-    ##   method            from
-    ##   as.zoo.data.frame zoo
-
-    ## Loading required package: pedtools
-
 ## Example
 
 This is an example based on a grandchild identification, first you
@@ -33,7 +27,7 @@ for a specific LR threshold (T):
 Trates(datasim, 10)
 ```
 
-    ## [1] "FNR = 0.581 ;  FPR = 0.007 ;  MCC = 0.503141398386643"
+    ## [1] "FNR = 0.782 ;  FPR = 0.014 ;  MCC = 0.318526115007301"
 
 Likelihoold ratio distributions under both hypothesis, relatedness and
 unrelatedness could be plotted.
