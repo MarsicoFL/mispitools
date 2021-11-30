@@ -29,6 +29,6 @@ Make likelihoods ratio (LRs) simulations: a function for obtaining expected LRs 
 # x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 # x = profileSim(x, N = 1, ids = 2)[[1]]
 # plot(x)
-# datasim = makeLRsims(x, missing = 5, 10)
+# datasim = makeLRsims(x, missing = 5, 10, 123)
 
 }
