@@ -11,7 +11,7 @@ Description: an open-source user friendly software for computing Likelihood rati
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-Imports: forrel, pedtools
+Imports: forrel, pedtools, plotly, dplyr, highcharter
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Suggests: 
