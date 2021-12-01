@@ -27,19 +27,11 @@ for a specific LR threshold (T):
 Trates(datasim, 10)
 ```
 
-    ## [1] "FNR = 0.782 ;  FPR = 0.014 ;  MCC = 0.318526115007301"
+    ## [1] "FNR = 0.678 ;  FPR = 0.018 ;  MCC = 0.404650499729402"
 
 Likelihoold ratio distributions under both hypothesis, relatedness and
-unrelatedness could be plotted.
-
-``` r
-LRdist(datasim)
-```
-
-![](README_files/figure-markdown_github/LRdist-1.png)
-
-Decision plot brings the posibility of analyzing FPR and FNR for each LR
-threshold.
+unrelatedness could be plotted. Decision plot brings the posibility of
+analyzing FPR and FNR for each LR threshold.
 
 ``` r
 deplot(datasim)
