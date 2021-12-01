@@ -5,6 +5,8 @@ making in missing person identification cases. You can install the
 released version of mispitools from [CRAN](https://CRAN.R-project.org)
 with:
 
+install.packages("mispitools")
+
 ## Example
 
 This is an example based on a grandchild identification, first you
