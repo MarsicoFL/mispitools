@@ -2,7 +2,7 @@
 
 The goal of mispitools is to bring a simulation framework for decision
 making in missing person identification cases. You can install the
-released version of mispitools from [CRAN](https://CRAN.R-project.org)
+released version of mispitools from [Github](https://github.com/MarsicoFL/mispitools/)
 with:
 
 ``` r
