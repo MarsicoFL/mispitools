@@ -1,5 +1,5 @@
 Package: mispitools
-Title: Missing person identification tools
+Title: Missing Person Identification Tools
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Franco",
@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "franco.lmarsico@gmail.com",
            comment = c(ORCID = "0000-0002-0740-5516"))
-Description: an open-source user friendly software for computing Likelihood ratios thresholds and error rates in DNA kinship testing.
+Description: Open-source software for computing Likelihood ratios thresholds and error rates in DNA kinship testing.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
