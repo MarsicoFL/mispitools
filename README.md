@@ -5,7 +5,12 @@ making in missing person identification cases. You can install the
 released version of mispitools from [CRAN](https://CRAN.R-project.org)
 with:
 
-install.packages("mispitools")
+``` r
+install.packages("devtools")
+library(devtools)
+install_github("MarsicoFL/mispitools")
+library(mispitools)
+```
 
 ## Example
 
