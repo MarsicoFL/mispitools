@@ -5,27 +5,27 @@
 #' @param datasim Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.
 #'
 #' @export
-#'
+#' @return Values of false positive and false negative rates and MCC for a specific LR threshold.
 #' @examples
-#' #library(forrel)
-#' #x = linearPed(2)
-#' #x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#' #x = profileSim(x, N = 1, ids = 2)[[1]]
-#' #datasim = makeLRsims(x, missing = 5, 1000, 123)
-#' #Trates(datasim, 10)
+#' library(forrel)
+#' x = linearPed(2)
+#' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+#' x = profileSim(x, N = 1, ids = 2)[[1]]
+#' datasim = makeLRsims(x, missing = 5, 10, 123)
+#' Trates(datasim, 10)
 
 
 
 Trates = function(datasim, threshold) {
 
 nsims = nrow(datasim)
-TPED = datasim$Related # We define the obtained values for H1
-RPED = datasim$Unrelated # We define the obtained values for H2
+TPED = datasim$Related 
+RPED = datasim$Unrelated 
 
-FPR = sum(RPED > threshold)/nsims #False positives.
-FNR = sum(TPED < threshold)/nsims #False negatives.
-TPR = sum(RPED < threshold)/nsims #True positives.
-TNR = sum(TPED > threshold)/nsims #True negatives.
+FPR = sum(RPED > threshold)/nsims 
+FNR = sum(TPED < threshold)/nsims 
+TPR = sum(RPED < threshold)/nsims 
+TNR = sum(TPED > threshold)/nsims 
 MCC = (TPR*TNR-FPR*FNR)/(sqrt(TPR+FPR)*sqrt(TPR+FNR)*sqrt(TNR+FPR)*sqrt(TNR+FNR))
 
 print(paste("FNR =", FNR, ";  FPR =", FPR,";  MCC =", MCC ))

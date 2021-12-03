@@ -4,14 +4,14 @@
 #' @param datasim Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.
 #'
 #' @export
-#'
+#' @return A plot showing likelihood ratio distributions under relatedness and unrelatedness hypothesis.
 #' @examples
-#' #library(forrel)
-#' #x = linearPed(2)
-#' #x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#' #x = profileSim(x, N = 1, ids = 2)[[1]]
-#' #datasim = makeLRsims(x, missing = 5, 1000, 123)
-#' #LRdist(datasim)
+#' library(forrel)
+#' x = linearPed(2)
+#' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+#' x = profileSim(x, N = 1, ids = 2)[[1]]
+#' datasim = makeLRsims(x, missing = 5, 10, 123)
+#' LRdist(datasim)
 #' @import plotly
 #' @import dplyr
 #' @import highcharter
@@ -20,8 +20,8 @@
 
 LRdist = function(datasim) {
 
-TPED = log10(datasim$Related)# We define the obtained values for H1
-RPED = log10(datasim$Unrelated)# We define the obtained values for H2
+TPED = log10(datasim$Related)
+RPED = log10(datasim$Unrelated)
 
 hc <- hchart(
   stats::density(TPED), type = "area", 
