@@ -4,10 +4,12 @@
 \alias{LRdist}
 \title{Likelihood ratio distribution: a function for plotting expected log10(LR) distributions under relatedness and unrelatedness.}
 \usage{
-LRdist(datasim)
+LRdist(datasim, type = 1)
 }
 \arguments{
 \item{datasim}{Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.}
+
+\item{type}{Select between a density plot (type = 1, default) or a violin plot (type = 2).}
 }
 \value{
 A plot showing likelihood ratio distributions under relatedness and unrelatedness hypothesis.
