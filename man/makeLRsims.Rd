@@ -16,19 +16,16 @@ makeLRsims(reference, missing, numsims, seed)
 \item{seed}{Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123}
 }
 \value{
-A dataframe with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
+An object of class data.frame with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
 }
 \description{
 Make likelihoods ratio (LRs) simulations: a function for obtaining expected LRs under relatedness and unrelatedness kinship hypothesis.
 }
 \examples{
-# A grandchild Search
-# library(forrel)
-# library(mispitools)
-# x = linearPed(2)
-# x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-# x = profileSim(x, N = 1, ids = 2)[[1]]
-# plot(x)
-# datasim = makeLRsims(x, missing = 5, 10, 123)
-
+library(forrel) 
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)[[1]]
+plot(x)
+datasim = makeLRsims(x, missing = 5, 10, 123)
 }

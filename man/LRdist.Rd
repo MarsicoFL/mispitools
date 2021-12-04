@@ -9,14 +9,17 @@ LRdist(datasim)
 \arguments{
 \item{datasim}{Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.}
 }
+\value{
+A plot showing likelihood ratio distributions under relatedness and unrelatedness hypothesis.
+}
 \description{
 Likelihood ratio distribution: a function for plotting expected log10(LR) distributions under relatedness and unrelatedness.
 }
 \examples{
-#library(forrel)
-#x = linearPed(2)
-#x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#x = profileSim(x, N = 1, ids = 2)[[1]]
-#datasim = makeLRsims(x, missing = 5, 1000, 123)
-#LRdist(datasim)
+library(forrel)
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)[[1]]
+datasim = makeLRsims(x, missing = 5, 10, 123)
+LRdist(datasim)
 }

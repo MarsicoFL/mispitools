@@ -9,14 +9,18 @@ deplot(datasim)
 \arguments{
 \item{datasim}{Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.}
 }
+\value{
+A plot showing false positive and false negative rates for each likelihood ratio threshold.
+}
 \description{
 Decision making plot: a function for plotting false positive and false negative rates for each LR threshold.
 }
 \examples{
-#library(forrel)
-#x = linearPed(2)
-#x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#x = profileSim(x, N = 1, ids = 2)[[1]]
-#datasim = makeLRsims(x, missing = 5, 1000, 123)
-#deplot(datasim)
+library(forrel)
+library(plotly)
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)[[1]]
+datasim = makeLRsims(x, missing = 5, 10, 123)
+deplot(datasim)
 }

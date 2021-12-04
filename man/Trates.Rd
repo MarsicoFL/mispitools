@@ -11,14 +11,17 @@ Trates(datasim, threshold)
 
 \item{threshold}{Likelihood ratio threshold selected for error rates calculation.}
 }
+\value{
+Values of false positive and false negative rates and MCC for a specific LR threshold.
+}
 \description{
 Threshold rates: a function for computing error rates and Matthews correlation coefficient of a specific LR threshold.
 }
 \examples{
-#library(forrel)
-#x = linearPed(2)
-#x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#x = profileSim(x, N = 1, ids = 2)[[1]]
-#datasim = makeLRsims(x, missing = 5, 1000, 123)
-#Trates(datasim, 10)
+library(forrel)
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)[[1]]
+datasim = makeLRsims(x, missing = 5, 10, 123)
+Trates(datasim, 10)
 }

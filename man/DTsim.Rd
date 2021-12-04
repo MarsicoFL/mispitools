@@ -11,14 +11,17 @@ DTsim(datasim, weight)
 
 \item{weight}{The differential weight between false positives and false negatives. A value of 10 is suggested.}
 }
+\value{
+A value of Likelihood ratio suggested as threshold based on false positive-false negative trade-off.
+}
 \description{
 Decision Threshold simulation: a function for computing likelihood ratio decision threshold.
 }
 \examples{
-#library(forrel)
-#x = linearPed(2)
-#x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#x = profileSim(x, N = 1, ids = 2)[[1]]
-#datasim = makeLRsims(x, missing = 5, 1000, 123)
-#DTsim(datasim, 10)
+library(forrel)
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)[[1]]
+datasim = makeLRsims(x, missing = 5, 10, 123)
+DTsim(datasim, 10)
 }
