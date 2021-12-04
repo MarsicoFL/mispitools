@@ -6,6 +6,7 @@
 #' @export
 #' @return A value of Likelihood ratio suggested as threshold based on false positive-false negative trade-off.
 #' @examples
+#' library(forrel)
 #' x = linearPed(2)
 #' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 #' x = profileSim(x, N = 1, ids = 2)[[1]]
