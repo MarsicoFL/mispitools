@@ -1,10 +1,15 @@
 ## Installation
 
 The goal of mispitools is to bring a simulation framework for decision
-making in missing person identification cases. You can install the
-released version of mispitools from [Github](https://github.com/MarsicoFL/mispitools/)
-with:
+making in missing person identification cases. You can install it from CRAN typing on your R command line the line presented below:
 
+``` r
+install.packages("mispitools")
+```
+
+You can install too the
+versions under development (unstable) of mispitools from [Github](https://github.com/MarsicoFL/mispitools/)
+with:
 ``` r
 install.packages("devtools")
 library(devtools)
