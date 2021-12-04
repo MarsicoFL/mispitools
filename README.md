@@ -5,6 +5,7 @@ making in missing person identification cases. You can install it from CRAN typi
 
 ``` r
 install.packages("mispitools")
+library(mispitools)
 ```
 
 You can install too the
