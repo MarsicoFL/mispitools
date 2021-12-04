@@ -1,3 +1,14 @@
+## Mispitools: Missing Person Identification Tools
+
+<!-- badges: start -->
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/pedtools)](https://CRAN.R-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/pedtools?color=yellow)](https://cran.r-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/last-month/pedtools?color=yellow)](https://cran.r-project.org/package=mispitools)
+<!-- badges: end -->
+
+
 ## Installation
 
 The goal of mispitools is to bring a simulation framework for decision
