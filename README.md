@@ -3,9 +3,9 @@
 <!-- badges: start -->
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/pedtools)](https://CRAN.R-project.org/package=mispitools)
-[![](https://cranlogs.r-pkg.org/badges/grand-total/pedtools?color=yellow)](https://cran.r-project.org/package=mispitools)
-[![](https://cranlogs.r-pkg.org/badges/last-month/pedtools?color=yellow)](https://cran.r-project.org/package=mispitools)
+status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/mispitools?color=yellow)](https://cran.r-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/last-month/mispitools?color=yellow)](https://cran.r-project.org/package=mispitools)
 <!-- badges: end -->
 
 
