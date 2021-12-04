@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "franco.lmarsico@gmail.com",
            comment = c(ORCID = "0000-0002-0740-5516"))
-Description: Open-source software for computing Likelihood ratios thresholds and error rates in DNA kinship testingi. Marsico FL. et al (2021) <doi:10.1016/j.fsigen.2021.102519>.
+Description: Open-source software for computing Likelihood ratios thresholds and error rates in DNA kinship testing. Marsico FL. et al (2021) <doi:10.1016/j.fsigen.2021.102519>.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
