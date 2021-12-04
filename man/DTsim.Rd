@@ -18,6 +18,7 @@ A value of Likelihood ratio suggested as threshold based on false positive-false
 Decision Threshold simulation: a function for computing likelihood ratio decision threshold.
 }
 \examples{
+library(forrel)
 x = linearPed(2)
 x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 x = profileSim(x, N = 1, ids = 2)[[1]]
