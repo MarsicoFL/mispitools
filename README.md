@@ -2,8 +2,8 @@
 
 <!-- badges: start -->
 
-[![CRAN
-status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
+[![CRAN status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/mispitools)](https://cran.r-project.org/package=mispitools)
 <!-- badges: end -->
 
 
