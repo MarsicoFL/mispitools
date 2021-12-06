@@ -78,7 +78,6 @@ DTsim(datasim, 10)
 
     ## [1] "Decision threshold is: 6"
 
-Please cite this tool as: Marsico, F. L., Vigeland, M. D., Egeland, T.,
-& Piñero, M. H. (2021). Making decisions in missing person
+Please cite this tool as: Marsico, F. L. et al(2021). Making decisions in missing person
 identification cases with low statistical power. Forensic science
 international: genetics, 102519.
