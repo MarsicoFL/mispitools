@@ -35,9 +35,15 @@ for (i in 1:w) {
     up = i + 1
     if (Dis > cuts[i]  & Dis < cuts[up]){H1 = fit2[i]}}}
                 
-  if(type == 1) {
+if(type == 1) {
   H2 = 1/length(alpha)
   LR = as.numeric(H1)/H2
   }
+
+if(type == 2) {
+ 
+ 
+ 
+ }
 print(LR)
 }
