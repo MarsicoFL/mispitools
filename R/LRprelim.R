@@ -41,9 +41,18 @@ if(type == 1) {
   }
 
 if(type == 2) {
- 
- 
- 
+  PrelimData <- mutate(PrelimData, Dis = julian(DBD,ABD))
+  PrelimData <- as.data.frame(table(cut(PrelimData$Dis, breaks = c(-Inf,alpha, Inf))))
+  freqGroup <- as.list(PrelimData$Freq)
+   	
+  if(Dis <= cuts[1]){H2 = freqGroup[1]}
+  if(Dis >= cuts[w]){H2 = freqGroup[w+1]}
+  if(Dis >= cuts[1] & Dis <= freqGroup[w]) {
+  for (i in 1:w) {
+  up = i + 1
+  if (Dis > cuts[i]  & Dis < cuts[up]){H2 = freqGroup[up]}}}
+
+  LR = as.numeric(H1)/as.numeric(H2)
  }
 print(LR)
 }
