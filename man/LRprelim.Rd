@@ -11,7 +11,8 @@ LRprelim(
   alpha = c(1, 4, 60, 11, 6, 4, 4),
   cuts = c(-120, -30, 30, 120, 240, 360),
   draw = 500,
-  type = 1
+  type = 1,
+  seed = 123
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ LRprelim(
 
 \item{type}{Type of scenario, type 1 is an "open search", where it is unknown if the missing person is in the database. Type 2 refers to a scenario where the missing person is in the database.}
 
+\item{seed}{Seed for simulations.}
+
 \item{datasim}{Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.}
 
 \item{Draw}{Number of simulations for Dirichlet distribution computation.}
@@ -39,5 +42,5 @@ Likelihood ratio for preliminary investigation data: a function for computing li
 }
 \examples{
 library(dirichlet)
-LRprelim(ABD = "1976-05-31", DBD = "1976-07-15", PrelimData, alpha = c(1, 4, 60, 11, 6, 4, 4), cuts = c(-120, -30, 30, 120, 240, 360), type = 1)
+LRprelim(ABD = "1976-05-31", DBD = "1976-07-15", PrelimData, alpha = c(1, 4, 60, 11, 6, 4, 4), cuts = c(-120, -30, 30, 120, 240, 360), type = 1, seed = 123)
 }
