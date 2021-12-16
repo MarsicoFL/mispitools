@@ -42,7 +42,7 @@ if(type == 1) {
 
 if(type == 2) {
   PrelimData <- mutate(PrelimData, Dis = julian(DBD,ABD))
-  PrelimData <- as.data.frame(table(cut(PrelimData$Dis, breaks = c(-Inf,alpha, Inf))))
+  PrelimData <- as.data.frame(table(cut(PrelimData$Dis, breaks = c(-Inf,cuts, Inf))))
   freqGroup <- as.list(PrelimData$Freq)
    	
   if(Dis <= cuts[1]){H2 = freqGroup[1]}
