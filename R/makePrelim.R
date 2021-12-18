@@ -12,7 +12,8 @@
 #'
 #' @return An object of class data.frame with preliminary investigation data.
 #' @export
-#'
+#' @importFrom stats rgamma
+#' @importFrom stats runif
 #' @examples
 #' makePrelim(
 #'   dateinit = "1975/01/01",
