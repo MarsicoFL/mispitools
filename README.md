@@ -81,7 +81,7 @@ DTsim(datasim, 10)
 It is possible work with preliminary investigation data. We use as example the case of the Abuelas de Plaza de Mayo. It consist in the search of abducted children during the last dictatorship in Argentina. Some function are presented below:
 
 ``` r
-makePrelim()
+makePOIprelim()
 
 Output:
     POI-ID        DBD Gender       Birth-type       Birth place
@@ -98,7 +98,7 @@ Output:
 ...
 ```
 
-It generates a database of preliminary investigation data. Some features such as gender, declared birth date (DBD), region and type of birth are simulated for a set of persons of interest. Different scenarios of searches could be selected. For instance:
+It generates a database of preliminary investigation data. Some features such as gender, declared birth date (DBD), region and type of birth are simulated for a set of persons of interest. Different scenarios of searches could be selected. Also, makeMPprelim() simulates preliminary investigation data for MPs. For instance:
 
 ``` r
 LRprelim()
