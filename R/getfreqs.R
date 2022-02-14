@@ -20,7 +20,7 @@ indice.es.alelos <- data.frame(country = c("Argentina",
 					      "USA"
                                               ),
                                     
-                                    urls = c('data/Argentina.rda',
+                                    urls = c("../data/Argentina.rda",
                                              "data/Asia.rda",
 				    	     "data/Austria.rda",
 				    	     "data/BosniaHerz.rda",
