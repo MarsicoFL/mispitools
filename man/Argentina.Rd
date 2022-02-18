@@ -8,7 +8,7 @@
 A data frame allele frequencies
 }
 \usage{
-data(Argentina)
+Argentina
 }
 \description{
 STRs allelic frequencies from specified country.
