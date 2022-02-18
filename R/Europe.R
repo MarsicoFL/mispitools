@@ -2,5 +2,4 @@
 #'
 #'
 #' @format A data frame allele frequencies
-#' @usage data(Europe)
 "Europe"
