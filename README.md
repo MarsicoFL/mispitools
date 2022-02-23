@@ -4,6 +4,7 @@
 
 [![CRAN status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
 [![](https://cranlogs.r-pkg.org/badges/grand-total/mispitools?color=blue)](https://cran.r-project.org/package=mispitools)
+[![](https://cranlogs.r-pkg.org/badges/last-month/mispitools?color=yellow)](https://cran.r-project.org/package=mispitools)
 
 <!-- badges: end -->
 
