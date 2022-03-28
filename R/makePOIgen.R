@@ -1,7 +1,7 @@
-#' Make POIs gen: a function for obtaining a database with genetic information from simulated POIs.
+#' Make POIs gen: a function for obtaining a database with genetic information from simulated POIs or UHRs.
 #'
 #' @param reference Indicate the reference STRs/SNPs frequency database used for simulations.
-#' @param numsims Number of simulations performed (numer of POIs).
+#' @param numsims Number of simulations performed (numer of POIs or UHRs).
 #' @param seed Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123
 #'
 #' @return An object of class data.frame with genetic information from POIs (randomly sampled from the frequency database).
@@ -10,8 +10,8 @@
 #' @import pedtools
 #' @examples
 #' library(forrel) 
-#' freqdata <- data(Argentina)
-#' makePOIgen(numsims = 100, reference = NorwegianFrequencies, seed = 123)
+#' freqdata <- getfreqs(Argentina)
+#' makePOIgen(numsims = 100, reference = freqdata, seed = 123)
 
 
 
@@ -32,3 +32,4 @@ poi <- cbind(id, poi)
 
 base::structure(base::as.data.frame(poi))
 }
+
