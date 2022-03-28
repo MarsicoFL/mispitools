@@ -4,7 +4,6 @@
 
 [![CRAN status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
 [![](https://cranlogs.r-pkg.org/badges/grand-total/mispitools?color=blue)](https://cran.r-project.org/package=mispitools)
-[![](https://cranlogs.r-pkg.org/badges/last-month/mispitools?color=yellow)](https://cran.r-project.org/package=mispitools)
 
 <!-- badges: end -->
 
@@ -40,7 +39,7 @@ library(forrel)
 x = linearPed(2)
 x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 x = profileSim(x, N = 1, ids = 2)[[1]]
-datasim = simLRgen(x, missing = 5, 1000, 123)
+datasim = makeLRsims(x, missing = 5, 1000, 123)
 ```
 
 Once obtained, false postive (FPR) and false negative rates (FNR) could
@@ -74,7 +73,7 @@ Decision threshold could be calculated. For further reading please see
 DOI: 10.1016/j.fsigen.2021.102519
 
 ``` r
-DeT(datasim, 10)
+DTsim(datasim, 10)
 ```
 
     ## [1] "Decision threshold is: 6"
