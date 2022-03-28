@@ -16,8 +16,8 @@
 #' combLR(LRdatasim1,LRdatasim2)
 
 combLR = function(LRdatasim1, LRdatasim2) {
-a <- as.numeric(unlist(LRdatasim1$unrelated))*as.numeric(unlist(LRdatasim2$unrelated))
-b <- as.numeric(unlist(LRdatasim1$unrelated))*as.numeric(unlist(LRdatasim2$unrelated))
+a <- as.numeric(unlist(LRdatasim1$Unrelated))*as.numeric(unlist(LRdatasim2$Unrelated))
+b <- as.numeric(unlist(LRdatasim1$Related))*as.numeric(unlist(LRdatasim2$Related))
 
 LRsimulated <- base::cbind(a,b)
 base::colnames(LRsimulated) <- c("Unrelated", "Related")

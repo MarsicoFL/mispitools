@@ -53,13 +53,13 @@ else if (scenario == 2) {
   e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
 PrelimDatasim <- cbind(a, b, c, d, e)
-base::colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Birth-type", "Birth place")
+base::colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Birth-type", "Region")
 base::structure(base::as.data.frame(PrelimDatasim))}
 
 else if (casetype == "migrants") { 
 sex = c("female","male")
 maleprop = 1 - femaleprop
-age <- seq(from = 4, to = 70, by = 1, length.out = numsims)
+age <- sample(seq.int(from = 4, to = 70, by = 1), size = numsims, replace = TRUE)
 height <- rnorm(numsims, mean=170, sd=15)
 
 set.seed(seed)
