@@ -73,7 +73,7 @@ Decision threshold could be calculated. For further reading please see
 DOI: 10.1016/j.fsigen.2021.102519
 
 ``` r
-DTsim(datasim, 10)
+DeT(datasim, 10)
 ```
 
     ## [1] "Decision threshold is: 6"
