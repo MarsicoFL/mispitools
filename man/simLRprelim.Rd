@@ -8,9 +8,13 @@ simLRprelim(
   vartype,
   numsims = 1000,
   seed = 123,
+  int = 5,
   ErrorRate = 0.05,
   alphaBdate = c(1, 4, 60, 11, 6, 4, 4),
-  numReg = 6
+  numReg = 6,
+  MP = NULL,
+  database,
+  cuts = c(-120, -30, 30, 120, 240, 360)
 )
 }
 \arguments{
@@ -20,11 +24,19 @@ simLRprelim(
 
 \item{seed}{Seed for simulations.}
 
+\item{int}{Interval parameter, used for height and age vartypes. It defines the estimation range, for example, if MP age is 55, and int is 10, the estimated age range will be between 45 and 65.}
+
 \item{ErrorRate}{Error rate for sex, region, age and Height LR calculations.}
 
-\item{alphaBdate}{Vector containing alpha parameters for Dirichlet distribution.}
+\item{alphaBdate}{Vector containing alpha parameters for Dirichlet distribution. Usually they are the frequencies of the solved cases in each category.}
 
 \item{numReg}{Number of regions present in the case.}
+
+\item{MP}{Introduce the preliminary data of the selected variable (vartype) of the MP. If it is null, open search is carried out. If it is not NULL, close search LR is computed. Variables values must be named as those presented in makePOIprelim function.}
+
+\item{database}{It is used when the close search (MP not NULL), is carried out. It could be the output from makePOIprelim or a database with the same structure.}
+
+\item{cuts}{Value of differences between DBD and ABD used for category definition. They must be the same as the ones selected for alphaBdate vector.}
 }
 \value{
 An object of class data.frame with LRs obtained for both hypothesis, Unrelated where POI/UHR is not MP or Related where POI/UHR is MP.
