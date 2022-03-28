@@ -2,12 +2,12 @@
 % Please edit documentation in R/makePOIgen.R
 \name{makePOIgen}
 \alias{makePOIgen}
-\title{Make POIs gen: a function for obtaining a database with genetic information from simulated POIs.}
+\title{Make POIs gen: a function for obtaining a database with genetic information from simulated POIs or UHRs.}
 \usage{
 makePOIgen(numsims = 100, reference, seed = 123)
 }
 \arguments{
-\item{numsims}{Number of simulations performed (numer of POIs).}
+\item{numsims}{Number of simulations performed (numer of POIs or UHRs).}
 
 \item{reference}{Indicate the reference STRs/SNPs frequency database used for simulations.}
 
@@ -17,10 +17,10 @@ makePOIgen(numsims = 100, reference, seed = 123)
 An object of class data.frame with genetic information from POIs (randomly sampled from the frequency database).
 }
 \description{
-Make POIs gen: a function for obtaining a database with genetic information from simulated POIs.
+Make POIs gen: a function for obtaining a database with genetic information from simulated POIs or UHRs.
 }
 \examples{
 library(forrel) 
-freqdata <- data(Argentina)
-makePOIgen(numsims = 100, reference = NorwegianFrequencies, seed = 123)
+freqdata <- getfreqs(Argentina)
+makePOIgen(numsims = 100, reference = freqdata, seed = 123)
 }

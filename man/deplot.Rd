@@ -21,6 +21,6 @@ library(plotly)
 x = linearPed(2)
 x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 x = profileSim(x, N = 1, ids = 2)[[1]]
-datasim = makeLRsims(x, missing = 5, 10, 123)
+datasim = simLRgen(x, missing = 5, 10, 123)
 deplot(datasim)
 }
