@@ -65,7 +65,7 @@ else if (vartype == "region") {
 	fr = sum(database$Region == MP)/length(database$Region)
         RegLRvalues <- c((1-ErrorRate)/fr, ErrorRate/(1-fr))
         a <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(1-ErrorRate, ErrorRate))
-        b <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(fs, 1-fr))}
+        b <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(fr, 1-fr))}
 else if (vartype == "age") {
 	fa = sum(database$Age < (MP+int) & database$Age  > (MP-int))/length(database$Age)
 	AgeLRvalues <- c((1-ErrorRate)/fa, ErrorRate/(1-fa))
