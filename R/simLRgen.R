@@ -14,7 +14,7 @@
 #' library(forrel) 
 #' x = linearPed(2)
 #' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#' x = profileSim(x, N = 1, ids = 2)[[1]]
+#' x = profileSim(x, N = 1, ids = 2)
 #' plot(x)
 #' datasim = simLRgen(x, missing = 5, 10, 123)
 
