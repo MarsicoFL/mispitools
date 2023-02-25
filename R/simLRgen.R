@@ -11,11 +11,11 @@
 #' @import pedtools
 #'
 #' @examples
-#' library(forrel) 
+#' library(forrel)
 #' x = linearPed(2)
-#' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-#' x = profileSim(x, N = 1, ids = 2)[[1]]
 #' plot(x)
+#' x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+#' x = profileSim(x, N = 1, ids = 2)
 #' datasim = simLRgen(x, missing = 5, 10, 123)
 
 
@@ -23,6 +23,9 @@
 
 simLRgen = function(reference, missing, numsims, seed) {
   st = base::Sys.time()
+
+  if(pedtools::is.pedList(reference) && base::length(reference) == 1)
+    reference = reference[[1]]
 
   if(!pedtools::is.ped(reference))
     base::stop("Expecting a connected pedigree as H1")

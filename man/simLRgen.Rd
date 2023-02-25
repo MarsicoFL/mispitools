@@ -22,10 +22,10 @@ An object of class data.frame with LRs obtained for both hypothesis, Unrelated w
 Simulate likelihoods ratio (LRs) based on genetic data: a function for obtaining expected LRs under relatedness and unrelatedness kinship hypothesis.
 }
 \examples{
-library(forrel) 
+library(forrel)
 x = linearPed(2)
-x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-x = profileSim(x, N = 1, ids = 2)[[1]]
 plot(x)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)
 datasim = simLRgen(x, missing = 5, 10, 123)
 }
