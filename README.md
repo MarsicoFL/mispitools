@@ -101,11 +101,95 @@ Output:
 It generates a database of preliminary investigation data. Some features such as gender, declared birth date (DBD), region and type of birth are simulated for a set of persons of interest. Different scenarios of searches could be selected. Also, makeMPprelim() simulates preliminary investigation data for MPs. For instance:
 
 ``` r
-LRprelim()
+LRdate()
 
 
 ```
 Could be used to compute a likelihood ratio based on birth dates of the missing person (actual birth date or ABD) and for the person of interest (DBD). Methods for LR computations are described here.
+
+Also, in human remain identification cases, some variables such as Age, Sex and hair color are very informative. Therefore, mispitools allows computation of LRs based on these variables. Below, a plot for Sex is shown:
+
+``` r
+H1_S <- simSex(MPs = "F", LR = TRUE, H = 1, nsims = 100000, Ps = c(0.5,0.5), eps = 0.05, erRs = 0.05)
+H2_S <- simSex(MPs = "F", LR = TRUE, H = 2, nsims = 100000, Ps = c(0.5,0.5), eps = 0.05, erRs = 0.05)
+H1_S <- mutate(H1_S, Hipotesis = "H1")
+H2_S <- mutate(H2_S, Hipotesis = "H2")
+Dat <- rbind(H1_S,H2_S)
+Dat <- select(Dat, -Sexo)
+Dat <- as.data.frame(table(Dat))
+Dat <- mutate(Dat, Freq = Freq/100000)
+
+ggplot(Dat, aes(x=LRs, y=Freq, fill=Hipotesis)) + 
+     geom_bar(stat="identity", position=position_dodge()) +
+     theme_minimal() +
+    theme(text = element_text(size = 13)) +
+    ylab("Frecuencia relativa") +
+    xlab("Valores de LR")
+```
+
+Here for hair color:
+
+``` r
+CVmod <- Cmodel(errorModel = "custom", ep12 = 0.04, ep13 = 0.04, ep14 = 0.01, ep15 = 0.01, ep23 = 0.01, ep24 = 0.01, ep25 = 0.01, ep34 = 0.03, ep35 = 0.04, ep45 = 0.02)
+
+MP1_H1 <- simCol(MPc = 1, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 1, LR=TRUE)
+MP1_H1 <- mutate(MP1_H1, Hipotesis = "H1")
+MP1_H1 <- mutate(MP1_H1, MPc = "1")
+
+MP1_H2 <- simCol(MPc = 1, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 2, LR=TRUE)
+MP1_H2 <- mutate(MP1_H2, Hipotesis = "H2")
+MP1_H2 <- mutate(MP1_H2, MPc = "1")
+
+MP5_H1 <- simCol(MPc = 5, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 1, LR=TRUE)
+MP5_H1 <- mutate(MP5_H1, Hipotesis = "H1")
+MP5_H1 <- mutate(MP5_H1, MPc = "5")
+
+MP5_H2 <- simCol(MPc = 5, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 2, LR=TRUE)
+MP5_H2 <- mutate(MP5_H2, Hipotesis = "H2")
+MP5_H2 <- mutate(MP5_H2, MPc = "5")
+
+X<- rbind(MP1_H1,MP1_H2)
+Y<- rbind(MP5_H1,MP5_H2)
+X<- mutate(X, LRc = log10(LRc))
+Y<- mutate(Y, LRc = log10(LRc))
+format(round(as.numeric(X$LRc),3))
+
+DatX <- select(X, -Col)
+DatX <- as.data.frame(table(DatX))
+DatX <- mutate(DatX, Freq = Freq/1000)
+DatX <- mutate(DatX, LRc = format(round(as.numeric(as.character(LRc)),3)))
+
+DatY <- select(Y, -Col)
+DatY <- as.data.frame(table(DatY))
+DatY <- mutate(DatY, Freq = Freq/1000)
+DatY <- mutate(DatY, LRc = format(round(as.numeric(as.character(LRc)),3)))
+
+
+ggplot(DatX, aes(x=LRc, y=Freq, fill=Hipotesis)) + 
+     geom_bar(stat="identity", position=position_dodge()) +
+     theme_minimal() +
+    theme(text = element_text(size = 13)) +
+    ylab("Frecuencia relativa") +
+    xlab("Valores de LR")
+
+ggplot(DatY, aes(x=LRc, y=Freq, fill=Hipotesis)) + 
+     geom_bar(stat="identity", position=position_dodge()) +
+     theme_minimal() +
+    theme(text = element_text(size = 13)) +
+    ylab("Frecuencia relativa") +
+    xlab("Valores de LR") 
+
+filter(DatX, DatX$Hipotesis == 1 & DatX$LRc > 0)
+DatY
+```
+
+And here the combined sex, age and hair variables:
+
+``` r
+CPTpop <- CPT_POP()
+CPTmp <- CPT_MP()
+ConditionalPlot(CPTpop, CPTmp)
+```
 
 
 
