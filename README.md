@@ -28,7 +28,7 @@ install_github("MarsicoFL/mispitools")
 library(mispitools)
 ```
 
-## Example
+## Example 1: Using DNA-based identification tools
 
 This is an example based on a grandchild identification, first you
 should do the simulations:
@@ -77,6 +77,8 @@ DeT(datasim, 10)
 ```
 
     ## [1] "Decision threshold is: 6"
+
+## Example 2: Using preliminary investigation data
 
 It is possible work with preliminary investigation data. We use as example the case of the Abuelas de Plaza de Mayo. It consist in the search of abducted children during the last dictatorship in Argentina. Some function are presented below:
 
