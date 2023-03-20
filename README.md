@@ -129,6 +129,7 @@ ggplot(Dat, aes(x=LRs, y=Freq, fill=Hipotesis)) +
   ylab("Frequency") +
   xlab("LR")
 ```
+![](README_files/figure-markdown_github/Sex.png)
 
 Here for hair color:
 
@@ -161,6 +162,7 @@ ggplot(DatX, aes(x=LRc, y=Freq, fill=Hipotesis)) +
   xlab("LR")
 
 ```
+![](README_files/figure-markdown_github/Hair.png)
 
 And here the combined sex, age and hair variables:
 
