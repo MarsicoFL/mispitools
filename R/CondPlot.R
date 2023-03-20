@@ -3,7 +3,6 @@
 #' @param CPT_POP Population conditioned probability table
 #' @param CPT_MP Missing person conditioned probability table
 #' @export
-#' @import graphics
 #' @import reshape2
 #' @import patchwork
 #' @return A value of Likelihood ratio based on preliminary investigation data. In this case, sex.

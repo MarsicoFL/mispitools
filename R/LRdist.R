@@ -57,7 +57,7 @@ else if(type == 2) {
   			 )
 
        hc <- hc %>%
-  	layout(
+  	plotly::layout(
     	xaxis = list(
       	title = "hypothesis"
     	),

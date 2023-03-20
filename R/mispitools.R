@@ -1,0 +1,14 @@
+#' mispitools: Missing Person Identification Tools
+#'
+#' 'mispitools' is an open source software package written in R statistical languaje.
+#' It consist in a set of decision making tools to conduct missing person searches. 
+#' Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search.
+#' mispitools imports forrel \doi{https://doi.org/10.1016/j.fsigen.2020.102376} and pedtools packages \doi{https://doi.org/10.1016/C2020-0-01956-0}.
+#' More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. 
+#' For citing mispitools please use the following references: Marsico and Caridi, 2023 (\doi{http://dx.doi.org/10.2139/ssrn.4331033}) and  Marsico, Vigeland et al. 2021 (\doi{https://doi.org/10.1016/j.fsigen.2021.102519}).
+#'
+#' @docType package
+#'
+#' @name mispitools
+NULL
+

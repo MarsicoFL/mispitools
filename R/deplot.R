@@ -35,7 +35,7 @@ p <- plotly::plot_ly(Datos, x = Datos$z, y = Datos$y,
   type   = 'scatter', 
   mode   = 'markers',
   color = Datos$z, size = 1) %>%
-  layout(xaxis = list(autotypenumbers = 'strict', title = 'False negative rate'),
+  plotly::layout(xaxis = list(autotypenumbers = 'strict', title = 'False negative rate'),
          yaxis = list(title = 'False positive rate'))
 p
 
