@@ -129,7 +129,10 @@ ggplot(Dat, aes(x=LRs, y=Freq, fill=Hipotesis)) +
   ylab("Frequency") +
   xlab("LR")
 ```
-![](README_files/figure-markdown_github/Sex.png)
+
+
+![](README_files/figure-markdown_github/Hair.png)
+
 
 Here for hair color:
 
