@@ -1,3 +1,6 @@
+<img src="mispiIcon.png" align="left" width="80">
+
+
 ## Mispitools: Missing Person Identification Tools
 
 <!-- badges: start -->
