@@ -11,7 +11,7 @@
 <!-- badges: end -->
 
 ## About mispitools
-'mispitools' is an open source software package written in R statistical languaje.
+'mispitools' is an open source software package written in R statistical language.
 It consist in a set of decision making tools to conduct missing person searches. 
 Particularly, it allows computing several features, from non-genetic based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
 mispitools imports forrel, https://doi.org/10.1016/j.fsigen.2020.102376, and pedtools packages, https://doi.org/10.1016/C2020-0-01956-0.
