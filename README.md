@@ -47,7 +47,7 @@ Now you can analyze the mispitools documentation, it has a description for all f
 
 
 
-## Example 1: Using DNA-based identification tools
+## Using DNA-based identification tools
 
 This is an example based on a grandchild identification, first you
 should do the simulations:
@@ -97,91 +97,131 @@ DeT(datasim, 10)
 
     ## [1] "Decision threshold is: 6"
 
-## Example 2: Using preliminary investigation data
+## Computing conditioned probability tables and non-genetic based LR
 
-It is possible work with preliminary investigation data. Some function are presented below:
-
-``` r
-makePOIprelim()
-
-Output:
-    POI-ID        DBD Gender       Birth-type       Birth place
-1        1 1977-08-25 female   hospital birth      Buenos Aires
-2        2 1979-05-09 female   hospital birth      Buenos Aires
-3        3 1976-10-10   male   hospital birth North west region
-4        4 1978-04-09 female       home birth           Litoral
-5        5 1979-12-11   male   hospital birth              Cuyo
-6        6 1978-08-04 female   hospital birth      Buenos Aires
-7        7 1977-01-31 female   hospital birth      Buenos Aires
-8        8 1976-09-30   male   hospital birth      Buenos Aires
-9        9 1979-05-22   male   hospital birth      Buenos Aires
-10      10 1978-06-29   male       home birth         Patagonia
-...
-```
-
-It generates a database of preliminary investigation data. Some features such as gender, declared birth date (DBD), region and type of birth are simulated for a set of persons of interest. Different scenarios of searches could be selected. Also, makeMPprelim() simulates preliminary investigation data for MPs. For instance:
+Now you are able to compute conditional probability tables, firstly you
+can analyze the different parameters from the documentation.
 
 ``` r
-LRdate()
-
-
+?CPT_POP
 ```
-Could be used to compute a likelihood ratio based on birth dates of the missing person (actual birth date or ABD) and for the person of interest (DBD). Methods for LR computations are described here.
 
-Also, in human remains identification cases, some variables such as Age, Sex and hair color are very informative. Therefore, mispitools allows computation of LRs based on these variables. Below, a plot for Sex is shown:
+You can compute the phenotype probabilities of three variables, sex, age
+and hair color in the population. For simplification, the reference ages
+distribution in the population are assumed as uniform (the function
+could be easily adapted to incorpore a dataset with the specified
+frequencies).
 
 ``` r
-library(tidyverse)
-H1_S <- LRsex(MPs = "F", LR = TRUE, H = 1, nsims = 100000, Ps = c(0.5,0.5), eps = 0.05, erRs = 0.05)
-H2_S <- LRsex(MPs = "F", LR = TRUE, H = 2, nsims = 100000, Ps = c(0.5,0.5), eps = 0.05, erRs = 0.05)
-H1_S <- mutate(H1_S, Hipotesis = "H1")
-H2_S <- mutate(H2_S, Hipotesis = "H2")
-Dat <- rbind(H1_S,H2_S)
-Dat <- select(Dat, -Sexo)
-Dat <- as.data.frame(table(Dat))
-Dat <- mutate(Dat, Freq = Freq/100000)
-
-ggplot(Dat, aes(x=LRs, y=Freq, fill=Hipotesis)) + 
-  geom_bar(stat="identity", position=position_dodge()) +
-  theme_minimal() +
-  theme(text = element_text(size = 13)) +
-  ylab("Frequency") +
-  xlab("LR")
+CPT_POP(
+  propS = c(0.5, 0.5),
+  MPa = 40,
+  MPr = 6,
+  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
 ```
 
+    ##        [,1]  [,2]    [,3]    [,4]   [,5]
+    ## F-T1 0.0225 0.015 0.01875 0.01125 0.0075
+    ## F-T0 0.1275 0.085 0.10625 0.06375 0.0425
+    ## M-T1 0.0225 0.015 0.01875 0.01125 0.0075
+    ## M-T0 0.1275 0.085 0.10625 0.06375 0.0425
 
-![](README_files/figure-markdown_github/Sex.png)
-
-
-Here for hair color:
+The obtained matrix represent the probabilities of the phenotypes in the
+reference population. Note that in the followin case, the parameters
+remains the same, but changin the MP range change the population
+probabilities.
 
 ``` r
-CVmod <- Cmodel(errorModel = "custom", ep12 = 0.04, ep13 = 0.04, ep14 = 0.01, ep15 = 0.01, ep23 = 0.01, ep24 = 0.01, ep25 = 0.01, ep34 = 0.03, ep35 = 0.04, ep45 = 0.02)
-
-MP1_H1 <- LRcol(MPc = 1, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 1, LR=TRUE)
-MP1_H1 <- mutate(MP1_H1, Hipotesis = "H1")
-MP1_H1 <- mutate(MP1_H1, MPc = "1")
-
-MP1_H2 <- LRcol(MPc = 1, epc =CVmod, erRc = CVmod, nsims = 1000, Pc = c(0.3,0.25,0.2,0.15,0.1), H= 2, LR=TRUE)
-MP1_H2 <- mutate(MP1_H2, Hipotesis = "H2")
-MP1_H2 <- mutate(MP1_H2, MPc = "1")
-
-X<- rbind(MP1_H1,MP1_H2)
-X<- mutate(X, LRc = log10(LRc))
-format(round(as.numeric(X$LRc),3))
-
-DatX <- select(X, -Col)
-DatX <- as.data.frame(table(DatX))
-DatX <- mutate(DatX, Freq = Freq/1000)
-DatX <- mutate(DatX, LRc = format(round(as.numeric(as.character(LRc)),3)))
-
-
-ggplot(DatX, aes(x=LRc, y=Freq, fill=Hipotesis)) + 
-  geom_bar(stat="identity", position=position_dodge()) +
-  theme_minimal() +
-  theme(text = element_text(size = 13)) +
-  ylab("Frequency") +
-  xlab("LR")
+CPT_POP(
+  propS = c(0.5, 0.5),
+  MPa = 40,
+  MPr = 15,
+  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
 ```
 
-![](README_files/figure-markdown_github/Hair.png)
+    ##         [,1]   [,2]     [,3]     [,4]    [,5]
+    ## F-T1 0.05625 0.0375 0.046875 0.028125 0.01875
+    ## F-T0 0.09375 0.0625 0.078125 0.046875 0.03125
+    ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
+    ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
+
+In the same way, MP conditioned probabilities could be computed. Again,
+we first see the documentation:
+
+``` r
+?CPT_MP
+```
+
+Then, we can select a specified MP. One of the parameters is epc, that
+comes from the function Cmodel(). Lets see that function:
+
+``` r
+?Cmodel()
+```
+
+It has two options, uniform, that add the same ep for all combinations
+of colors, and custom, that specify a specific value for each pair. Here
+we select the custom.
+
+``` r
+Cmodel(
+  errorModel = "custom",
+  ep = 0.01,ep12 = 0.01,ep13 = 0.005,
+  ep14 = 0.01,ep15 = 0.003,ep23 = 0.01,
+  ep24 = 0.003,ep25 = 0.01,ep34 = 0.003,
+  ep35 = 0.003,ep45 = 0.01)
+```
+
+    ##             [,1]        [,2]        [,3]        [,4]        [,5]
+    ## [1,] 0.972762646 0.009727626 0.004863813 0.009727626 0.002918288
+    ## [2,] 0.009680542 0.968054211 0.004840271 0.009680542 0.002904163
+    ## [3,] 0.004897160 0.009794319 0.979431929 0.002938296 0.002938296
+    ## [4,] 0.009746589 0.002923977 0.002923977 0.974658869 0.009746589
+    ## [5,] 0.002923977 0.009746589 0.002923977 0.009746589 0.974658869
+
+Now we can specified the phenotype probabilities conditioned on MP
+characteristics.
+
+``` r
+CPT_MP(MPs = "F", MPc = 1, 
+       eps = 0.05, epa = 0.05, 
+       epc = Cmodel())
+```
+
+    ##                1            2            3            4            5
+    ## F-T1 0.877918288 8.779183e-03 4.389591e-03 8.779183e-03 2.633755e-03
+    ## F-T0 0.046206226 4.620623e-04 2.310311e-04 4.620623e-04 1.386187e-04
+    ## M-T1 0.046206226 4.620623e-04 2.310311e-04 4.620623e-04 1.386187e-04
+    ## M-T0 0.002431907 2.431907e-05 1.215953e-05 2.431907e-05 7.295720e-06
+
+Moreover, LR can be computed as follows:
+
+``` r
+MP <- CPT_MP(MPs = "F", MPc = 1, 
+       eps = 0.05, epa = 0.05, 
+       epc = Cmodel())
+POP <- CPT_POP(
+  propS = c(0.5, 0.5),
+  MPa = 40,
+  MPr = 6,
+  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
+
+MP/POP
+```
+
+    ##                1            2            3            4           5
+    ## F-T1 39.01859058 0.5852788586 0.2341115435 0.7803718115 0.351167315
+    ## F-T0  0.36240177 0.0054360266 0.0021744106 0.0072480354 0.003261616
+    ## M-T1  2.05361003 0.0308041505 0.0123216602 0.0410722006 0.018482490
+    ## M-T0  0.01907378 0.0002861067 0.0001144427 0.0003814755 0.000171664
+
+We can see that the sex-age-color: F-T1-1 and M-T1-1 are the only two LR
+values over 1, being the former (perfect match) the largest. All these
+information could be summarized in the following plot:
+
+``` r
+library(ggplot2)
+CondPlot(POP,MP)
+```
+
+![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)<!-- -->
