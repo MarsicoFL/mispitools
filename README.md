@@ -46,58 +46,7 @@ Now you can analyze the mispitools documentation, it has a description for all f
 ```
 
 
-
-## Using DNA-based identification tools
-
-This is an example based on a grandchild identification, first you
-should do the simulations:
-
-``` r
-library(mispitools)
-library(forrel)
-x = linearPed(2)
-x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
-x = profileSim(x, N = 1, ids = 2)
-datasim = simLRgen(x, missing = 5, 1000, 123)
-```
-
-Once obtained, false postive (FPR) and false negative rates (FNR) could
-be computed. This allows to calculate Matthews correlation coefficient
-for a specific LR threshold (T):
-
-``` r
-Trates(datasim, 10)
-```
-
-    ## [1] "FNR = 0.678 ;  FPR = 0.018 ;  MCC = 0.404650499729402"
-
-Likelihoold ratio distributions under both hypothesis, relatedness and
-unrelatedness could be plotted. 
-
-``` r
-LRdist(datasim)
-```
-
-
-Decision plot brings the posibility of analyzing FPR and FNR for each LR threshold. 
-It could be obtained doing:
-
-``` r
-deplot(datasim)
-```
-
-<img src="README_files/figure-markdown_github/deplot-1.png" width="50%" height="50%" />
-
-Decision threshold could be calculated. For further reading please see
-DOI: 10.1016/j.fsigen.2021.102519
-
-``` r
-DeT(datasim, 10)
-```
-
-    ## [1] "Decision threshold is: 6"
-
-## Computing conditioned probability tables and non-genetic based LR
+## Computing non-genetic based LRs
 
 Now you are able to compute conditional probability tables, firstly you
 can analyze the different parameters from the documentation.
@@ -225,3 +174,54 @@ CondPlot(POP,MP)
 ```
 
 ![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)<!-- -->
+
+## Calculating DNA-based decision threshold and error rates
+
+This is an example based on a grandchild identification, first you
+should do the simulations:
+
+``` r
+library(mispitools)
+library(forrel)
+x = linearPed(2)
+x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
+x = profileSim(x, N = 1, ids = 2)
+datasim = simLRgen(x, missing = 5, 1000, 123)
+```
+
+Once obtained, false postive (FPR) and false negative rates (FNR) could
+be computed. This allows to calculate Matthews correlation coefficient
+for a specific LR threshold (T):
+
+``` r
+Trates(datasim, 10)
+```
+
+    ## [1] "FNR = 0.678 ;  FPR = 0.018 ;  MCC = 0.404650499729402"
+
+Likelihoold ratio distributions under both hypothesis, relatedness and
+unrelatedness could be plotted. 
+
+``` r
+LRdist(datasim)
+```
+
+
+Decision plot brings the posibility of analyzing FPR and FNR for each LR threshold. 
+It could be obtained doing:
+
+``` r
+deplot(datasim)
+```
+
+<img src="README_files/figure-markdown_github/deplot-1.png" width="50%" height="50%" />
+
+Decision threshold could be calculated. For further reading please see
+DOI: 10.1016/j.fsigen.2021.102519
+
+``` r
+DeT(datasim, 10)
+```
+
+    ## [1] "Decision threshold is: 6"
+
