@@ -34,7 +34,7 @@ LRtable <- log10(CPT_MP/CPT_POP)
 LR <- reshape2::melt(LRtable)
 p3 <- ggplot2::ggplot(LR, aes(x = Var2, y = Var1)) +
   ggplot2::geom_raster(aes(fill=value)) +
-  scale_fill_gradient(low="grey90", high="blue",limits = c(-5,3)) +
+  scale_fill_gradient(low="grey90", high="blue") +
   labs(x="Hair colour (C)", y="Biologocial sex-Age", title="Log10(LR)") +
   theme_bw() + theme(axis.text.x=element_text(size=13, angle=0, vjust=0.3),
                      axis.text.y=element_text(size=13),
