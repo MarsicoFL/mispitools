@@ -210,7 +210,7 @@ unrelatedness could be plotted.
 ``` r
 LRdist(datasim, type = 2)
 ```
-![](README_files/figure-markdown_github/newplot.png)<!-- -->
+<img src="README_files/figure-markdown_github/newplot.png" width="10" height="10">
 
 
 Or other plotting option:
@@ -218,8 +218,7 @@ Or other plotting option:
 ``` r
 LRdist(datasim, type = 1)
 ```
-![](README_files/figure-markdown_github/New3.png)<!-- -->
-
+<img src="README_files/figure-markdown_github/New3.png" width="10" height="10">
 
 Decision plot brings the posibility of analyzing FPR and FNR for each LR
 threshold. It could be obtained doing:
@@ -227,5 +226,5 @@ threshold. It could be obtained doing:
 ``` r
 deplot(datasim)
 ```
-![](README_files/figure-markdown_github/newplot2.png)<!-- -->
 
+<img src="README_files/figure-markdown_github/newplot2.png" width="5" height="5">
