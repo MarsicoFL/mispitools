@@ -45,6 +45,16 @@ Now you can analyze the mispitools documentation, it has a description for all f
 ?mispitools
 ```
 
+If not previously installed, mispitools requires some other packages, that could be installed with the following lines:
+
+```r 
+install.packages("ggplot2")
+install.packages("forrel")
+install.packages("pedtools")
+install.packages("reshape2")
+install.packages("tidyverse")
+```
+
 
 ## Computing non-genetic based LRs
 
