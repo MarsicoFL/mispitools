@@ -1,4 +1,4 @@
-<img src="/README_files/figure-markdown_github/MispiIcon.png" align="left" width="80">
+<img src="/README_files/figure-markdown_github/MispiIcon.png" align="left" width="100">
 
 
 ## Mispitools: Missing Person Identification Tools
