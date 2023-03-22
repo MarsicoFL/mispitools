@@ -238,3 +238,11 @@ deplot(datasim)
 ```
 
 <img src="README_files/figure-markdown_github/newplot2.png" width="450" height="250">
+
+This last plot is the baseline for computing the decision threshold with the following command
+
+``` r
+DeT(datasim, 10)
+```
+
+where 10 is the weight_1 (please see mispitools related papers on the top for further information)
