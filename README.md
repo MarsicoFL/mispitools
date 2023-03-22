@@ -86,7 +86,7 @@ It could be obtained doing:
 deplot(datasim)
 ```
 
-![](README_files/figure-markdown_github/deplot-1.png)
+<img src="README_files/figure-markdown_github/deplot-1.png" width="50%" height="50%" />
 
 Decision threshold could be calculated. For further reading please see
 DOI: 10.1016/j.fsigen.2021.102519
