@@ -91,7 +91,7 @@ DeT(datasim, 10)
 
 ## Example 2: Using preliminary investigation data
 
-It is possible work with preliminary investigation data. We use as example the case of the Abuelas de Plaza de Mayo. It consist in the search of abducted children during the last dictatorship in Argentina. Some function are presented below:
+It is possible work with preliminary investigation data. Some function are presented below:
 
 ``` r
 makePOIprelim()
@@ -120,7 +120,7 @@ LRdate()
 ```
 Could be used to compute a likelihood ratio based on birth dates of the missing person (actual birth date or ABD) and for the person of interest (DBD). Methods for LR computations are described here.
 
-Also, in human remain identification cases, some variables such as Age, Sex and hair color are very informative. Therefore, mispitools allows computation of LRs based on these variables. Below, a plot for Sex is shown:
+Also, in human remains identification cases, some variables such as Age, Sex and hair color are very informative. Therefore, mispitools allows computation of LRs based on these variables. Below, a plot for Sex is shown:
 
 ``` r
 library(tidyverse)
@@ -177,17 +177,3 @@ ggplot(DatX, aes(x=LRc, y=Freq, fill=Hipotesis)) +
 ```
 
 ![](README_files/figure-markdown_github/Hair.png)
-
-And here the combined sex, age and hair variables:
-
-``` r
-CPTpop <- CPT_POP()
-CPTmp <- CPT_MP()
-ConditionalPlot(CPTpop, CPTmp)
-```
-
-
-
-Please cite this tool as: Marsico, F. L. et al(2021). Making decisions in missing person
-identification cases with low statistical power. Forensic science
-international: genetics, 102519.
