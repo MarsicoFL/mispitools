@@ -39,6 +39,14 @@ install_github("MarsicoFL/mispitools")
 library(mispitools)
 ```
 
+Now you can analyze the mispitools documentation, it has a description for all functions and parameters.
+
+```r 
+?mispitools
+```
+
+
+
 ## Example 1: Using DNA-based identification tools
 
 This is an example based on a grandchild identification, first you
