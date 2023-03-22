@@ -216,9 +216,6 @@ deplot(datasim)
 
 <img src="README_files/figure-markdown_github/deplot-1.png" width="50%" height="50%" />
 
-Decision threshold could be calculated. For further reading please see
-DOI: 10.1016/j.fsigen.2021.102519
-
 ``` r
 DeT(datasim, 10)
 ```
