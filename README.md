@@ -210,7 +210,7 @@ unrelatedness could be plotted.
 ``` r
 LRdist(datasim, type = 2)
 ```
-<img src="README_files/figure-markdown_github/newplot.png" width="350" height="300">
+<img src="README_files/figure-markdown_github/newplot.png" width="300" height="250">
 
 
 Or other plotting option:
@@ -227,4 +227,4 @@ threshold. It could be obtained doing:
 deplot(datasim)
 ```
 
-<img src="README_files/figure-markdown_github/newplot2.png" width="500" height="250">
+<img src="README_files/figure-markdown_github/newplot2.png" width="450" height="250">
