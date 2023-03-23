@@ -208,7 +208,7 @@ Mispitools allows LR distributions simulations considering both, H1: UP
 is MP and H2: UP is not MP, as true, as follows:
 
 ``` r
-datasim = simLRgen(x, missing = 5, 10, 123)
+datasim = simLRgen(x, missing = 5, 1000, 123)
 ```
 
 Once obtained, false postive (FPR) and false negative rates (FNR) could
