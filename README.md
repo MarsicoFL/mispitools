@@ -59,6 +59,7 @@ install.packages("patchwork")
 
 ## Computing non-genetic based LRs
 NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
+
 Now you are able to compute conditional probability phenotype tables considering Age, Sex and Hair color variables. Firstly you
 can analyze the different parameters from the documentation.
 
@@ -188,6 +189,7 @@ CondPlot(POP,MP)
 
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
+
 WARNING!: At the moment we are solving some bugs between mispitools and forrel new version, 1.5.0. Therefore, to work with genetic simulations some step should be done previously:
 
 ``` r
