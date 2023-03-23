@@ -45,7 +45,7 @@ Now you can analyze the mispitools documentation, it has a description for all f
 ?mispitools
 ```
 
-NOTE: These packages should be directly, ff not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually. This could be done with the following lines:
+NOTE: These packages should be directly, ff not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually (specially if you are installing the under development version from github). This could be done with the following lines:
 
 ```r 
 install.packages("ggplot2")
@@ -53,6 +53,7 @@ install.packages("forrel")
 install.packages("pedtools")
 install.packages("reshape2")
 install.packages("tidyverse")
+install.packages("patchwork")
 ```
 
 
