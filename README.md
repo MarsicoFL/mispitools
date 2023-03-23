@@ -68,7 +68,7 @@ can analyze the different parameters from the documentation.
 ```
 
  For simplification, the population reference age
-distribution treated as uniform (the function
+distribution is treated as uniform (the function
 could be easily adapted to incorpore a dataset with the specified
 frequencies, this will be implemented soon).
 
@@ -105,7 +105,7 @@ CPT_POP(
     ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
     ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
 
-This could be counterintuitive, because there are population frequencies, but T1 and T0 values depends on MP age and error rate.
+This could be counterintuitive, because there are population frequencies, and the population parameters remains the same in both cases. But T1 and T0 values depends on MP age and error rate.
 In the same way, MP conditioned probabilities could be computed. Again,
 we first see the documentation:
 
