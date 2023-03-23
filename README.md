@@ -190,7 +190,7 @@ CondPlot(POP,MP)
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
 
-WARNING!: At the moment we are solving some bugs between mispitools and forrel new version, 1.5.0. Therefore, to work with genetic simulations some step should be done previously:
+$${\color{red}WARNING!:}$$	 At the moment we are solving some bugs between mispitools and forrel new version, 1.5.0. Therefore, to work with genetic simulations some step should be done previously:
 
 ``` r
 remove.packages(forrel) #This will remove the version 1.5.0 installed by default with mispitools
