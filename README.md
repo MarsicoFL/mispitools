@@ -190,7 +190,7 @@ CondPlot(POP,MP)
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
 
-$${\color{red}WARNING!:}$$	 At the moment we are solving some bugs between mispitools and forrel new version, 1.5.0. Therefore, to work with genetic simulations some step should be done previously:
+$${\color{red}WARNING!}$$	 At the moment we are solving some bugs between mispitools and forrel new version, 1.5.0. Therefore, to work with genetic simulations some step should be done previously:
 
 ``` r
 remove.packages(forrel) #This will remove the version 1.5.0 installed by default with mispitools
@@ -199,7 +199,8 @@ library(remote)
 install_version("forrel", version = "1.4.1", repos = "http://cran.us.r-project.org") #this will install previous forrel version
 ```
 
-After this, please restart r session, and everything should be work. If this step isnt done, some inconsisten results and error will appar. Please verify that version 1.4.1 is installed.
+After this, please restart r session, and everything should be work. If this step isnt done, some inconsisten results and error will appar. Please verify that version 1.4.1 is installed. 
+
 
 In this example, forrel and pedtools packages provides the scafold for
 pedigree definition and genetic profile simulations.The allele frequency database from Argentina is used,
