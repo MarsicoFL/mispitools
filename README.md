@@ -11,9 +11,9 @@
 <!-- badges: end -->
 
 ## About mispitools
-'mispitools' is an open source software package written in R statistical language.
+'mispitools' is an open source package written in R statistical language.
 It consist in a set of decision making tools to conduct missing person searches. 
-Particularly, it allows computing several features, from non-genetic based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
+It allows computing several features, from non-genetic based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
 mispitools imports forrel, https://doi.org/10.1016/j.fsigen.2020.102376, and pedtools packages, https://doi.org/10.1016/C2020-0-01956-0.
 More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. 
 For citing mispitools please use the following references: Marsico and Caridi, 2023, http://dx.doi.org/10.2139/ssrn.4331033, and  Marsico, Vigeland et al. 2021, https://doi.org/10.1016/j.fsigen.2021.102519.
@@ -45,7 +45,7 @@ Now you can analyze the mispitools documentation, it has a description for all f
 ?mispitools
 ```
 
-If not previously installed, mispitools requires some other packages, that could be installed with the following lines:
+NOTE: These packages should be directly, ff not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually. This could be done with the following lines:
 
 ```r 
 install.packages("ggplot2")
@@ -58,18 +58,17 @@ install.packages("tidyverse")
 
 ## Computing non-genetic based LRs
 
-Now you are able to compute conditional probability tables, firstly you
+Now you are able to compute conditional probability phenotype tables considering Age, Sex and Hair color variables. Firstly you
 can analyze the different parameters from the documentation.
 
 ``` r
 ?CPT_POP
 ```
 
-You can compute the phenotype probabilities of three variables, sex, age
-and hair color in the population. For simplification, the reference ages
-distribution in the population are assumed as uniform (the function
+ For simplification, the population reference age
+distribution treated as uniform (the function
 could be easily adapted to incorpore a dataset with the specified
-frequencies).
+frequencies, this will be implemented soon).
 
 ``` r
 CPT_POP(
@@ -86,7 +85,7 @@ CPT_POP(
     ## M-T0 0.1275 0.085 0.10625 0.06375 0.0425
 
 The obtained matrix represent the probabilities of the phenotypes in the
-reference population. Note that in the followin case, the parameters
+reference population. F-T1 represent a female thats age matches with the age of the missing. F-T0 is a female with a mismatch in age with the missing. M correspond to males, and the number (columns) represent hair colors. Note that in the followin case, the parameters
 remains the same, but changin the MP range change the population
 probabilities.
 
@@ -104,6 +103,7 @@ CPT_POP(
     ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
     ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
 
+This could be contraintuitive, because there are population frequencies, but T1 and T0 values depends on MP age and error rate.
 In the same way, MP conditioned probabilities could be computed. Again,
 we first see the documentation:
 
@@ -118,9 +118,9 @@ comes from the function Cmodel(). Lets see that function:
 ?Cmodel()
 ```
 
-It has two options, uniform, that add the same ep for all combinations
-of colors, and custom, that specify a specific value for each pair. Here
-we select the custom.
+It has two options, uniform, that adds the same ep for all combinations
+of colors, and custom, that allows specifying a specific value for each pair. Here
+we select the custom:
 
 ``` r
 Cmodel(
@@ -138,7 +138,7 @@ Cmodel(
     ## [4,] 0.009746589 0.002923977 0.002923977 0.974658869 0.009746589
     ## [5,] 0.002923977 0.009746589 0.002923977 0.009746589 0.974658869
 
-Now we can specified the phenotype probabilities conditioned on MP
+Now we can specify the phenotype probabilities conditioned on MP
 characteristics.
 
 ``` r
@@ -188,7 +188,7 @@ CondPlot(POP,MP)
 ## Calculating DNA-based decision threshold and error rates
 
 In this example, forrel and pedtools packages provides the scafold for
-pedigree definition. Allele frequency database from Argentina is used,
+pedigree definition and genetic profile simulations.The allele frequency database from Argentina is used,
 provided by mispitools.
 
 ``` r
@@ -201,11 +201,11 @@ plot(x, hatched = typedMembers(x))
 
 ![](MispitoolsDNA_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
-Mispitools allows simulations LR distributions considering both, H1: UP
-is MP and H2: UP is not MP, as true
+Mispitools allows LR distributions simulations considering both, H1: UP
+is MP and H2: UP is not MP, as true.
 
 Once obtained, false postive (FPR) and false negative rates (FNR) could
-be computed. This allows to calculate Matthews correlation coefficient
+be computed. This allows to calculate Matthews correlation coefficient (MCC)
 for a specific LR threshold (T):
 
 ``` r
@@ -239,7 +239,7 @@ deplot(datasim)
 
 <img src="README_files/figure-markdown_github/newplot2.png" width="450" height="250">
 
-This last plot is the baseline for computing the decision threshold with the following command
+This last plot show how different thresholds have different FNR and FPR values. The optimal (named decision threshold, DT) could be computed with the following command:
 
 ``` r
 DeT(datasim, 10)
