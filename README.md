@@ -103,7 +103,7 @@ CPT_POP(
     ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
     ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
 
-This could be contraintuitive, because there are population frequencies, but T1 and T0 values depends on MP age and error rate.
+This could be counterintuitive, because there are population frequencies, but T1 and T0 values depends on MP age and error rate.
 In the same way, MP conditioned probabilities could be computed. Again,
 we first see the documentation:
 
