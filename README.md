@@ -197,7 +197,7 @@ library(remote)
 install_version("forrel", version = "1.4.1", repos = "http://cran.us.r-project.org") #this will install previous forrel version
 ```
 
-After this, please restart r sesion, and everything should be work. If this step isnt done, some inconsisten results and error will appar. Please verify that version 1.4.1 is installed.
+After this, please restart r session, and everything should be work. If this step isnt done, some inconsisten results and error will appar. Please verify that version 1.4.1 is installed.
 
 In this example, forrel and pedtools packages provides the scafold for
 pedigree definition and genetic profile simulations.The allele frequency database from Argentina is used,
