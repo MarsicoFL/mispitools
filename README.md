@@ -199,7 +199,7 @@ library(remote)
 install_version("forrel", version = "1.4.1", repos = "http://cran.us.r-project.org") #this will install previous forrel version
 ```
 
-After this, please restart r session, and everything should be work. If this step isnt done, some inconsisten results and error will appar. Please verify that version 1.4.1 is installed. 
+After this, please restart r session, and everything will work in the right way. If there is any doubt about the process do not hesitate in contact me: francol.marsico@gmail.com. If this step isnt done, some inconsistent results and error will appear. Please verify that version 1.4.1 is installed. 
 
 
 In this example, forrel and pedtools packages provides the scafold for
