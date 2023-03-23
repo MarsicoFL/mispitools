@@ -194,8 +194,8 @@ $${\color{red}WARNING}$$	 At the moment we are solving some bugs between mispito
 
 ``` r
 remove.packages(forrel) #This will remove the version 1.5.0 installed by default with mispitools
-install.packages("remote")
-library(remote)
+install.packages("devtools")
+library(devtools)
 install_version("forrel", version = "1.4.1", repos = "http://cran.us.r-project.org") #this will install previous forrel version
 ```
 
