@@ -294,3 +294,6 @@ LRdist(Postdata, type = 2)
 
 <img src="README_files/figure-markdown_github/PostPlot.png" width="450" height="450">
 
+
+
+You can compare it withe the 
