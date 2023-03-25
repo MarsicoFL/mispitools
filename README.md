@@ -269,7 +269,7 @@ DeT(datasim, 10)
 where 10 is the weight_1 (please see mispitools related papers on the top for further information)
 
 
-## Computing posterior odds in the genetic step
+## The whole game: Computing DNA-based kinship test posterior odds with preliminary investigation data based prior odds
 
 NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
 
