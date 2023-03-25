@@ -292,5 +292,5 @@ Postdata <- postSim(
 LRdist(Postdata, type = 2)
 ```
 
-<img src="README_files/figure-markdown_github/PostPlot.png" width="325" height="450">
+<img src="README_files/figure-markdown_github/PostPlot.png" width="400" height="450">
 
