@@ -70,8 +70,8 @@ postSim <- function(datasim, Prior = 0.01, PriorModel = c("prelim","uniform")[1]
       datasim1 <- mutate(datasim1, PostOdds = PriorOdds*Related)
     }
   
-  Related <- datasim1$PostOdds
-  Unrelated <- datasim2$PostOdds
+  Related <- datasim1$PostOddsGen
+  Unrelated <- datasim2$PostOddsGen
   data <- cbind(Unrelated, Related)
   
   return(as.data.frame(data))}
