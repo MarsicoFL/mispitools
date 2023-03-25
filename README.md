@@ -241,7 +241,7 @@ unrelatedness could be plotted.
 ``` r
 LRdist(datasim, type = 2)
 ```
-<img src="README_files/figure-markdown_github/newplot.png" width="450" height="450">
+<img src="README_files/figure-markdown_github/newplot.png" width="450" height="430">
 
 
 Or other plotting option:
