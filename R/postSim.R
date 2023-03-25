@@ -28,7 +28,7 @@ postSim <- function(datasim, Prior = 0.01, PriorModel = c("prelim","uniform")[1]
                     epc = Cmodel(), erRc = Cmodel(), MPc = 1, 
                     epa = 0.05, erRa = 0.01, MPa = 10, MPr = 2) {
   
-  nsims = length(datasim)
+  nsims = nrow(datasim)
   
   LRa <- LRc <- LRs <- LRtot <- PostOdds <- PriorOdds <- NULL
 
