@@ -233,7 +233,7 @@ for a specific LR threshold (T):
 Trates(datasim, 10)
 ```
 
-    ## [1] "FNR = 0.87 ;  FPR = 0 ;  MCC = 0.263664022152322"
+    ## [1] "FNR = 0.757 ;  FPR = 0.005 ;  MCC = 0.361063897416207"
 
 Likelihoold ratio distributions under both hypothesis, relatedness and
 unrelatedness could be plotted.
@@ -296,4 +296,4 @@ LRdist(Postdata, type = 2)
 
 
 
-You can compare it withe the 
+You can compare it with the previous violing plot, elucidating the increasement in distribution separation. This would impact on performance metrics, that could be analyzed with the same function (Trates). Also, decision threshold could be setted for posterior odds. 
