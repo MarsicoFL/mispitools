@@ -5,14 +5,17 @@
 #' @export
 #' @import reshape2
 #' @import patchwork
+#' @importFrom ggplot2 ggplot geom_raster scale_fill_gradient theme_bw theme element_text labs aes
+#' @importFrom graphics par
 #' @return A value of Likelihood ratio based on preliminary investigation data. In this case, sex.
 #' @examples
 #' Cmodel()
 
 CondPlot <- function(CPT_POP, CPT_MP) {
 
-par(mfrow = c(2, 1), mar = c(2, 4, 4, 2))
+graphics::par(mfrow = c(2, 1), mar = c(2, 4, 4, 2))
 POP <- reshape2::melt(CPT_POP)
+  Var1 <- Var2  <- value <- NULL
 
 p1 <- ggplot2::ggplot(POP, aes(x = Var2, y = Var1)) +
   ggplot2::geom_raster(aes(fill=value)) +
