@@ -267,3 +267,30 @@ DeT(datasim, 10)
 ```
 
 where 10 is the weight_1 (please see mispitools related papers on the top for further information)
+
+
+## Computing posterior odds in the genetic step
+
+NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
+
+In this section we introduce a simple code for computing posterior odds of the genetic step. Prior Odds could be based on two models: (i) Preliminary investigation data based prior odds, or (ii) uniform prior odds. The first option assign a specific prior odds for each MP-UP pair, the second assigns the same. To see the documentation please run the following code:
+
+``` r
+?postSim
+```
+
+As you can see, several parameters correspond to non-genetic LRs simulations, and datasim (output of simLRgen) is taken as the genetic LR simulations. With the following code we can calculate the posteriors of the example analyzed above. 
+
+``` r
+Postdata <- postSim(
+  datasim, Prior = 0.01, PriorModel = "prelim", 
+  eps = 0.05, erRs = 0.01, epc = Cmodel(), 
+  erRc = Cmodel(), MPc = 1, epa = 0.05, 
+  erRa = 0.01, MPa = 10, MPr = 2
+)
+
+LRdist(Postdata, type = 2)
+```
+
+<img src="README_files/figure-markdown_github/PostPlot.png" width="450" height="250">
+
