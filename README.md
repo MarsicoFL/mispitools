@@ -22,7 +22,7 @@ For citing mispitools please use the following references: Marsico and Caridi, 2
 ## Installation
 
 The goal of mispitools is to bring a simulation framework for decision
-making in missing person identification cases. You can install it from CRAN typing on your R command line the line presented below:
+making in missing person identification cases. You can install it from CRAN typing on your R command line:
 
 ``` r
 install.packages("mispitools")
@@ -45,7 +45,7 @@ Now you can analyze the mispitools documentation, it has a description for all f
 ?mispitools
 ```
 
-NOTE: These packages should be directly, ff not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually (specially if you are installing the under development version from github). This could be done with the following lines:
+NOTE: These packages should be directly, if not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually (specially if you are installing the under development version from github). This could be done with the following lines:
 
 ```r 
 install.packages("ggplot2")
