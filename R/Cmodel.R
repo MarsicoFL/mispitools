@@ -20,7 +20,7 @@
 
 Cmodel <- function(errorModel = c("custom","uniform")[1], ep = 0.01, ep12 = 0.01, ep13 = 0.005, ep14 = 0.01, ep15 = 0.003, ep23 =0.01, ep24 = 0.003, ep25 =0.01, ep34 = 0.003, ep35 = 0.003, ep45 = 0.01){
 if(errorModel == "uniform") {
-  ep12 <- ep13 <- ep14 <- ep15 <- ep23 <- ep25 <- ep25 <- ep34 <- ep35 <- ep45 <- ep
+  ep12 <- ep13 <- ep14 <- ep15 <- ep23 <- ep24 <- ep25 <- ep34 <- ep35 <- ep45 <- ep
 }
 l1 = 1/(1+ep12+ep13+ep14+ep15)
 l2 = 1/(1+ep12+ep23+ep24+ep25)
