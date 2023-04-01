@@ -1,10 +1,16 @@
-library(shiny)
-library(ggplot2)
-library(shinyjs)
-library(httr)
-library(jsonlite)
-library(huxtable)
+#' Missing person shiny app
+#'
+#' @import shiny
+#' @import shinyjs
+#' @import httr
+#' @import jsonlite
+#' @import huxtable
+#' @export
+#' @return A value of Likelihood ratio based on preliminary investigation data. In this case, sex.
+#' @examples
+#' CPT_MP()
 
+mispiApp <- function() {
 # UI
 ###spinner:
 options(spinner.color = "#5661f4", spinner.type = 6, spinner.color.background = "#ffffff", spinner.size = 0.5)
@@ -164,3 +170,4 @@ server <- function(input, output) {
 
 # Run the app
 shinyApp(ui = ui, server = server)
+}
