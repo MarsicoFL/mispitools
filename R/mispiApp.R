@@ -16,10 +16,8 @@ mispiApp <- function() {
 options(spinner.color = "#5661f4", spinner.type = 6, spinner.color.background = "#ffffff", spinner.size = 0.5)
 
 VERSION = list(shinyapp = "1.3.0", 
-               ibdsim2 = packageVersion("ibdsim2"))
+               ibdsim2 = packageVersion("mispitools"))
 
-.MODELS = c(Haldane = "haldane", chi2 = "chi")
-.MAPS = c("Decode (1-22)" = "decode19", "Single (26M/42M)" = "onechrom")
 
 # User interface
 ui = fluidPage(
@@ -108,7 +106,10 @@ server <- function(input, output) {
     #CPT MP
     
     jointname <- c("F-T1", "F-T0", "M-T1", "M-T0")
-    jointprob <- c((1-eps)*(1-epa), (1-eps)*epa, eps*(1-epa), eps*epa)
+    
+    if (MPs == "F") {jointprob <- c((1-eps)*(1-epa), (1-eps)*epa, eps*(1-epa), eps*epa)}
+    else if  (MPs == "M") {jointprob <- c(eps*(1-epa), eps*epa,(1-eps)*(1-epa), (1-eps)*epa)}
+    
     names(jointprob) <- jointname
     
     Col <- c(1,2,3,4,5)
