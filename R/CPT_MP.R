@@ -10,10 +10,10 @@
 #' @examples
 #' CPT_MP()
 
-
 CPT_MP <- function(MPs = "F", MPc = 1, eps = 0.05, epa = 0.05, epc = Cmodel()) {
   jointname <- c("F-T1", "F-T0", "M-T1", "M-T0")
-  jointprob <- c((1-eps)*(1-epa), (1-eps)*epa, eps*(1-epa), eps*epa)
+  if (MPs == "F") {jointprob <- c((1-eps)*(1-epa), (1-eps)*epa, eps*(1-epa), eps*epa)}
+  else if  (MPs == "M") {jointprob <- c(eps*(1-epa), eps*epa,(1-eps)*(1-epa), (1-eps)*epa)}
   names(jointprob) <- jointname
 
   Col <- c(1,2,3,4,5)
@@ -23,4 +23,3 @@ CPT_MP <- function(MPs = "F", MPc = 1, eps = 0.05, epa = 0.05, epc = Cmodel()) {
   CPTmp <- outer(jointprob,probC)
   return(CPTmp)
 }
-
