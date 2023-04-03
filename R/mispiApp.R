@@ -97,8 +97,8 @@ server <- function(input, output) {
 
     p1 <- ggplot2::ggplot(POP, aes(x = Var2, y = Var1)) +
       ggplot2::geom_raster(aes(fill=value)) +
-      scale_fill_gradient(low="grey90", high="blue") +
-      labs(x="Hair colour (C)", y="Biologocial sex-Age", title="P(D|H2)", limits = c(0,1)) +
+      scale_fill_gradient(low="grey90", high="blue", limits = c(0,1)) +
+      labs(x="Hair colour (C)", y="Biologocial sex-Age", title="P(D|H2)") +
       theme_bw() + theme(axis.text.x=element_text(size=13, angle=0, vjust=0.3),
                          axis.text.y=element_text(size=13),
                          plot.title=element_text(size=13)) +
