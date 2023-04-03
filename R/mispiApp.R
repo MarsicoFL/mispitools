@@ -1,12 +1,9 @@
 #' Missing person shiny app
 #'
-#' @import shiny
-#' @import shinyjs
-#' @import httr
-#' @import jsonlite
-#' @import huxtable
+#' @importFrom shiny sidebarLayout sidebarPanel numericInput selectInput sliderInput renderPlot shinyApp
+#' @import ggplot2
 #' @export
-#' @return A value of Likelihood ratio based on preliminary investigation data. In this case, sex.
+#' @return An user interface for computing non-genetic LRs and conditioned probability tables.
 #' @examples
 #' CPT_MP()
 
@@ -15,68 +12,44 @@ mispiApp <- function() {
 ###spinner:
 options(spinner.color = "#5661f4", spinner.type = 6, spinner.color.background = "#ffffff", spinner.size = 0.5)
 
-VERSION = list(shinyapp = "1.3.0", 
-               ibdsim2 = packageVersion("mispitools"))
-
 
 # User interface
-ui = fluidPage(
-  
-  useShinyjs(),  # Set up shinyjs
-  
-  tags$head(
-    tags$style(type = "text/css", "
-      .body {font-size: small}
-      .well {padding-top: 10px;}
-      .selectize-dropdown {width: 250px !important;}
-      .fa-check { font-size:xx-large; color:Lime}
-      
-  ")),
-  
-  # Application title
-  h2(id = "title-h2", "MispiApp: Missing Person Identification App"),
-  tags$style(HTML("#title-h2 {background-color: gray; color: white; padding: 15px}")),
-  
-  p("MispiApp contains an user-friendly interface for performing some of the core functions computed by mispitools. Mispitools is an open source package written in R statistical language. It consist in a set of decision making tools to conduct missing person searches. It allows computing several features, from non-genetic based LRs to optimal LR threshold for declaring potential matches in DNA-based database search. "),
-  
-  p("More information: 
-    This program is a frontend for the R package mispitools", "https://github.com/MarsicoFL/mispitools
-     Details about the parameters and methodology can be found in the documentation of mispitools."), 
-  
-    sidebarLayout(
-    sidebarPanel(
-      numericInput("MPa", "MPa:", 40, min = 0),
-      numericInput("MPr", "MPr:", 6, min = 0),
-      numericInput("MPc", "MPc:", 1, min = 1, max = 5),
-      numericInput("eps", "eps:", 0.05, min = 0, max = 1),
-      numericInput("epa", "epa:", 0.05, min = 0, max = 1),
-      numericInput("epc", "epc:", 0.02, min = 0, max = 1),
-      selectInput("MPs", "MPs:",
+ui = shiny::fluidPage(
+
+    shiny::sidebarLayout(
+    shiny::sidebarPanel(
+      shiny::numericInput("MPa", "MPa:", 40, min = 0),
+      shiny::numericInput("MPr", "MPr:", 6, min = 0),
+      shiny::numericInput("MPc", "MPc:", 1, min = 1, max = 5),
+      shiny::numericInput("eps", "eps:", 0.05, min = 0, max = 1),
+      shiny::numericInput("epa", "epa:", 0.05, min = 0, max = 1),
+      shiny::numericInput("epc", "epc:", 0.02, min = 0, max = 1),
+      shiny::selectInput("MPs", "MPs:",
                   choices = c("F", "M")),
-      sliderInput("propF", "PropF:",
+      shiny::sliderInput("propF", "PropF:",
                   min = 0, max = 1, value = 0.5, step = 0.1),
-      sliderInput("propC1", "PropC1:",
+      shiny::sliderInput("propC1", "PropC1:",
                   min = 0, max = 1, value = 0.3, step = 0.05),
-      sliderInput("propC2", "PropC2:",
+      shiny::sliderInput("propC2", "PropC2:",
                   min = 0, max = 1, value = 0.2, step = 0.05),
-      sliderInput("propC3", "PropC3:",
+      shiny::sliderInput("propC3", "PropC3:",
                   min = 0, max = 1, value = 0.25, step = 0.05),
-      sliderInput("propC4", "PropC4:",
+      shiny::sliderInput("propC4", "PropC4:",
                   min = 0, max = 1, value = 0.15, step = 0.05),
-      sliderInput("propC5", "PropC5:",
+      shiny::sliderInput("propC5", "PropC5:",
                   min = 0, max = 1, value = 0.1, step = 0.05)
     ),
-    mainPanel(
-      plotOutput("myplot")
+    shiny::mainPanel(
+      shiny::plotOutput("myplot")
     )
   )
 )
 
 # Server
 server <- function(input, output) {
-  
+
   MainPlot <- function(propF = 0.5, MPa = 40, MPr = 6, propC = c(0.3,0.2, 0.25, 0.15,0.1), MPs = "F", MPc = 1, eps = 0.05, epa = 0.05, epc = 0.02){
-    
+
     #CPT POP
     Age <- seq(1:80)
     MPmin <- MPa - MPr
@@ -84,44 +57,44 @@ server <- function(input, output) {
     T1p <- (MPmax-MPmin)/length(Age)  # Para una uniforme
     T0p <-  1-T1p
     propS = c(propF, 1-propF)
-    
+
     jointname <- c("F-T1", "F-T0", "M-T1", "M-T0")
     jointprob <- c(propS[1]*T1p, propS[1]*T0p, propS[2]*T1p, propS[2]*T0p)
     names(jointprob) <- jointname
-    
+
     CPT_POP <- outer(jointprob,propC)
-    
-    
+
+
     # CVModel (Only Equal)
     ep12 <- ep13 <- ep14 <- ep15 <- ep23 <- ep24 <- ep25 <- ep34 <- ep35 <- ep45 <- ep <- epc
-    
+
     l1 = 1/(1+ep12+ep13+ep14+ep15)
     l2 = 1/(1+ep12+ep23+ep24+ep25)
     l3 = 1/(1+ep13+ep23+ep34+ep35)
     l4 = 1/(1+ep14+ep24+ep34+ep45)
     l5 = 1/(1+ep15+ep25+ep35+ep45)
-    
+
     errorMat <- rbind(c(l1, l1*ep12, l1*ep13, l1*ep14, l1*ep15), c(l2*ep12,l2,l2*ep13,l2*ep14,l2*ep15), c(l3*ep13, l3*ep23, l3, l3*ep34, l3*ep35), c(l4*ep14, l4*ep24, l4*ep34, l4, l4*ep45), c(l5*ep15, l5*ep25, l5*ep35, l5*ep45, l5))
-    
+
     #CPT MP
-    
+
     jointname <- c("F-T1", "F-T0", "M-T1", "M-T0")
-    
+
     if (MPs == "F") {jointprob <- c((1-eps)*(1-epa), (1-eps)*epa, eps*(1-epa), eps*epa)}
     else if  (MPs == "M") {jointprob <- c(eps*(1-epa), eps*epa,(1-eps)*(1-epa), (1-eps)*epa)}
-    
+
     names(jointprob) <- jointname
-    
+
     Col <- c(1,2,3,4,5)
     probC = errorMat[MPc,]
     names(probC) <- Col
-    
+
     CPT_MP <- outer(jointprob,probC)
-    
+
     graphics::par(mfrow = c(2, 1), mar = c(2, 4, 4, 2))
     POP <- reshape2::melt(CPT_POP)
     Var1 <- Var2  <- value <- NULL
-    
+
     p1 <- ggplot2::ggplot(POP, aes(x = Var2, y = Var1)) +
       ggplot2::geom_raster(aes(fill=value)) +
       scale_fill_gradient(low="grey90", high="blue") +
@@ -149,13 +122,13 @@ server <- function(input, output) {
                          axis.text.y=element_text(size=13),
                          plot.title=element_text(size=13)) +
       geom_text(aes(label = as.character(format(round(value, 2), nsmall = 2))))
-    
+
     p <- ((p1+p2+p3)) + patchwork::plot_annotation(tag_levels = 'A')
     p
     return(p)}
-  
-  
-  output$myplot <- renderPlot({
+
+
+  output$myplot <- shiny::renderPlot({
     p <- MainPlot(propF = input$propF,
                   MPa = input$MPa,
                   MPr = input$MPr,
@@ -170,5 +143,5 @@ server <- function(input, output) {
 }
 
 # Run the app
-shinyApp(ui = ui, server = server)
+shiny::shinyApp(ui = ui, server = server)
 }

@@ -13,7 +13,7 @@
 #' x = profileSim(x, N = 1, ids = 2)
 #' datasim = simLRgen(x, missing = 5, 10, 123)
 #' LRdist(datasim)
-#' @import plotly
+#' @importFrom plotly plot_ly layout
 #' @import dplyr
 #' @import highcharter
 #' @import tidyr
