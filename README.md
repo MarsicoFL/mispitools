@@ -187,6 +187,19 @@ CondPlot(POP,MP)
 
 ![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)<!-- -->
 
+Furthermore, a ShinyApp could be executed using the following command:
+
+``` r
+mispiApp()
+```
+It will open an interactive panel where parameters could be selected in order to comput conditioned probability tables and LR for each phenotype. 
+PropF refer to the female proportion in the population (the male proportion is 1-PropF). PropC indicate the proportion of the specific hair colour. After defining five hair color proportion mispitools normalize it all to sum 1.
+Note: this App is undervelopment. Particularly age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing incoherent parameters, i.e MPa= 40 with a range error (MPr) of 100 (error being more than two times the age allowing negative results), will lead to incoherent probabilities. Please select realiable values.
+
+
+![](README_files/figure-markdown_github/shiny.png)<!-- -->
+
+
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
 
