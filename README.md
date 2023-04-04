@@ -221,7 +221,7 @@ provided by mispitools.
 ``` r
 library(pedtools)
 library(forrel)
-freq = mispitools::getfreqs(Argentina)[1:5]
+freq = mispitools::getfreqs(mispitools::Argentina)[1:5]
 x = pedtools::linearPed(2)
 x = pedtools::setMarkers(x, locusAttributes = freq)
 x = forrel::profileSim(x, N = 1, ids = 2)
