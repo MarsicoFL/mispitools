@@ -51,7 +51,7 @@ server <- function(input, output) {
   MainPlot <- function(propF = 0.5, MPa = 40, MPr = 6, propC = c(0.3,0.2, 0.25, 0.15,0.1), MPs = "F", MPc = 1, eps = 0.05, epa = 0.05, epc = 0.02){
 
     #CPT POP
-    Age <- seq(1:100)
+    Age <- seq(1:80)
     MPmin <- MPa - MPr
     MPmax <- MPa + MPr
     T1p <- (MPmax-MPmin)/length(Age)  # Para una uniforme
