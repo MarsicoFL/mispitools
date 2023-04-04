@@ -13,7 +13,7 @@
 ## About mispitools
 'mispitools' is an open source package written in R statistical language.
 It consist in a set of decision making tools to conduct missing person searches. 
-It allows computing several features, from non-genetic based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
+It allows computing several features, from preliminary investigation data based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
 mispitools imports forrel, https://doi.org/10.1016/j.fsigen.2020.102376, and pedtools packages, https://doi.org/10.1016/C2020-0-01956-0.
 More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. 
 For citing mispitools please use the following references: Marsico and Caridi, 2023, http://dx.doi.org/10.2139/ssrn.4331033, and  Marsico, Vigeland et al. 2021, https://doi.org/10.1016/j.fsigen.2021.102519.
@@ -57,7 +57,7 @@ install.packages("patchwork")
 ```
 
 
-## Computing non-genetic based LRs
+## Computing preliminary investigation data based LRs
 NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
 
 Now you are able to compute conditional probability phenotype tables considering Age, Sex and Hair color variables. Firstly you
