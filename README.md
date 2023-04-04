@@ -197,7 +197,7 @@ PropF refer to the female proportion in the population (the male proportion is 1
 
 ![](README_files/figure-markdown_github/shiny.png)<!-- -->
 
-Note: this App is undervelopment. Particularly age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing incoherent parameters, i.e MPa= 40 with a range error (MPr) of 100 (error being more than two times the age allowing negative results), will lead to incoherent probabilities. Please select realiable values.
+Note: mispiApp is under development. Particularly age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing incoherent parameters, i.e MPa= 40 with a range error (MPr) of 100 (error being more than two times the age allowing negative results), will lead to incoherent probabilities. Please select realiable values.
 
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
