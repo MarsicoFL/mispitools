@@ -202,7 +202,7 @@ Note: this App is undervelopment. Particularly age variable assumes a uniform po
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
 
-$${\color{red}WARNING}$$	 At the moment mispitools works with under development forrel version (soon on CRAN). In order to perform genetic simulations some step should be done previously:
+$${\color{red}WARNING}$$	 At the moment mispitools works with under development forrel version (soon on CRAN). In order to perform genetic simulations some steps should be done previously:
 
 ``` r
 remove.packages(forrel) #This will remove the version 1.5.0 installed by default with mispitools
