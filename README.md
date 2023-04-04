@@ -219,6 +219,7 @@ pedigree definition and genetic profile simulations.The allele frequency databas
 provided by mispitools.
 
 ``` r
+library(mispitools)
 library(pedtools)
 library(forrel)
 freq = mispitools::getfreqs(mispitools::Argentina)[1:5]
