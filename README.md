@@ -25,8 +25,8 @@ The goal of mispitools is to bring a simulation framework for decision
 making in missing person identification cases. You can install it from CRAN typing on your R command line:
 
 ``` r
-install.packages("fbnet")
-library(fbnet)
+install.packages("mispitools")
+library(mispitools)
 ```
 
 You can install too the
