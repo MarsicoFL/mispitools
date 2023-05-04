@@ -35,8 +35,7 @@ with:
 ``` r
 install.packages("devtools")
 library(devtools)
-install.packages("fbnet", version='1.0.1')
-library(fbnet)
+install_github("MarsicoFL/mispitools")
 ```
 
 Now you can analyze the mispitools documentation, it has a description for all functions and parameters.
