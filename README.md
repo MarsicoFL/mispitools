@@ -25,8 +25,8 @@ The goal of mispitools is to bring a simulation framework for decision
 making in missing person identification cases. You can install it from CRAN typing on your R command line:
 
 ``` r
-install.packages("mispitools")
-library(mispitools)
+install.packages("fbnet")
+library(fbnet)
 ```
 
 You can install too the
@@ -35,8 +35,8 @@ with:
 ``` r
 install.packages("devtools")
 library(devtools)
-install_github("MarsicoFL/mispitools")
-library(mispitools)
+install.packages("fbnet", version='1.0.1')
+library(fbnet)
 ```
 
 Now you can analyze the mispitools documentation, it has a description for all functions and parameters.
