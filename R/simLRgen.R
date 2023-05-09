@@ -4,7 +4,7 @@
 #' @param missing Missing person ID/label indicated in the pedigree.
 #' @param numsims Number of simulations performed.
 #' @param seed Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123
-#'
+#' @param numCores Enables parallelization
 #' @return An object of class data.frame with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
 #' @export
 #' @import forrel
