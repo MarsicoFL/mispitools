@@ -21,7 +21,7 @@
 
 
 
-simLRgen = function(reference, missing, numsims, seed) {
+simLRgen = function(reference, missing, numsims, seed, numCores = 1) {
   st = base::Sys.time()
 
   if(pedtools::is.pedList(reference) && base::length(reference) == 1)
@@ -34,14 +34,14 @@ set.seed(seed)
 
 poi1 = pedtools::singleton("poi1")
 poi1 = pedtools::transferMarkers(from = reference, to = poi1)
-poi1 = forrel::profileSim(poi1, numsims)
+poi1 = forrel::profileSim(poi1, numsims, numCores = numCores)
 
 lr1 <- as.list(rep(NA, numsims))
 for(i in 1:numsims) {
        lr1[[i]] = forrel::missingPersonLR(reference, missing, poi = poi1[[i]])
     }
 
-poi2ped = forrel::profileSim(reference, numsims, ids = missing)
+poi2ped = forrel::profileSim(reference, numsims, ids = missing, numCores = numCores)
 
 poi2 <- base::as.list(base::rep(NA, numsims))
 for(i in 1:numsims) {
