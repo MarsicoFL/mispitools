@@ -11,40 +11,39 @@
 <!-- badges: end -->
 
 ## About mispitools
-'mispitools' is an open source package written in R statistical language.
-It consist in a set of decision making tools to conduct missing person searches. 
-It allows computing several features, from preliminary investigation data based LRs to optimal LR threshold for declaring potential matches in DNA-based database search.
-mispitools imports forrel, https://doi.org/10.1016/j.fsigen.2020.102376, and pedtools packages, https://doi.org/10.1016/C2020-0-01956-0.
-More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. 
-For citing mispitools please use the following references: Marsico and Caridi, 2023, http://dx.doi.org/10.2139/ssrn.4331033, and  Marsico, Vigeland et al. 2021, https://doi.org/10.1016/j.fsigen.2021.102519.
+'mispitools' is an open-source package written in the R statistical language. It consists of a collection of decision-making tools designed for conducting missing person searches. The package enables the computation of various features, ranging from preliminary investigation data-based likelihood ratios (LRs) to the optimal LR threshold for identifying potential matches in DNA-based database searches.
+
+'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
+
+In its most recent update, 'mispitools' incorporates preliminary investigation data-based LRs, presenting the statistical weight of different traces of evidence, such as biological sex, age, and hair color.
+
+To properly cite 'mispitools,' please refer to the following references: Marsico and Caridi, 2023 (http://dx.doi.org/10.2139/ssrn.4331033), and Marsico, Vigeland et al. 2021 (https://doi.org/10.1016/j.fsigen.2021.102519).
 
 
 ## Installation
 
-The goal of mispitools is to bring a simulation framework for decision
-making in missing person identification cases. You can install it from CRAN typing on your R command line:
+The objective of mispitools is to provide a simulation framework for decision-making in missing person identification cases. You can install it from CRAN by typing the following command on your R command line:
 
 ``` r
 install.packages("mispitools")
 library(mispitools)
 ```
 
-You can install too the
-versions under development (unstable) of mispitools from [Github](https://github.com/MarsicoFL/mispitools/)
-with:
+You can also install the unstable versions of mispitools from  [Github](https://github.com/MarsicoFL/mispitools/) by using the following command:
+
 ``` r
 install.packages("devtools")
 library(devtools)
 install_github("MarsicoFL/mispitools")
 ```
 
-Now you can analyze the mispitools documentation, it has a description for all functions and parameters.
+Now you can analyze the mispitools documentation, which provides descriptions for all functions and parameters.
 
 ```r 
 ?mispitools
 ```
 
-NOTE: These packages should be directly, if not previously, installed as dependencies with mispitools. Nevertheless, in some cases it is necesary to install them manually (specially if you are installing the under development version from github). This could be done with the following lines:
+NOTE: These packages should be installed automatically as dependencies with mispitools. However, in some cases, it may be necessary to install them manually, especially if you are installing the development version from GitHub. You can do this by using the following lines:
 
 ```r 
 install.packages("ggplot2")
@@ -56,20 +55,16 @@ install.packages("patchwork")
 ```
 
 
-## Computing preliminary investigation data based LRs
+## Computing LRs for preliminary investigation data
 NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
 
-Now you are able to compute conditional probability phenotype tables considering Age, Sex and Hair color variables. Firstly you
-can analyze the different parameters from the documentation.
+Now you are able to compute conditional probability phenotype tables considering the variables Age, Sex, and Hair color. Firstly, you can analyze the different parameters from the documentation.
 
 ``` r
 ?CPT_POP
 ```
 
- For simplification, the population reference age
-distribution is treated as uniform (the function
-could be easily adapted to incorpore a dataset with the specified
-frequencies, this will be implemented soon).
+For simplification, the population reference age distribution is assumed to be uniform. However, the function can be easily adapted to incorporate a dataset with the specified frequencies. This feature will be implemented in the near future.
 
 ``` r
 CPT_POP(
@@ -85,10 +80,7 @@ CPT_POP(
     ## M-T1 0.0225 0.015 0.01875 0.01125 0.0075
     ## M-T0 0.1275 0.085 0.10625 0.06375 0.0425
 
-The obtained matrix represent the probabilities of the phenotypes in the
-reference population. F-T1 represent a female thats age matches with the age of the missing. F-T0 is a female with a mismatch in age with the missing. M correspond to males, and the number (columns) represent hair colors. Note that in the followin case, the parameters
-remains the same, but changin the MP range change the population
-probabilities.
+The obtained matrix represents the probabilities of the phenotypes in the reference population. F-T1 represents a female whose age matches with the age of the missing person. F-T0 represents a female with a mismatch in age with the missing person. M corresponds to males, and the numbers (columns) represent different hair colors. It is important to note that in the following case, the parameters remain the same, but changing the MP (missing person) range will alter the population probabilities.
 
 ``` r
 CPT_POP(
@@ -104,24 +96,19 @@ CPT_POP(
     ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
     ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
 
-This could be counterintuitive, because there are population frequencies, and the population parameters remains the same in both cases. But T1 and T0 values depends on MP age and error rate.
-In the same way, MP conditioned probabilities could be computed. Again,
-we first see the documentation:
+This can be counterintuitive because the population frequencies remain the same in both cases. However, the values of T1 and T0 depend on the age of the missing person (MP) and the error rate. Similarly, it is possible to compute MP conditioned probabilities. Once again, I recommend referring to the documentation for more details on this process.
 
 ``` r
 ?CPT_MP
 ```
 
-Then, we can select a specified MP. One of the parameters is epc, that
-comes from the function Cmodel(). Lets see that function:
+Then, we can select a specific missing person (MP). One of the parameters is epc, which is derived from the function Cmodel(). Let's take a look at that function:
 
 ``` r
 ?Cmodel()
 ```
 
-It has two options, uniform, that adds the same ep for all combinations
-of colors, and custom, that allows specifying a specific value for each pair. Here
-we select the custom:
+The Cmodel() function provides two options: "uniform" and "custom". The "uniform" option assigns the same error probability (ep) for all combinations of colors, while the "custom" option allows you to specify a specific value for each pair. In this case, we will select the "custom" option.
 
 ``` r
 Cmodel(
@@ -139,8 +126,7 @@ Cmodel(
     ## [4,] 0.009746589 0.002923977 0.002923977 0.974658869 0.009746589
     ## [5,] 0.002923977 0.009746589 0.002923977 0.009746589 0.974658869
 
-Now we can specify the phenotype probabilities conditioned on MP
-characteristics.
+Now we can specify the phenotype probabilities conditioned on the characteristics of the missing person (MP).
 
 ``` r
 CPT_MP(MPs = "F", MPc = 1, 
@@ -191,12 +177,12 @@ Furthermore, a ShinyApp could be executed using the following command:
 ``` r
 mispiApp()
 ```
-It will open an interactive panel where parameters could be selected in order to comput conditioned probability tables and LR for each phenotype. 
-PropF refer to the female proportion in the population (the male proportion is 1-PropF). PropC indicate the proportion of the specific hair colour. After defining five hair color proportion mispitools normalize it all to sum 1.
+It will open an interactive panel where you can select parameters to compute conditioned probability tables and likelihood ratios (LR) for each phenotype.
+The parameter "PropF" represents the proportion of females in the population, and the male proportion is calculated as 1 minus PropF. "PropC" indicates the proportion of a specific hair color. After defining proportions for five hair colors, mispitools normalizes them so that they sum up to 1.
 
 ![](README_files/figure-markdown_github/shiny.png)<!-- -->
 
-Note: mispiApp is under development. Particularly age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing incoherent parameters, i.e MPa= 40 with a range error (MPr) of 100 (error being more than two times the age allowing negative results), will lead to incoherent probabilities. Please select realiable values.
+Note: mispiApp is currently under development. Specifically, the age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing inconsistent parameters, such as setting MPa (missing person age) to 40 with a range error (MPr) of 100 (an error that exceeds two times the age and allows negative results), will result in inconsistent probabilities. Please ensure that you select reliable values for accurate calculations.
 
 ## Calculating DNA-based decision threshold and error rates
 NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
@@ -269,11 +255,11 @@ DeT(datasim, 10)
 where 10 is the weight_1 (please see mispitools related papers on the top for further information)
 
 
-## The whole game: Computing DNA-based kinship test posterior odds with preliminary investigation data based prior odds
+##  The Whole Game: Computing DNA-Based Kinship Test Posterior Odds with Preliminary Investigation Data Based Prior Odds
 
 NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
 
-In this section we introduce a simple code for computing posterior odds of the genetic step. Prior Odds could be based on two models: (i) Preliminary investigation data based prior odds, or (ii) uniform prior odds. The first option assign a specific prior odds for each MP-UP pair, the second assigns the same. To see the documentation please run the following code:
+In this section, we provide a simple code for computing the posterior odds of the genetic step. The prior odds can be based on two models: (i) preliminary investigation data-based prior odds, or (ii) uniform prior odds. The first option assigns specific prior odds for each missing person (MP) and unidentified person (UP) pair, while the second option assigns the same prior odds for all pairs. To access the documentation for further details, please run the following code:
 
 ``` r
 ?postSim
