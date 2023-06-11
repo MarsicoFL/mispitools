@@ -80,7 +80,7 @@ CPT_POP(
     ## M-T1 0.0225 0.015 0.01875 0.01125 0.0075
     ## M-T0 0.1275 0.085 0.10625 0.06375 0.0425
 
-The obtained matrix represents the probabilities of the phenotypes in the reference population. F-T1 represents a female whose age matches with the age of the missing person. F-T0 represents a female with a mismatch in age with the missing person. M corresponds to males, and the numbers (columns) represent different hair colors. It is important to note that in the following case, the parameters remain the same, but changing the MP (missing person) range will alter the population probabilities.
+The obtained matrix represents the probabilities of the phenotypes in the reference population. F-T1 represents a female whose age matches with the age of the missing person. F-T0 represents a female with a mismatch in age with the missing person. M-T1 and M-T0 correspond to the same age categories in association with male. The numbers (columns) represent different hair colors. It is important to note that in the following case, the parameters remain the same, but changing the MP (missing person) range will alter the population probabilities.
 
 ``` r
 CPT_POP(
