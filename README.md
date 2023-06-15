@@ -58,7 +58,7 @@ install.packages("patchwork")
 
 
 ## Computing LRs for preliminary investigation data
-NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
+NOTE: The methodology implemented in this section is explained in: https://doi.org/10.1016/j.fsigen.2023.102891 (or the open pre-print version, available on http://dx.doi.org/10.2139/ssrn.4331033).
 
 Now you are able to compute conditional probability phenotype tables considering the variables Age, Sex, and Hair color. Firstly, you can analyze the different parameters from the documentation.
 
