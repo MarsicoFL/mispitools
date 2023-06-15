@@ -259,7 +259,7 @@ where 10 is the weight_1 (please see mispitools related papers on the top for fu
 
 ##  The Whole Game: Computing DNA-Based Kinship Test Posterior Odds with Preliminary Investigation Data Based Prior Odds
 
-NOTE: The methodology implemented in this section is explained in: http://dx.doi.org/10.2139/ssrn.4331033.
+NOTE: The methodology implemented in this section is explained in: https://doi.org/10.1016/j.fsigen.2023.102891 (or the open pre-print version, available on http://dx.doi.org/10.2139/ssrn.4331033).)
 
 In this section, we provide a simple code for computing the posterior odds of the genetic step. The prior odds can be based on two models: (i) preliminary investigation data-based prior odds, or (ii) uniform prior odds. The first option assigns specific prior odds for each missing person (MP) and unidentified person (UP) pair, while the second option assigns the same prior odds for all pairs. To access the documentation for further details, please run the following code:
 
