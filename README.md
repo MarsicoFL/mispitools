@@ -19,7 +19,7 @@ In its most recent update, 'mispitools' incorporates preliminary investigation d
 
 To properly cite 'mispitools,' please refer to the following references: 
   -  Marsico and Caridi, 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
-  -  Marsico, Vigeland et al. 2021 (https://doi.org/10.1016/j.fsigen.2021.102519).
+  -  Marsico, Vigeland et al. 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
 
 
 ## Installation
