@@ -24,7 +24,7 @@ To properly cite 'mispitools,' please use the following references:
 
 ## Installation
 
-The objective of mispitools is to provide a simulation framework for decision-making in missing person identification cases. You can install it from CRAN by typing the following command on your R command line:
+The objective of mispitools is to provide a simulation framework for decision-making in missing person identification cases. You can install it from CRAN by typing the following command on R:
 
 ``` r
 install.packages("mispitools")
