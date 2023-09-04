@@ -1,19 +1,19 @@
 Package: mispitools
 Title: Missing Person Identification Tools
-Version: 0.4.0
+Version: 1.0.0
 Authors@R: 
     person(given = "Franco",
            family = "Marsico",
            role = c("aut", "cre"),
            email = "franco.lmarsico@gmail.com",
            comment = c(ORCID = "0000-0002-0740-5516"))
-Description: Open-source software for computing Likelihood ratios thresholds and error rates in DNA kinship testing. Marsico FL. et al (2021) <doi:10.1016/j.fsigen.2021.102519>.
+Description: An open source software package written in R statistical language. It consist in a set of decision making tools to conduct missing person searches.  Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search. More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. For citing mispitools please use the following references: Marsico and Caridi, 2023 <doi:10.1016/j.fsigen.2023.102891> and  Marsico, Vigeland et al. 2021 <doi:10.1016/j.fsigen.2021.102519>.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Imports: forrel, pedtools, plotly, dplyr, highcharter, tidyr, tidyverse, DirichletReg, stats, purrr, patchwork, reshape2, graphics, ggplot2, shiny
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 URL: https://github.com/MarsicoFL/mispitools
 BugReports: https://github.com/MarsicoFL/mispitools/issues
 Depends: 
