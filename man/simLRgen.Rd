@@ -4,7 +4,7 @@
 \alias{simLRgen}
 \title{Simulate likelihoods ratio (LRs) based on genetic data: a function for obtaining expected LRs under relatedness and unrelatedness kinship hypothesis.}
 \usage{
-simLRgen(reference, missing, numsims, seed)
+simLRgen(reference, missing, numsims, seed, numCores = 1)
 }
 \arguments{
 \item{reference}{Reference pedigree. It could be an input from read_fam() function or a pedigree built with pedtools.}
@@ -14,6 +14,8 @@ simLRgen(reference, missing, numsims, seed)
 \item{numsims}{Number of simulations performed.}
 
 \item{seed}{Select a seed for simulations. If it is defined, results will be reproducible. Suggested, seed = 123}
+
+\item{numCores}{Enables parallelization}
 }
 \value{
 An object of class data.frame with LRs obtained for both hypothesis, Unrelated where POI is not MP or Related where POI is MP.
