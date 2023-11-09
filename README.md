@@ -18,8 +18,8 @@
 In its most recent update, 'mispitools' incorporates preliminary investigation data-based LRs, presenting the statistical weight of different traces of evidence, such as biological sex, age, and hair color.
 
 To properly cite 'mispitools,' please use the following references: 
-  -  Marsico et al., 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
-  -  Marsico et al., 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
+  -  Marsico et al., Forensic Science International: Genetics, 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
+  -  Marsico et al., Forensic Science International: Genetics, 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
 
 
 ## Installation
