@@ -56,7 +56,8 @@ for(i in 1:numsims) {
   lr2[[i]] = forrel::missingPersonLR(reference, missing, poi = poi2[[i]])
 }
 
-LRsimulated <- base::cbind(base::sapply(lr1, function(x) {x[["LRtotal"]][["H1:H2"]]}), base::sapply(lr2, function(x) {x[["LRtotal"]][["H1:H2"]]}))
-base::colnames(LRsimulated) <- c("Unrelated", "Related")
-base::structure(base::as.data.frame(LRsimulated))
+#LRsimulated <- base::cbind(base::sapply(lr1, function(x) {x[["LRtotal"]][["H1:H2"]]}), base::sapply(lr2, function(x) {x[["LRtotal"]][["H1:H2"]]}))
+#base::colnames(LRsimulated) <- c("Unrelated", "Related")
+base::structure(list(Unrelated = lr1, Related = lr2))
+#base::structure(base::as.data.frame(LRsimulated))
 }
