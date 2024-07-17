@@ -21,6 +21,23 @@
 
 LRdist = function(datasim, type = 1) {
 
+unrelated_values <- vector()
+related_values <- vector()
+
+list_length <- length(datasim[["Unrelated"]])
+
+for (i in 1:list_length) {
+  unrelated_value <- datasim[["Unrelated"]][[i]][["LRtotal"]][["H1:H2"]]
+  related_value <- datasim[["Related"]][[i]][["LRtotal"]][["H1:H2"]]
+  
+  unrelated_values <- c(unrelated_values, unrelated_value)
+  related_values <- c(related_values, related_value)
+}
+
+results_df <- data.frame(Unrelated = unrelated_values, Related = related_values)
+datasim <- results_df
+
+
 TPED = log10(datasim$Related)
 RPED = log10(datasim$Unrelated)
 

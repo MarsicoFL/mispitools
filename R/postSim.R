@@ -24,10 +24,24 @@
 #' datasim = simLRgen(x, missing = 5, 10, 123)
 #' postSim(datasim)
 
-postSim <- function(datasim, Prior = 0.01, PriorModel = c("prelim","uniform")[1] ,eps = 0.05, erRs = 0.01, 
-                    epc = Cmodel(), erRc = Cmodel(), MPc = 1, 
-                    epa = 0.05, erRa = 0.01, MPa = 10, MPr = 2) {
+postSim <- function(datasim, Prior = 0.01, PriorModel = c("prelim","uniform")[1] ,eps = 0.05, erRs = 0.01, epc = Cmodel(), erRc = Cmodel(), MPc = 1,  epa = 0.05, erRa = 0.01, MPa = 10, MPr = 2) {
   
+unrelated_values <- vector()
+related_values <- vector()
+
+list_length <- length(datasim[["Unrelated"]])
+
+for (i in 1:list_length) {
+  unrelated_value <- datasim[["Unrelated"]][[i]][["LRtotal"]][["H1:H2"]]
+  related_value <- datasim[["Related"]][[i]][["LRtotal"]][["H1:H2"]]
+  
+  unrelated_values <- c(unrelated_values, unrelated_value)
+  related_values <- c(related_values, related_value)
+}
+
+results_df <- data.frame(Unrelated = unrelated_values, Related = related_values)
+datasim <- results_df
+
   nsims = nrow(datasim)
   
   LRa <- LRc <- LRs <- LRtot <- PostOdds <- PriorOdds <- NULL
