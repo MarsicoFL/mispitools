@@ -1,4 +1,4 @@
-#' Likelihood ratio for age variable
+#' Likelihood ratio for color variable
 #'
 #' @param epc epsilon paramenter.
 #' @param erRc error rate in the database.
