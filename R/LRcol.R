@@ -7,6 +7,7 @@
 #' @param H hypothesis tested, H1: UHR is MP, H2: UHR is no MP
 #' @param Qprop Query color tested.
 #' @param MPc MP hair color
+#' @param seed For reproducible simulations
 #' @param LR compute LR values
 #' @export
 #' @return A value of Likelihood ratio based on preliminary investigation data. In this case, hair color.
@@ -14,12 +15,12 @@
 #' LRcol() 
 
 
-LRcol <- function(MPc = 1, epc = Cmodel(),  erRc = epc, nsims = 1000, Pc = c(0.3,0.2, 0.25, 0.15,0.1), H=1,  Qprop = MPc, LR = FALSE) {
+LRcol <- function(MPc = 1, epc = Cmodel(),  erRc = epc, nsims = 1000, Pc = c(0.3,0.2, 0.25, 0.15,0.1), H=1,  Qprop = MPc, LR = FALSE, seed = 1234) {
 
 sims <- list()  
 Col <- c(1,2,3,4,5)
 
-
+set.seed(seed)
 if(H == 1) {
 
   x = Col
