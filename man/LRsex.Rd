@@ -2,7 +2,7 @@
 % Please edit documentation in R/LRsex.R
 \name{LRsex}
 \alias{LRsex}
-\title{Likelihood ratio for age variable}
+\title{Likelihood ratio for sex variable}
 \usage{
 LRsex(
   MPs = "F",
@@ -11,7 +11,8 @@ LRsex(
   nsims = 1000,
   Ps = c(0.5, 0.5),
   H = 1,
-  LR = FALSE
+  LR = FALSE,
+  seed = 1234
 )
 }
 \arguments{
@@ -28,12 +29,14 @@ LRsex(
 \item{H}{hypothesis tested, H1: UHR is MP, H2: UHR is no MP}
 
 \item{LR}{compute LR values}
+
+\item{seed}{For reproducible simulations}
 }
 \value{
 A value of Likelihood ratio based on preliminary investigation data. In this case, sex.
 }
 \description{
-Likelihood ratio for age variable
+Likelihood ratio for sex variable
 }
 \examples{
 LRsex() 

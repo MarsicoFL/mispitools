@@ -2,7 +2,7 @@
 % Please edit documentation in R/LRcol.R
 \name{LRcol}
 \alias{LRcol}
-\title{Likelihood ratio for age variable}
+\title{Likelihood ratio for color variable}
 \usage{
 LRcol(
   MPc = 1,
@@ -12,7 +12,8 @@ LRcol(
   Pc = c(0.3, 0.2, 0.25, 0.15, 0.1),
   H = 1,
   Qprop = MPc,
-  LR = FALSE
+  LR = FALSE,
+  seed = 1234
 )
 }
 \arguments{
@@ -31,12 +32,14 @@ LRcol(
 \item{Qprop}{Query color tested.}
 
 \item{LR}{compute LR values}
+
+\item{seed}{For reproducible simulations}
 }
 \value{
 A value of Likelihood ratio based on preliminary investigation data. In this case, hair color.
 }
 \description{
-Likelihood ratio for age variable
+Likelihood ratio for color variable
 }
 \examples{
 LRcol() 

@@ -14,7 +14,8 @@ LRage(
   erRa = epa,
   H = 1,
   modelA = c("uniform", "custom")[1],
-  LR = FALSE
+  LR = FALSE,
+  seed = 1234
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ LRage(
 \item{modelA}{reference database probabilities, uniform assumes equally probable ages. Custom needs a vector with ages frequencies.}
 
 \item{LR}{compute LR values}
+
+\item{seed}{For reproducible simulations}
 }
 \value{
 A value of Likelihood ratio based on preliminary investigation data. In this case, Age.
