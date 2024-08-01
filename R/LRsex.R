@@ -1,4 +1,4 @@
-#' Likelihood ratio for age variable
+#' Likelihood ratio for sex variable
 #'
 #' @param eps epsilon paramenter.
 #' @param erRs error rate in the database.
@@ -6,6 +6,7 @@
 #' @param Ps Sex probabilities in the population. 
 #' @param H hypothesis tested, H1: UHR is MP, H2: UHR is no MP
 #' @param MPs MP sex
+#' @param seed For reproducible simulations
 #' @param LR compute LR values
 #' @export
 #' @return A value of Likelihood ratio based on preliminary investigation data. In this case, sex.
@@ -13,24 +14,22 @@
 #' LRsex() 
 
 
-LRsex <- function(MPs = "F", eps = 0.05, erRs = eps, nsims = 1000, Ps = c(0.5,0.5), H = 1,  LR = FALSE) {
-#Seteo general
+LRsex <- function(MPs = "F", eps = 0.05, erRs = eps, nsims = 1000, Ps = c(0.5,0.5), H = 1,  LR = FALSE, seed = 1234) {
+
+set.seed(seed)
 sims <- list()  
 S = c("F", "M")
 
-#Interpretar sexo de MP
 MPss <- which(S == MPs)
 NoMPsn <- S[-MPss]
 noMPs <- which(S == NoMPsn)
 
-#Simular cuando H1 es cierta
 if(H == 1) {
 
   x = c(S[MPss], S[noMPs])
   sims=as.data.frame(sample(x, size = nsims, prob = c(1-erRs, erRs), replace = TRUE))
 names(sims) <- "Sexo"}
 
-#Simular cuando H2 es cierta
 else if (H == 2) {
 
   x = c(S[MPss], S[noMPs])
@@ -46,6 +45,5 @@ if (LR == TRUE) {
   names(sims) <- c("Sexo", "LRs")
   return(sims)}
 
-#Devolver simulaciones crudas o proporciones
 return(sims)
 }
