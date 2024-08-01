@@ -7,14 +7,16 @@
 #' @param nsims number of simulations.
 #' @param erRa error rate in the database.
 #' @param epa epsilon age
+#' @param seed For reproducible simulations
 #' @param H hipothesis tested, H1: UHR is MP, H2: UHR is not MP.
 #' @param modelA reference database probabilities, uniform assumes equally probable ages. Custom needs a vector with ages frequencies.
 #' @param LR compute LR values
 #' @export
 #' @return A value of Likelihood ratio based on preliminary investigation data. In this case, Age.
 
-LRage <- function(MPa = 40, MPr = 6, UHRr = 1, gam = 0.07, nsims = 1000, epa = 0.05, erRa = epa, H=1, modelA = c("uniform", "custom")[1], LR = FALSE) {
+LRage <- function(MPa = 40, MPr = 6, UHRr = 1, gam = 0.07, nsims = 1000, epa = 0.05, erRa = epa, H=1, modelA = c("uniform", "custom")[1], LR = FALSE, seed = 1234) {
 
+set.seed(seed)
 sims = list()  
 Age = seq(1:80)
 MPmin = MPa - MPr
