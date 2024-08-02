@@ -24,3 +24,4 @@ LRcolors <- function(df, seed = 1234, nsim = 500) {
   result_df <- data.frame(Unrelated = Unrelated, Related = Related)
   
   return(result_df)
+}
