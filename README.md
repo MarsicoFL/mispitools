@@ -269,7 +269,7 @@ Postdata <- postSim(
   erRa = 0.01, MPa = 10, MPr = 2
 )
 
-LRdist(Postdata, type = 2)
+LRdist(Postdata)
 ```
 
 <img src="README_files/figure-markdown_github/PostPlot.png" width="450" height="450">
