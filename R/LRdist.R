@@ -13,7 +13,6 @@
 #' datasim = simLRgen(x, missing = 5, 10, 123)
 #' LRdist(datasim)
 #' @import dplyr
-#' @import highcharter
 #' @import tidyr
 #' @import ggplot2
 
@@ -28,17 +27,21 @@ if (!is.data.frame(datasim)) {
 TPED = log10(datasim$Related)
 RPED = log10(datasim$Unrelated)
 
-hc <- hchart(
-stats::density(TPED), type = "area", 
- color = "steelblue", name = "Related"
-  ) %>%
- hc_add_series(
-stats::density(RPED), type = "area",
-color = "#B71C1C", 
-name = "Unrelated"
-  ) %>%
-    	hc_title(text = "LR distributions") %>%
-    	hc_xAxis(title = list(text = "Log10(LR)")) %>%
-    	hc_yAxis(title = list(text = "Density"))
-hc
+# Calculamos las densidades
+density_TPED <- stats::density(TPED)
+density_RPED <- stats::density(RPED)
+
+# Convertimos las densidades en data frames para ggplot2
+df_TPED <- data.frame(x = density_TPED$x, y = density_TPED$y)
+df_RPED <- data.frame(x = density_RPED$x, y = density_RPED$y)
+
+# Creamos el plot
+ggplot2::ggplot() +
+  ggplot2::geom_area(data = df_TPED, ggplot2::aes(x = x, y = y), fill = "steelblue", alpha = 0.6, color = NA) +
+  ggplot2::geom_area(data = df_RPED, ggplot2::aes(x = x, y = y), fill = "#B71C1C", alpha = 0.6, color = NA) +
+  ggplot2::labs(title = "LR distributions",
+                x = "Log10(LR)",
+                y = "Density") +
+  ggplot2::theme_minimal()
+
 }
