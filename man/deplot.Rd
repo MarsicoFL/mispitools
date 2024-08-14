@@ -4,10 +4,12 @@
 \alias{deplot}
 \title{Decision making plot: a function for plotting false positive and false negative rates for each LR threshold.}
 \usage{
-deplot(datasim)
+deplot(datasim, LRmax = 1000)
 }
 \arguments{
 \item{datasim}{Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.}
+
+\item{LRmax}{Maximum LR value used as a threshold. 1000 setted by default.}
 }
 \value{
 A plot showing false positive and false negative rates for each likelihood ratio threshold.
