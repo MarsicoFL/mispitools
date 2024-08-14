@@ -17,7 +17,6 @@ Decision making plot: a function for plotting false positive and false negative 
 }
 \examples{
 library(forrel)
-library(plotly)
 x = linearPed(2)
 x = setMarkers(x, locusAttributes = NorwegianFrequencies[1:5])
 x = profileSim(x, N = 1, ids = 2)
