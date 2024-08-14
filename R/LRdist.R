@@ -17,12 +17,12 @@
 #' @import ggplot2
 
 
-LRdist = function(datasim, type = 1) {
+LRdist = function(datasim) {
 if (!is.data.frame(datasim)) {
    datasim <- simLR2dataframe(datasim)
  }
 
-
+x <- y <- z <- NULL
 
 TPED = log10(datasim$Related)
 RPED = log10(datasim$Unrelated)

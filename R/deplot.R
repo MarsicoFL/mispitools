@@ -2,6 +2,7 @@
 #' Decision making plot: a function for plotting false positive and false negative rates for each LR threshold.
 #'
 #' @param datasim Input dataframe containing expected LRs for related and unrelated POIs. It should be the output from makeLRsims function.
+#' @param LRmax Maximum LR value used as a threshold. 1000 setted by default.
 #'
 #' @export
 #' @return A plot showing false positive and false negative rates for each likelihood ratio threshold.
@@ -15,16 +16,18 @@
 #' @import ggplot2
 
 
-deplot = function(datasim) {
+deplot = function(datasim, LRmax = 1000) {
 if (!is.data.frame(datasim)) {
    datasim <- simLR2dataframe(datasim)
  }
+
+x <- y <- z <- NULL
 
 TPED = datasim$Related
 RPED = datasim$Unrelated
 nsimul = nrow(datasim) 
 
-ValoresLR = seq(1, nsimul, length.out= nsimul)
+ValoresLR = seq(1, LRmax, length.out= LRmax)
 FPs = 0
 FNs = 0
 for(i in 1:nsimul) { FPs[i] = sum(RPED > ValoresLR[i]); 
