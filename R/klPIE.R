@@ -19,10 +19,6 @@
 #'   \item{"Q || P"}{The KL divergence from Q to P (Q || P).}
 #' }
 #' 
-#' @examples
-#' P <- matrix(c(0.2, 0.3, 0.5), nrow = 1)
-#' Q <- matrix(c(0.1, 0.4, 0.5), nrow = 1)
-#' kl_divergence(P, Q)
 #'
 #' @export
 klPIE <- function(P, Q, min_value = 1e-12) {
