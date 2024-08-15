@@ -30,9 +30,3 @@ The function calculates KL divergence in both directions (P || Q and Q || P)
 and handles zero probabilities by replacing them with a minimum value to avoid
 undefined logarithms.
 }
-\examples{
-P <- matrix(c(0.2, 0.3, 0.5), nrow = 1)
-Q <- matrix(c(0.1, 0.4, 0.5), nrow = 1)
-kl_divergence(P, Q)
-
-}
