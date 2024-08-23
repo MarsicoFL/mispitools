@@ -229,7 +229,7 @@ unrelatedness could be plotted.
 ``` r
 LRdist(datasim)
 ```
-<img src="README_files/figure-markdown_github/New3.png" width="500" height="250">
+<img src="README_files/figure-markdown_github/Captura desde 2024-08-23 18-26-41.png" width="500" height="250">
 
 Decision plot brings the posibility of analyzing FPR and FNR for each LR
 threshold. It could be obtained doing:
@@ -238,7 +238,7 @@ threshold. It could be obtained doing:
 deplot(datasim)
 ```
 
-<img src="README_files/figure-markdown_github/newplot2.png" width="450" height="250">
+<img src="README_files/figure-markdown_github/Captura desde 2024-08-23 18-26-50.png" width="450" height="250">
 
 This last plot show how different thresholds have different FNR and FPR values. The optimal (named decision threshold, DT) could be computed with the following command:
 
