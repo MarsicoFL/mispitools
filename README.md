@@ -18,7 +18,6 @@ Terminal
 Expected time
     16:41database searches.
 
-'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
 
 In its most recent update, 'mispitools' incorporates preliminary investigation data-based LRs, presenting the statistical weight of different traces of evidence, such as biological sex, age, and hair color.
 
@@ -29,6 +28,7 @@ To properly cite 'mispitools,' please use the following references:
 Aditionally, an add-on package draft is underconstruction, and can be useful for a depeer introduction of the package:
   -  Marsico, BioRxiv 2024 (https://doi.org/10.1101/2024.08.16.608307)
 
+'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
 
 ## Installation
 
