@@ -25,7 +25,7 @@ To properly cite 'mispitools,' please use the following references:
   -  Marsico et al., Forensic Science International: Genetics, 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
   -  Marsico et al., Forensic Science International: Genetics, 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
 
-Aditionally, an add-on package draft is underconstruction, and can be useful for a depeer introduction of the package:
+Additionally, an add-on package draft is under construction, and it can be useful for a deeper introduction to the package:
   -  Marsico, BioRxiv 2024 (https://doi.org/10.1101/2024.08.16.608307)
 
 'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
