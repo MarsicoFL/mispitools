@@ -11,7 +11,12 @@
 <!-- badges: end -->
 
 ## About mispitools
-'mispitools' is an open-source package written in the R statistical language. It consists of a collection of decision-making tools designed for conducting missing person searches. The package enables the computation of various features, ranging from preliminary investigation data-based likelihood ratios (LRs) to the optimal LR threshold for identifying potential matches in DNA-based database searches.
+'mispitools' is an open-source package written in the R statistical language. It consists of a collection of decision-making tools designed for conducting missing person searches. The package enables the computation of various features, ranging from preliminary investigation data-based likelihood ratios (LRs) to the optimal LR threshold for identifying potential matches in DNA-based     16:25
+Terminal
+    1
+
+Expected time
+    16:41database searches.
 
 'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
 
@@ -20,6 +25,9 @@ In its most recent update, 'mispitools' incorporates preliminary investigation d
 To properly cite 'mispitools,' please use the following references: 
   -  Marsico et al., Forensic Science International: Genetics, 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
   -  Marsico et al., Forensic Science International: Genetics, 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
+
+Aditionally, an add-on package draft is underconstruction, and can be useful for a depeer introduction of the package:
+  -  Marsico, BioRxiv 2024 (https://doi.org/10.1101/2024.08.16.608307)
 
 
 ## Installation
