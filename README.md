@@ -39,7 +39,7 @@ You can also install the unstable versions of mispitools from  [Github](https://
 ``` r
 install.packages("devtools")
 library(devtools)
-install_github("MarsicoFL/mispitools")
+install_github("MarsicoFL/mispitools") 
 ```
 
 Now you can analyze the mispitools documentation, which provides descriptions for all functions and parameters.
