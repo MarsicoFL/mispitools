@@ -6,7 +6,7 @@
 \alias{mispitools-package}
 \title{mispitools: Missing Person Identification Tools}
 \description{
-An open source software package written in R statistical language. It consist in a set of decision making tools to conduct missing person searches. Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search. More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. For citing mispitools please use the following references: Marsico and Caridi, 2023 \doi{10.1016/j.fsigen.2023.102891} and Marsico, Vigeland et al. 2021 \doi{10.1016/j.fsigen.2021.102519}.
+An open source software package written in R statistical language. It consists of a set of decision-making tools to conduct missing person searches. Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search. More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. For citing mispitools please use the following references: Marsico et al., 2023 \doi{10.1016/j.fsigen.2023.102891} and Marsico, Vigeland et al. 2021 \doi{10.1016/j.fsigen.2021.102519}.
 }
 \seealso{
 Useful links:

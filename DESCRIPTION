@@ -1,19 +1,19 @@
 Package: mispitools
 Title: Missing Person Identification Tools
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: 
     person(given = "Franco",
            family = "Marsico",
            role = c("aut", "cre"),
            email = "franco.lmarsico@gmail.com",
            comment = c(ORCID = "0000-0002-0740-5516"))
-Description: An open source software package written in R statistical language. It consists of a set of decision-making tools to conduct missing person searches.  Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search. More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. For citing mispitools please use the following references: Marsico and Caridi, 2023 <doi:10.1016/j.fsigen.2023.102891> and  Marsico, Vigeland et al. 2021 <doi:10.1016/j.fsigen.2021.102519>.
+Description: An open source software package written in R statistical language. It consists of a set of decision-making tools to conduct missing person searches.  Particularly, it allows computing optimal LR threshold for declaring potential matches in DNA-based database search. More recently 'mispitools' incorporates preliminary investigation data based LRs. Statistical weight of different traces of evidence such as biological sex, age and hair color are presented. For citing mispitools please use the following references: Marsico et al., 2023 <doi:10.1016/j.fsigen.2023.102891> and  Marsico, Vigeland et al. 2021 <doi:10.1016/j.fsigen.2021.102519>.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-Imports: forrel, pedtools, dplyr, tidyr, tidyverse, DirichletReg, stats, purrr, patchwork, reshape2, graphics, ggplot2, shiny
+Imports: forrel, pedtools, dplyr, tidyr,  stats, reshape2, patchwork, graphics, ggplot2
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 URL: https://github.com/MarsicoFL/mispitools
 BugReports: https://github.com/MarsicoFL/mispitools/issues
 Depends: 
