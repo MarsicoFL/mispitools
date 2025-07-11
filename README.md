@@ -1,7 +1,7 @@
 <img src="/README_files/figure-markdown_github/MispiIcon.png" align="left" width="100">
 
 
-## Mispitools: Missing Person Identification Tools
+## Mispitools: Kinship inference in Forensic Science
 
 <!-- badges: start -->
 
