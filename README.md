@@ -280,3 +280,34 @@ LRdist(Postdata)
 
 
 You can compare it with the previous violing plot, elucidating the increasement in distribution separation. This would impact on performance metrics, that could be analyzed with the same function (Trates). Also, decision threshold could be setted for posterior odds. 
+
+## Inferring distant relationships using all available references
+### By Undral Ganbaatar 
+#### Presentation of the cases
+We are using 10 cases from “Making decisions in missing person identification cases with low statistical power” by Marsico et al. (FSIG, 2021), along with one case from Abuelas de Plaza de Mayo, and extending each pedigree by one generation. Given that the missing individuals were often born in the 1970s, it is plausible that they may have had children who are now seeking information about their origins. We aim to assess whether existing statistical methods are sufficient to confirm genetic matches in these 11 cases, or whether more robust approaches are needed for scenarios where the unidentified person is separated by multiple generations from the genotyped relatives.
+
+<img src="README_files/figure-markdown_github/pedigrees.png">
+
+Table 1: All 11 pedigrees. 
+
+#### Statistical power evaluation
+To address the statistical power for the identification, we used simLRgen function, available in mispitools, and allele frequencies from Argentina (23 STRs markers). With rounds of 10.000 simulations per hypothesis (H1: UP is MP and H2: UP is not MP) we obtained the results presented in the plot below. Across all 11 pedigrees, the log-likelihood ratio (LR) distributions for H1 (true child) and H2 (unrelated) show considerable overlap, as seen in the density plots. While the LR distributions are centered at different values under each hypothesis, their significant overlap implies a high risk of misclassification, either failing to identify a true biological child or incorrectly labeling an unrelated individual as such.
+
+<img src = "README_files/figure-markdown_github/LR_plots.png">
+
+Table 2: LR plots. 
+
+For practical purposes, we would like to have a simple metric to measure how these curves overlap. To quantify how much the red and blue LR distributions overlap in each plot, we followed a five-step process. First, we extracted the total likelihood ratios from each of the 1,000 simulations under both hypotheses (H1 = true child, H2 = unrelated) and transformed them using log10. Second, we computed kernel density estimates for each log10-distribution. Third, we defined a shared x-axis grid spanning the region where both densities have support. Fourth, we interpolated both density curves onto this grid. Finally, we computed the overlap area by summing the pointwise minimums of the two densities across the grid and multiplying by the grid spacing. This gave us a single overlap value between 0 and 1 for each pedigree.
+
+<img src = "README_files/figure-markdown_github/density_overlaps_plot.png">
+Table 3: Density overlaps. 
+The bar plot quantifying density overlap further confirms this concern, with several pedigrees exhibiting over 50% overlap. This highlights a critical limitation in using standard genetic markers (STRs)when the missing person is multiple generations removed from the genotyped relatives. 
+
+
+
+#### An alternative path
+Recently, dense SNPs panels have allowed good coverage of the genome. This can be used to identify Identity by Descent segments and then define relationships between individuals. This approach proved to be useful in Forensic Investigative Genetic Genealogy efforts. Nevertheless, the main methods rely on pairwise comparisons. Our aim is to propose an alternative approach to compute probabilities based on a given pedigree with multiple sequenced individuals.
+Approximate Bayesian Computation (ABC) offers a promising alternative in complex kinship scenarios. ABC uses simulations to generate expected genetic patterns under different hypotheses. These simulated datasets are then compared to the observed data using summary statistics, allowing us to approximate the posterior probability of each hypothesis.
+
+ABC is especially well-suited for our context because it can incorporate full pedigrees, multiple genotyped relatives, and population-level allele frequencies, while flexibly handling genotyping error and missing data. This makes it a strong candidate for improving identification in human rights cases where biological relatives may span several generations.
+
