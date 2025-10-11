@@ -1,5 +1,6 @@
 #' Missing person shiny app (versión mejorada)
-#'
+# Minor formatting update for documentation clarity
+
 #' @import shiny
 #' @import shinythemes
 #' @import ggplot2
