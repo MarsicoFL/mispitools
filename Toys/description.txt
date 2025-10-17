@@ -1,0 +1,2 @@
+This folder is dedicated to toy examples, tests, in process projects and anything else. 
+You are welcome to contribute here.
