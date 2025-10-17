@@ -1,0 +1,7 @@
+**Reasons why machine learning is tricky for forensics genetics:**
+AI models require large amounts of data to train on, and we cannot exactly know how they are interpreting this data to produce outcomes (a black box). Hence, once an AI model over-rely on training data, it inherits the trends that might be specific to the context in which the data is produced and/or due to the human mistakes present in the data. Because of unknowns in the internal processes of AI models, users cannot pinpoint what might be contributing to bias in the output. 
+Mitigating the bias and skewenes in the training datasets is helpful in mitigating bias however for contexts with limited data this application is limited. 
+
+**What to consider before implementing machine learning models in mispitools? Should we implement AI?** 
+- Variety in contextual factors between regions and time periods influencing the potential training datasets
+  - Requires more data from different contexts (hard to collect?)
