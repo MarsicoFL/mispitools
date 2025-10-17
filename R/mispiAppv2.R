@@ -18,6 +18,10 @@ library(ggplot2)
 install.packages("reshape2")
 install.packages("pROC")  # para calcular AUC fácilmente
 
+#' @param None
+#' Context: Launches the interactive Shiny app for LR comparison and ROC visualization.
+#' Users can adjust missing-person parameters and explore calibration metrics.
+
 #' @import shiny
 #' @import shinythemes
 #' @import ggplot2
