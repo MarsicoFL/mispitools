@@ -1,0 +1,30 @@
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+# (optionally) ignore converted notebooks with outputs
+# *.nbconvert.ipynb
+
+# Python caches / bytecode
+__pycache__/
+*.py[cod]
+
+# Editor / OS
+.vscode/
+.DS_Store
+
+# Common large files / data
+*.csv
+data/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# test cache
+.pytest_cache/
