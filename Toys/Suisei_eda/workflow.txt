@@ -1,0 +1,13 @@
+Workflow/to-do for EDA: 
+- ingest/clean data
+    - separate compound fields 
+    - idnetify how to treat missing values
+    - code date/booleans
+- aggregate
+    - age 
+    - gender
+    - location 
+    - result (dissapearance or death)
+- visualize
+    - bell plot for age/gender 
+    - heatmap for location? 
