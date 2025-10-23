@@ -6,4 +6,3 @@ seaborn>=0.12
 plotly>=5.0
 jupyterlab>=4.0
 ipykernel>=6.0
-tqdm>=4.65
