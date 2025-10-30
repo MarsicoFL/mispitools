@@ -2,3 +2,37 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# ----- Pytho/related files to ignore -----
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+# keep notebook source but strip outputs before committing
+*.nbconvert.ipynb
+
+# Python caches / bytecode
+__pycache__/
+*.py[cod]
+
+# Editor / OS
+.vscode/
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Common large files / data
+*.csv
+data/
+
+# Build / packaging
+dist/
+build/
+*.egg-info/
+
+# test cache
+.pytest_cache/
