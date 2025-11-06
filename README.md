@@ -290,7 +290,7 @@ Table 1: All 11 pedigrees.
 #### Statistical power evaluation
 To address the statistical power for the identification, we used simLRgen function, available in mispitools, and allele frequencies from Argentina (23 STRs markers). With rounds of 10.000 simulations per hypothesis (H1: UP is MP and H2: UP is not MP) we obtained the results presented in the plot below. Across all 11 pedigrees, the log-likelihood ratio (LR) distributions for H1 (true child) and H2 (unrelated) show considerable overlap, as seen in the density plots. While the LR distributions are centered at different values under each hypothesis, their significant overlap implies a high risk of misclassification, either failing to identify a true biological child or incorrectly labeling an unrelated individual as such.
 
-<img src = "README_files/figure-markdown_github/LR_plots.png">
+<img src="https://raw.githubusercontent.com/undralg/mispitools/main/README_files/figure-markdown_github/output.png">
 
 Table 2: LR plots. 
 
