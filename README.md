@@ -296,9 +296,6 @@ Table 2: LR plots.
 
 For practical purposes, we would like to have a simple metric to measure how these curves overlap. To quantify how much the red and blue LR distributions overlap in each plot, we followed a five-step process. First, we extracted the total likelihood ratios from each of the 1,000 simulations under both hypotheses (H1 = true child, H2 = unrelated) and transformed them using log10. Second, we computed kernel density estimates for each log10-distribution. Third, we defined a shared x-axis grid spanning the region where both densities have support. Fourth, we interpolated both density curves onto this grid. Finally, we computed the overlap area by summing the pointwise minimums of the two densities across the grid and multiplying by the grid spacing. This gave us a single overlap value between 0 and 1 for each pedigree.
 
-<img src = "README_files/figure-markdown_github/density_overlaps_plot.png">
-Table 3: Density overlaps. 
-The bar plot quantifying density overlap further confirms this concern, with several pedigrees exhibiting over 50% overlap. This highlights a critical limitation in using standard genetic markers (STRs)when the missing person is multiple generations removed from the genotyped relatives. 
 
 
 
