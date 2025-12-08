@@ -290,15 +290,12 @@ Table 1: All 11 pedigrees.
 #### Statistical power evaluation
 To address the statistical power for the identification, we used simLRgen function, available in mispitools, and allele frequencies from Argentina (23 STRs markers). With rounds of 10.000 simulations per hypothesis (H1: UP is MP and H2: UP is not MP) we obtained the results presented in the plot below. Across all 11 pedigrees, the log-likelihood ratio (LR) distributions for H1 (true child) and H2 (unrelated) show considerable overlap, as seen in the density plots. While the LR distributions are centered at different values under each hypothesis, their significant overlap implies a high risk of misclassification, either failing to identify a true biological child or incorrectly labeling an unrelated individual as such.
 
-<img src = "README_files/figure-markdown_github/LR_plots.png">
+<img src="https://raw.githubusercontent.com/undralg/mispitools/main/README_files/figure-markdown_github/output.png">
 
 Table 2: LR plots. 
 
 For practical purposes, we would like to have a simple metric to measure how these curves overlap. To quantify how much the red and blue LR distributions overlap in each plot, we followed a five-step process. First, we extracted the total likelihood ratios from each of the 1,000 simulations under both hypotheses (H1 = true child, H2 = unrelated) and transformed them using log10. Second, we computed kernel density estimates for each log10-distribution. Third, we defined a shared x-axis grid spanning the region where both densities have support. Fourth, we interpolated both density curves onto this grid. Finally, we computed the overlap area by summing the pointwise minimums of the two densities across the grid and multiplying by the grid spacing. This gave us a single overlap value between 0 and 1 for each pedigree.
 
-<img src = "README_files/figure-markdown_github/density_overlaps_plot.png">
-Table 3: Density overlaps. 
-The bar plot quantifying density overlap further confirms this concern, with several pedigrees exhibiting over 50% overlap. This highlights a critical limitation in using standard genetic markers (STRs)when the missing person is multiple generations removed from the genotyped relatives. 
 
 
 
