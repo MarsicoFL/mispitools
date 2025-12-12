@@ -305,3 +305,6 @@ Approximate Bayesian Computation (ABC) offers a promising alternative in complex
 
 ABC is especially well-suited for our context because it can incorporate full pedigrees, multiple genotyped relatives, and population-level allele frequencies, while flexibly handling genotyping error and missing data. This makes it a strong candidate for improving identification in human rights cases where biological relatives may span several generations.
 
+---
+
+This package is now maintained by Suisei Nakagawa and Franco Marsico. 
