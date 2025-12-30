@@ -1,7 +1,7 @@
 # AGENTS.md — Guidance for AI Coding Agents
 
 This repository is an **R package**: **mispitools** (“Missing Person Identification Tools”).
-Agents working here should optimize for: **scientific correctness, reproducibility, CRAN-friendly practices, and documentation quality**.
+Agents working here should optimize for: **Reproducibility, CRAN-friendly practices, and documentation quality**.
 
 ---
 
