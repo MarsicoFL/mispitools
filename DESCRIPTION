@@ -11,9 +11,10 @@ Description: An open source software package written in R statistical language. 
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-Imports: forrel, pedtools, dplyr, tidyr,  stats, reshape2, patchwork, graphics, ggplot2
+Imports: forrel, pedtools, dplyr, tidyr, stats, reshape2, patchwork, graphics,
+    ggplot2, DirichletReg, pROC, shiny, shinythemes
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 URL: https://github.com/MarsicoFL/mispitools
 BugReports: https://github.com/MarsicoFL/mispitools/issues
 Depends: 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/LRcol.R
 \name{LRcol}
 \alias{LRcol}
-\title{Likelihood ratio for color variable}
+\title{Likelihood ratio for hair colour variable}
 \usage{
 LRcol(
   MPc = 1,
@@ -17,30 +17,32 @@ LRcol(
 )
 }
 \arguments{
-\item{MPc}{MP hair color}
+\item{MPc}{MP hair colour.}
 
-\item{epc}{epsilon paramenter.}
+\item{epc}{Error matrix for hair colour observations (rows = true MP colour).}
 
-\item{erRc}{error rate in the database.}
+\item{erRc}{Error matrix used for simulation under H1; defaults to \code{epc}.}
 
-\item{nsims}{number of simulations performed.}
+\item{nsims}{Number of simulations performed.}
 
-\item{Pc}{hair color probabilities.}
+\item{Pc}{Population hair colour probabilities.}
 
-\item{H}{hypothesis tested, H1: UHR is MP, H2: UHR is no MP}
+\item{H}{Hypothesis tested: 1 for H1 (UHR is MP), 2 for H2 (UHR is not MP).}
 
-\item{Qprop}{Query color tested.}
+\item{Qprop}{Query colour tested.}
 
-\item{LR}{compute LR values}
+\item{LR}{If \code{TRUE}, return LR values alongside simulated colours.}
 
-\item{seed}{For reproducible simulations}
+\item{seed}{For reproducible simulations.}
 }
 \value{
-A value of Likelihood ratio based on preliminary investigation data. In this case, hair color.
+A data.frame of simulated hair colours, and if \code{LR = TRUE}, a \code{LRc} column.
 }
 \description{
-Likelihood ratio for color variable
+Simulates a distribution of observed hair colours under either H1 (UHR is MP)
+or H2 (UHR is not MP), and optionally returns LR values per simulated observation.
 }
 \examples{
-LRcol() 
+LRcol()
+LRcol(MPc = 2, H = 2, nsims = 100, LR = TRUE)
 }

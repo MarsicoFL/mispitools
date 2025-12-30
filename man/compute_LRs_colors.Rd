@@ -2,28 +2,29 @@
 % Please edit documentation in R/compute_LRs_colors.R
 \name{compute_LRs_colors}
 \alias{compute_LRs_colors}
-\title{Compute Likelihood Ratios based con color characteristics}
+\title{Compute likelihood ratios from pigmentation traits}
 \usage{
 compute_LRs_colors(conditioned, unconditioned)
 }
 \arguments{
-\item{conditioned}{A dataframe with at least the columns 'hair_colour', 'skin_colour',
-'eye_colour', and 'numerators'.}
+\item{conditioned}{A data.frame with at least the columns \code{hair_colour}, \code{skin_colour},
+\code{eye_colour}, and \code{numerators}.}
 
-\item{unconditioned}{A dataframe with at least the columns 'hair_colour', 'skin_colour',
-'eye_colour', and 'f_h_s_y'.}
+\item{unconditioned}{A data.frame with at least the columns \code{hair_colour}, \code{skin_colour},
+\code{eye_colour}, and \code{f_h_s_y}.}
 }
 \value{
-A dataframe with the merged data and computed LRs.
+A data.frame with the merged data and the computed \code{LR} column.
 }
 \description{
-This function calculates the Likelihood Ratios (LRs) for each combination of hair colour,
-skin colour, and eye colour between two datasets. It assumes one dataset (\code{conditioned})
-contains numerators and the other (\code{unconditioned}) contains denominators.
+This function calculates likelihood ratios (LRs) for each combination of hair, skin, and eye
+colour across two datasets. It assumes \code{conditioned} provides the numerators and
+\code{unconditioned} provides the denominators for the same trait combinations.
+Combinations not present in both inputs are dropped by the merge.
 }
 \examples{
 data <- simRef()
-conditioned <- conditionedProp(data, 1, 1, 1, 0.01, 0.01, 0.01) 
+conditioned <- conditionedProp(data, 1, 1, 1, 0.01, 0.01, 0.01)
 unconditioned <- refProp(data)
 compute_LRs_colors(conditioned, unconditioned)
 }
