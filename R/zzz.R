@@ -1,0 +1,10 @@
+utils::globalVariables(c(
+  "Var1",
+  "Var2",
+  "value",
+  "logLR",
+  "w",
+  "Condition",
+  "FPR",
+  "TPR"
+))

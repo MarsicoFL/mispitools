@@ -1,27 +1,13 @@
-#' Missing person shiny app (versión mejorada)
-# Minor formatting update for documentation clarity
-
-#' @import shiny
-#' @import shinythemes
-#' @import ggplot2
-#' @export
-#' 
-#' @return Interfaz con pestañas (tabs) para computar LRs y tablas de probabilidad condicionadas (CPT),
-#' incluyendo una sección descriptiva, más plots y estética mejorada.
-#' 
+#' Missing person Shiny app for LR comparison and ROC visualization
+#'
+#' Launches the interactive Shiny app that compares CPTs, visualizes log10(LR),
+#' and shows ROC-based diagnostics for missing-person inference scenarios.
+#'
+#' @return A Shiny app UI with tabs for CPT comparison, LR plots, and ROC summaries.
 #' @examples
-#' CPT_MP_improved()
-
-library(shiny)
-library(shinythemes)
-library(ggplot2)
-install.packages("reshape2")
-install.packages("pROC")  # para calcular AUC fácilmente
-
-#' @param None
-#' Context: Launches the interactive Shiny app for LR comparison and ROC visualization.
-#' Users can adjust missing-person parameters and explore calibration metrics.
-
+#' if (interactive()) {
+#'   lrComparisonApp()
+#' }
 #' @import shiny
 #' @import shinythemes
 #' @import ggplot2
@@ -34,13 +20,6 @@ lrComparisonApp <- function() {
   #---------------------------------------------------
   # 1) Auxiliary functions
   #---------------------------------------------------
-  
-  library(shiny)
-  library(shinythemes)
-  library(ggplot2)
-  library(reshape2)
-  library(patchwork)
-  library(pROC)
   
   # (a) Build CPT under H2 (Population)
   cpt_pop_function <- function(propF, MPa, MPr, propC) {
@@ -230,7 +209,7 @@ lrComparisonApp <- function() {
     return(list(data=df_roc, AUC=AUC_value))
   }
   
-  # (h) Helper to detect T1/T0 from an observed age wrt MPa ± MPr
+  # (h) Helper to detect T1/T0 from an observed age wrt MPa +/- MPr
   range_label <- function(obsAge, MPa, MPr) {
     mn <- MPa - MPr
     mx <- MPa + MPr
@@ -366,7 +345,7 @@ lrComparisonApp <- function() {
             br(),
             p("We compute the LR for the specific cell: [obsSex - T1/T0, obsColor]. 
                The T1/T0 label depends on whether 'observed age' lies within the 
-               MP's age range (MPa ± MPr). If the population probability is zero 
+               MP's age range (MPa +/- MPr). If the population probability is zero 
                in that cell, the LR is undefined (NA).")
           )
         )

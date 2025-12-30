@@ -1,18 +1,22 @@
-#' Likelihood ratio for color variable
+#' Likelihood ratio for hair colour variable
 #'
-#' @param epc epsilon paramenter.
-#' @param erRc error rate in the database.
-#' @param nsims number of simulations performed.
-#' @param Pc hair color probabilities. 
-#' @param H hypothesis tested, H1: UHR is MP, H2: UHR is no MP
-#' @param Qprop Query color tested.
-#' @param MPc MP hair color
-#' @param seed For reproducible simulations
-#' @param LR compute LR values
+#' Simulates a distribution of observed hair colours under either H1 (UHR is MP)
+#' or H2 (UHR is not MP), and optionally returns LR values per simulated observation.
+#'
+#' @param epc Error matrix for hair colour observations (rows = true MP colour).
+#' @param erRc Error matrix used for simulation under H1; defaults to `epc`.
+#' @param nsims Number of simulations performed.
+#' @param Pc Population hair colour probabilities.
+#' @param H Hypothesis tested: 1 for H1 (UHR is MP), 2 for H2 (UHR is not MP).
+#' @param Qprop Query colour tested.
+#' @param MPc MP hair colour.
+#' @param seed For reproducible simulations.
+#' @param LR If `TRUE`, return LR values alongside simulated colours.
 #' @export
-#' @return A value of Likelihood ratio based on preliminary investigation data. In this case, hair color.
+#' @return A data.frame of simulated hair colours, and if `LR = TRUE`, a `LRc` column.
 #' @examples
-#' LRcol() 
+#' LRcol()
+#' LRcol(MPc = 2, H = 2, nsims = 100, LR = TRUE)
 
 
 LRcol <- function(MPc = 1, epc = Cmodel(),  erRc = epc, nsims = 1000, Pc = c(0.3,0.2, 0.25, 0.15,0.1), H=1,  Qprop = MPc, LR = FALSE, seed = 1234) {
@@ -41,4 +45,3 @@ if (LR == TRUE) {
   return(sims)}
 else {return(sims)
 }}
-

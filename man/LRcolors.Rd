@@ -2,20 +2,30 @@
 % Please edit documentation in R/LRcolors.R
 \name{LRcolors}
 \alias{LRcolors}
-\title{Simulate LR values considering H1 and H2}
+\title{Simulate LR distributions for pigmentation traits under H1 and H2}
 \usage{
 LRcolors(df, seed = 1234, nsim = 500)
 }
 \arguments{
-\item{df}{A data.frame containing the characteristics of individuals, numerator, f_h_s_y and LRs. Output from compute_LRs function.}
+\item{df}{A data.frame with \code{numerators}, \code{f_h_s_y}, and \code{LR} columns, typically the output
+of \code{compute_LRs_colors()}.}
 
 \item{seed}{For replication purposes.}
 
-\item{nsim}{Number of LRs simulated.}
+\item{nsim}{Number of LRs simulated per hypothesis.}
 }
 \value{
-LR distribution considering H1 (Related) and H2 (Unrelated).
+A data.frame with columns \code{Unrelated} (H2) and \code{Related} (H1).
 }
 \description{
-Simulate LR values considering H1 and H2
+This function samples LR values with probabilities proportional to the numerator
+(related, H1) and the denominator (unrelated, H2) across hair/skin/eye colour combinations.
+Use \code{compute_LRs_colors()} to prepare the input data with matching trait columns.
+}
+\examples{
+data <- simRef()
+conditioned <- conditionedProp(data, 1, 1, 1, 0.01, 0.01, 0.01)
+unconditioned <- refProp(data)
+lrs <- compute_LRs_colors(conditioned, unconditioned)
+LRcolors(lrs, nsim = 100)
 }
