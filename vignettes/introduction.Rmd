@@ -162,10 +162,10 @@ Launch interactive Shiny applications:
 
 ```{r eval=FALSE}
 # Basic CPT explorer
-mispiApp()
+app_mispitools()
 
 # Advanced LR comparison with ROC analysis
-lrComparisonApp()
+app_lr_comparison()
 ```
 
 ## Population Frequency Databases

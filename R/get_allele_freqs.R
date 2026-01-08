@@ -33,9 +33,9 @@
 #' Series. \doi{10.1016/j.fsigss.2009.08.178}
 #'
 #' @source
-#' \url{https://doi.org/10.1016/j.fsigss.2009.08.178}
-#' \url{https://doi.org/10.1016/j.fsigen.2016.06.008}
-#' \url{https://doi.org/10.1016/j.fsigen.2018.07.013}
+#' \doi{10.1016/j.fsigss.2009.08.178}
+#' \doi{10.1016/j.fsigen.2016.06.008}
+#' \doi{10.1016/j.fsigen.2018.07.013}
 #'
 #' @export
 #' @examples

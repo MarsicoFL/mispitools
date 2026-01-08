@@ -5,12 +5,9 @@
 #' (STR) markers from the Austrian population. Focused on core forensic
 #' markers used in European laboratories.
 #'
-#' @format A data frame with 66 rows (alleles) and 17 columns:
-#'   \describe{
-#'     \item{Allele}{Allele designation (numeric repeat number)}
-#'     \item{D1S1656, D2S1338, D2S441, ...}{Allele frequencies for each marker
-#'       (values between 0 and 1, summing to 1 per marker)}
-#'   }
+#' @format A data frame with 66 rows (alleles) and 17 columns.
+#'   First column is Allele (repeat number), remaining columns are
+#'   allele frequencies for each STR marker.
 #'
 #' @details
 #' This dataset contains allele frequencies for the following 16 STR markers:

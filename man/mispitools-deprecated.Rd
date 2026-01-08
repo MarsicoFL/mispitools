@@ -93,9 +93,9 @@ klPIE(...)
 
 multi_kl_divergence(...)
 
-mispiApp()
+mispiApp(...)
 
-lrComparisonApp()
+lrComparisonApp(...)
 }
 \description{
 These functions are deprecated and will be removed in a future version

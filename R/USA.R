@@ -5,12 +5,9 @@
 #' (STR) markers from the United States population. Includes both core
 #' CODIS loci and extended markers.
 #'
-#' @format A data frame with 97 rows (alleles) and 30 columns:
-#'   \describe{
-#'     \item{Allele}{Allele designation (numeric repeat number)}
-#'     \item{CSF1PO, D10S1248, D12S391, ...}{Allele frequencies for each marker
-#'       (values between 0 and 1, summing to 1 per marker)}
-#'   }
+#' @format A data frame with 97 rows (alleles) and 30 columns.
+#'   First column is Allele (repeat number), remaining columns are
+#'   allele frequencies for each STR marker.
 #'
 #' @details
 #' This dataset contains allele frequencies for 29 STR markers:

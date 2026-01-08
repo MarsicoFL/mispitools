@@ -26,7 +26,7 @@
 #' recommended for forensic applications.
 #'
 #' @seealso
-#' \code{\link{lrComparisonApp}} for extended LR analysis with ROC curves,
+#' \code{\link{app_lr_comparison}} for extended LR analysis with ROC curves,
 #' \code{\link{cpt_population}}, \code{\link{cpt_missing_person}} for
 #' programmatic CPT generation.
 #'
@@ -42,10 +42,10 @@
 #' @export
 #' @examples
 #' if (interactive()) {
-#'   mispiApp()
+#'   app_mispitools()
 #' }
 
-mispiApp <- function() {
+app_mispitools <- function() {
 # UI
 ###spinner:
 options(spinner.color = "#5661f4", spinner.type = 6, spinner.color.background = "#ffffff", spinner.size = 0.5)

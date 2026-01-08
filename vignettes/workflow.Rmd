@@ -315,10 +315,10 @@ Shiny applications:
 
 ```{r eval=FALSE}
 # Basic CPT and LR visualization
-mispiApp()
+app_mispitools()
 
 # Advanced analysis with ROC curves
-lrComparisonApp()
+app_lr_comparison()
 ```
 
 ## Conclusion

@@ -5,12 +5,9 @@
 \alias{China}
 \title{STR Allele Frequencies from China}
 \format{
-A data frame with 67 rows (alleles) and 71 columns:
-\describe{
-\item{Allele}{Allele designation (numeric repeat number)}
-\item{CSF1PO, D1S1656, D2S441, ...}{Allele frequencies for each marker
-(values between 0 and 1, summing to 1 per marker)}
-}
+A data frame with 67 rows (alleles) and 71 columns.
+First column is Allele (repeat number), remaining columns are
+allele frequencies for each STR marker.
 }
 \source{
 Chinese population frequency data. Format compatible with \pkg{pedtools}
@@ -49,9 +46,10 @@ common <- intersect(names(China), names(Japan))
 length(common)  # Many shared markers
 }
 \references{
-Wang L, et al. (2019). "Genetic polymorphisms of 21 autosomal STR loci
-in the Han population from Shanghai, China." \emph{Forensic Science
-International: Genetics}, 42, e4-e6. \doi{10.1016/j.fsigen.2019.05.008}
+Hu S, et al. (2015). "Population genetics of 17 Y-STR loci in the
+Han ethnic minority from Henan Province, Central China."
+\emph{Forensic Science International: Genetics}, 19, e1-e2.
+\doi{10.1016/j.fsigen.2015.05.005}
 }
 \seealso{
 \code{\link{get_allele_freqs}} for extracting frequencies,

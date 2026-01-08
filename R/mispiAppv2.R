@@ -16,7 +16,7 @@
 #'   }
 #'
 #' @details
-#' This app extends \code{\link{mispiApp}} with:
+#' This app extends \code{\link{app_mispitools}} with:
 #' \itemize{
 #'   \item Overlapped histograms of log10(LR) under H1 and H2
 #'   \item ROC curve with AUC calculation
@@ -28,7 +28,7 @@
 #' recommended for forensic applications.
 #'
 #' @seealso
-#' \code{\link{mispiApp}} for basic CPT visualization,
+#' \code{\link{app_mispitools}} for basic CPT visualization,
 #' \code{\link{decision_threshold}}, \code{\link{threshold_rates}} for
 #' programmatic decision analysis.
 #'
@@ -46,9 +46,9 @@
 #' @export
 #' @examples
 #' if (interactive()) {
-#'   lrComparisonApp()
+#'   app_lr_comparison()
 #' }
-lrComparisonApp <- function() {
+app_lr_comparison <- function() {
   
   #---------------------------------------------------
   # 1) Auxiliary functions

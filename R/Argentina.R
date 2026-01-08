@@ -5,12 +5,9 @@
 #' (STR) markers from Argentina. These frequencies are used for calculating
 #' likelihood ratios in forensic genetics and missing person identification.
 #'
-#' @format A data frame with 93 rows (alleles) and 25 columns:
-#'   \describe{
-#'     \item{Allele}{Allele designation (numeric repeat number)}
-#'     \item{D8S1179, D21S11, D7S820, ...}{Allele frequencies for each marker
-#'       (values between 0 and 1, summing to 1 per marker)}
-#'   }
+#' @format A data frame with 93 rows (alleles) and 25 columns.
+#'   First column is Allele (repeat number), remaining columns are
+#'   allele frequencies for each STR marker.
 #'
 #' @details
 #' This dataset contains allele frequencies for the following 24 STR markers:

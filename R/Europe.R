@@ -6,12 +6,9 @@
 #' are useful for general European cases or when country-specific data
 #' is unavailable.
 #'
-#' @format A data frame with 97 rows (alleles) and 24 columns:
-#'   \describe{
-#'     \item{Allele}{Allele designation (numeric repeat number)}
-#'     \item{D1S1656, D2S1338, D2S441, ...}{Allele frequencies for each marker
-#'       (values between 0 and 1, summing to 1 per marker)}
-#'   }
+#' @format A data frame with 97 rows (alleles) and 24 columns.
+#'   First column is Allele (repeat number), remaining columns are
+#'   allele frequencies for each STR marker.
 #'
 #' @details
 #' This dataset contains allele frequencies for the following 23 STR markers:
