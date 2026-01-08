@@ -3,14 +3,58 @@
 \docType{data}
 \name{USA}
 \alias{USA}
-\title{STRs allelic frequencies from specified country.}
+\title{STR Allele Frequencies from United States}
 \format{
-A data frame allele frequencies
+A data frame with 97 rows (alleles) and 30 columns:
+\describe{
+\item{Allele}{Allele designation (numeric repeat number)}
+\item{CSF1PO, D10S1248, D12S391, ...}{Allele frequencies for each marker
+(values between 0 and 1, summing to 1 per marker)}
+}
+}
+\source{
+NIST Population Data. Format compatible with \pkg{pedtools} and
+\pkg{forrel} packages.
 }
 \usage{
-USA
+data(USA)
 }
 \description{
-STRs allelic frequencies from specified country.
+Population allele frequency data for 29 autosomal Short Tandem Repeat
+(STR) markers from the United States population. Includes both core
+CODIS loci and extended markers.
+}
+\details{
+This dataset contains allele frequencies for 29 STR markers:
+CSF1PO, D10S1248, D12S391, D13S317, D16S539, D18S51, D19S433, D1S1656,
+D21S11, D22S1045, D2S1338, D2S441, D3S1358, D5S818, D6S1043, D7S820,
+D8S1179, F13A01, F13B, FESFPS, FGA, LPL, Penta_C, Penta_D, Penta_E,
+SE33, TH01, TPOX, vWA.
+
+This dataset is compatible with the expanded CODIS core loci and
+includes additional markers for higher discrimination power.
+}
+\examples{
+# Load the dataset
+data(USA)
+
+# Check CODIS core loci are present
+codis <- c("CSF1PO", "D3S1358", "D5S818", "D7S820", "D8S1179",
+           "D13S317", "D16S539", "D18S51", "D21S11", "FGA",
+           "TH01", "TPOX", "vWA")
+all(codis \%in\% names(USA))
+}
+\references{
+Hill CR, et al. (2013). "U.S. population data for 29 autosomal STR
+loci." \emph{Forensic Science International: Genetics}, 7(3), e82-e83.
+\doi{10.1016/j.fsigen.2012.12.004}
+}
+\seealso{
+\code{\link{get_allele_freqs}} for extracting frequencies,
+\code{\link{sim_lr_genetic}} for LR simulations.
+
+Other frequency databases: \code{\link{Argentina}}, \code{\link{Europe}},
+\code{\link{Asia}}, \code{\link{Austria}}, \code{\link{BosniaHerz}},
+\code{\link{China}}, \code{\link{Japan}}
 }
 \keyword{datasets}

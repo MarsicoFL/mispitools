@@ -1,11 +1,49 @@
-#' Missing person shiny app
+#' Interactive Shiny App for Missing Person CPT Visualization
 #'
-#' @importFrom shiny sidebarLayout sidebarPanel numericInput selectInput sliderInput renderPlot shinyApp
+#' @description
+#' Launches an interactive Shiny application for visualizing Conditional
+#' Probability Tables (CPTs) and Likelihood Ratios for non-genetic evidence
+#' in missing person cases. Allows exploration of sex, age, and hair color
+#' evidence with customizable error rates and population parameters.
+#'
+#' @return A Shiny app object. When run interactively, launches a web
+#'   interface with:
+#'   \itemize{
+#'     \item CPT under H2 (population hypothesis)
+#'     \item CPT under H1 (missing person hypothesis)
+#'     \item Log10(LR) heatmap for all evidence combinations
+#'   }
+#'
+#' @details
+#' The app provides sliders and inputs for:
+#' \itemize{
+#'   \item Missing person characteristics (age, sex, hair color)
+#'   \item Error rates (epsilon) for sex, age, and hair color observations
+#'   \item Population proportions for sex and hair color categories
+#' }
+#'
+#' Error rate inputs use step = 0.001 for fine-grained control as
+#' recommended for forensic applications.
+#'
+#' @seealso
+#' \code{\link{lrComparisonApp}} for extended LR analysis with ROC curves,
+#' \code{\link{cpt_population}}, \code{\link{cpt_missing_person}} for
+#' programmatic CPT generation.
+#'
+#' @references
+#' Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+#' in missing person cases." \emph{Forensic Science International: Genetics},
+#' 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
+#'
+#' @importFrom shiny sidebarLayout sidebarPanel numericInput selectInput sliderInput renderPlot shinyApp fluidPage mainPanel plotOutput
 #' @import ggplot2
+#' @import reshape2
+#' @import patchwork
 #' @export
-#' @return An user interface for computing non-genetic LRs and conditioned probability tables.
 #' @examples
-#' CPT_MP()
+#' if (interactive()) {
+#'   mispiApp()
+#' }
 
 mispiApp <- function() {
 # UI
@@ -21,9 +59,9 @@ ui = shiny::fluidPage(
       shiny::numericInput("MPa", "MP age:", 40, min = 0),
       shiny::numericInput("MPr", "MP age error range:", 6, min = 0),
       shiny::numericInput("MPc", "MP hair color (from 1 to 5):", 1, min = 1, max = 5),
-      shiny::numericInput("eps", "Epsilon (error rate) for sex:", 0.05, min = 0, max = 1),
-      shiny::numericInput("epa", "Epsilon (error rate) for age:", 0.05, min = 0, max = 1),
-      shiny::numericInput("epc", "Epsilon (error rate) for hair color:", 0.02, min = 0, max = 1),
+      shiny::numericInput("eps", "Epsilon (error rate) for sex:", 0.05, min = 0, max = 1, step = 0.001),
+      shiny::numericInput("epa", "Epsilon (error rate) for age:", 0.05, min = 0, max = 1, step = 0.001),
+      shiny::numericInput("epc", "Epsilon (error rate) for hair color:", 0.02, min = 0, max = 1, step = 0.001),
       shiny::selectInput("MPs", "MP sex:",
                   choices = c("F", "M")),
       shiny::sliderInput("propF", "Female proportion:",

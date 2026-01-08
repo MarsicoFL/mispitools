@@ -1,0 +1,355 @@
+---
+title: "Complete Workflow: Combining Genetic and Non-Genetic Evidence"
+author: "Franco L. Marsico"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Complete Workflow: Combining Genetic and Non-Genetic Evidence}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Introduction
+
+This vignette demonstrates a complete workflow for missing person
+identification combining genetic DNA evidence with non-genetic
+preliminary investigation evidence (sex, age, hair color).
+
+### The Case Scenario
+
+A family is searching for their missing relative with the following
+known characteristics:
+
+- **Sex**: Female
+- **Age at disappearance**: 25 years old
+- **Hair color**: Dark brown (category 2)
+
+A person of interest (POI) has been found with:
+
+- **Observed sex**: Female
+- **Estimated age**: 27 years (within expected range)
+- **Hair color**: Dark brown
+
+We will evaluate this match using both:
+
+1. Non-genetic preliminary evidence
+2. Genetic DNA comparison with family reference
+
+## Setup
+
+```{r message=FALSE, warning=FALSE}
+library(mispitools)
+library(forrel)     # For genetic simulations
+library(pedtools)   # For pedigree operations
+```
+
+## Part 1: Non-Genetic Evidence
+
+### Step 1.1: Define Error Rates
+
+Error rates (epsilon) account for uncertainty in observations:
+
+```{r}
+# Probability of misrecording biological sex
+eps_sex <- 0.02
+
+# Probability of age estimate being outside true range
+eps_age <- 0.05
+
+# Hair color observation error matrix
+eps_color <- error_matrix_hair(ep = 0.05)  # 5% error rate
+```
+
+### Step 1.2: Calculate Individual LRs
+
+**Sex Evidence:**
+
+```{r}
+# MP is female (H=1), POI observed as female
+lr_sex_result <- lr_sex(
+  LR = TRUE,
+  H = 1,          # True hypothesis (MP is female)
+  nsims = 1,
+  eps = eps_sex,
+  erRs = 0.01     # Database recording error
+)
+
+cat("LR for sex evidence:", lr_sex_result$LRs, "\n")
+```
+
+**Age Evidence:**
+
+```{r}
+# MP age = 25, tolerance = 5 years (so 20-30 is acceptable)
+# POI age = 27 (falls within range)
+lr_age_result <- lr_age(
+  LR = TRUE,
+  H = 1,          # True hypothesis
+  nsims = 1,
+  epa = eps_age,
+  erRa = 0.01,
+  MPa = 25,       # MP age
+  MPr = 5         # Range tolerance
+)
+
+cat("LR for age evidence:", lr_age_result$LRa, "\n")
+```
+
+**Hair Color Evidence:**
+
+```{r}
+# MP has color 2 (dark brown), POI observed as color 2
+lr_color_result <- lr_hair_color(
+  LR = TRUE,
+  H = 1,          # True hypothesis
+  nsims = 1,
+  MPc = 2,        # MP hair color
+  epc = eps_color,
+  erRc = eps_color
+)
+
+cat("LR for hair color:", lr_color_result$LRc, "\n")
+```
+
+### Step 1.3: Combined Non-Genetic LR
+
+```{r}
+# Combine all non-genetic evidence
+lr_nongenetic <- lr_sex_result$LRs * lr_age_result$LRa * lr_color_result$LRc
+cat("Combined non-genetic LR:", round(lr_nongenetic, 2), "\n")
+cat("Log10(LR):", round(log10(lr_nongenetic), 2), "\n")
+```
+
+### Step 1.4: Visualize the CPTs
+
+```{r fig.height=4}
+# Population CPT (H2)
+cpt_h2 <- cpt_population(
+  propS = c(0.5, 0.5),
+  MPa = 25,
+  MPr = 5,
+  propC = c(0.15, 0.35, 0.25, 0.15, 0.10)  # Realistic color distribution
+)
+
+# MP CPT (H1)
+cpt_h1 <- cpt_missing_person(
+  MPs = 1,        # Female
+  MPc = 2,        # Dark brown
+  eps = eps_sex,
+  epa = eps_age,
+  epc = eps_color
+)
+
+# Visualize both CPTs and LR heatmap
+plot_cpt(cpt_h2, cpt_h1)
+```
+
+## Part 2: Genetic Evidence (Simulation)
+
+For illustration, we'll show how to simulate genetic LRs using a
+parent-child relationship pedigree. Note: This code is provided for
+reference but not executed in this vignette to avoid dependency
+on specific pedigree structures.
+
+### Step 2.1: Create Pedigree
+
+```{r eval=FALSE}
+# Create a simple pedigree: parent-child relationship
+# The missing person (ID 5) is child of individual 2
+
+# Using linearPed to create grandparent-parent-child
+ped <- linearPed(2)  # 5 individuals
+
+# Add genetic markers from Norwegian population
+ped <- setMarkers(ped, locusAttributes = NorwegianFrequencies[1:10])
+
+# Simulate a profile for the reference person
+set.seed(123)
+ped <- profileSim(ped, N = 1, ids = 2)[[1]]
+```
+
+### Step 2.2: Simulate Genetic LRs
+
+```{r eval=FALSE}
+# Simulate genetic LRs
+genetic_sims <- sim_lr_genetic(
+  reference = ped,
+  missing = 5,
+  numsims = 100,
+  seed = 456
+)
+
+# Convert to dataframe
+genetic_df <- lr_to_dataframe(genetic_sims)
+
+# Visualize
+plot_lr_distribution(genetic_df)
+```
+
+For this demonstration, we'll use pre-computed example values:
+
+```{r}
+# Example genetic LR values (pre-computed)
+# These represent typical values from parent-child testing
+set.seed(42)
+genetic_df <- data.frame(
+  Related = 10^rnorm(100, mean = 3, sd = 1.5),
+  Unrelated = 10^rnorm(100, mean = -0.5, sd = 1)
+)
+
+cat("Summary of log10(LR) under H1 (Related):\n")
+summary(log10(genetic_df$Related))
+
+cat("\nSummary of log10(LR) under H2 (Unrelated):\n")
+summary(log10(genetic_df$Unrelated))
+```
+
+### Step 2.3: Visualize Genetic LR Distributions
+
+```{r fig.height=4}
+# Plot the LR distributions
+plot_lr_distribution(genetic_df)
+```
+
+## Part 3: Combining All Evidence
+
+### Step 3.1: Prior Probability
+
+We need to specify a prior probability that a random POI is the MP.
+This depends on the size of the candidate population:
+
+```{r}
+# If there are ~10,000 potential candidates
+prior_prob <- 1/10000
+
+# Convert to prior odds
+prior_odds <- prior_prob / (1 - prior_prob)
+cat("Prior probability:", prior_prob, "\n")
+cat("Prior odds:", prior_odds, "\n")
+```
+
+### Step 3.2: Posterior Odds Calculation
+
+The posterior odds combine all evidence:
+
+$$\text{Posterior Odds} = \text{Prior Odds} \times LR_{genetic} \times LR_{nongenetic}$$
+
+```{r}
+# For the simulations under H1 (true match scenario)
+posterior_h1 <- prior_odds * genetic_df$Related * lr_nongenetic
+
+# For simulations under H2 (no match scenario)
+posterior_h2 <- prior_odds * genetic_df$Unrelated * lr_nongenetic
+
+# Summary
+cat("Posterior odds under H1 (median):", round(median(posterior_h1), 4), "\n")
+cat("Posterior odds under H2 (median):", round(median(posterior_h2), 6), "\n")
+```
+
+### Step 3.3: Decision Threshold Analysis
+
+```{r fig.height=4}
+# Find optimal threshold with weight 10 (FP 10x worse than FN)
+threshold_result <- decision_threshold(
+  datasim = genetic_df,
+  weight = 10
+)
+
+# Calculate error rates at different thresholds
+rates <- threshold_rates(
+  datasim = genetic_df,
+  threshold = c(0.1, 1, 10, 100, 1000, 10000)
+)
+print(rates)
+
+# Plot decision curve
+plot_decision_curve(
+  datasim = genetic_df,
+  LRmax = 10000
+)
+```
+
+## Part 4: Interpretation
+
+### Strength of Evidence Categories
+
+The combined LR can be interpreted using verbal scales:
+
+| Log10(LR) | LR Range | Verbal Interpretation |
+|-----------|----------|----------------------|
+| < 0 | < 1 | Supports H2 (exclusion) |
+| 0-1 | 1-10 | Limited support for H1 |
+| 1-2 | 10-100 | Moderate support for H1 |
+| 2-4 | 100-10,000 | Strong support for H1 |
+| > 4 | > 10,000 | Very strong support for H1 |
+
+### Our Case Results
+
+```{r}
+# Median genetic LR under H1
+median_genetic_lr <- median(genetic_df$Related)
+
+# Total LR
+total_lr <- median_genetic_lr * lr_nongenetic
+log10_total <- log10(total_lr)
+
+cat("Genetic LR (median under H1):", round(median_genetic_lr, 0), "\n")
+cat("Non-genetic LR:", round(lr_nongenetic, 2), "\n")
+cat("Total combined LR:", round(total_lr, 0), "\n")
+cat("Log10(Total LR):", round(log10_total, 2), "\n")
+```
+
+## Part 5: Interactive Exploration
+
+For interactive exploration of parameters and their effects, use the
+Shiny applications:
+
+```{r eval=FALSE}
+# Basic CPT and LR visualization
+mispiApp()
+
+# Advanced analysis with ROC curves
+lrComparisonApp()
+```
+
+## Conclusion
+
+This workflow demonstrated how to:
+
+1. Calculate LRs for non-genetic evidence (sex, age, hair color)
+2. Simulate genetic LRs from pedigree-based relationships
+3. Combine evidence using the Bayesian framework
+4. Evaluate decision performance and error rates
+
+The key advantage of combining evidence types is increased discrimination
+power, particularly useful in cases where genetic evidence alone may be
+inconclusive due to:
+
+- Distant family relationships
+- Limited number of markers
+- Degraded samples
+
+## Session Information
+
+```{r}
+sessionInfo()
+```
+
+## References
+
+Marsico FL, Vigeland MD, Egeland T, Herrera Pinero F (2021). "Making
+decisions in missing person identification cases with low statistical
+power." *Forensic Science International: Genetics*, 52, 102519.
+
+Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+in missing person cases." *Forensic Science International: Genetics*,
+66, 102891.

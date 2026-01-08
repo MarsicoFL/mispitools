@@ -3,14 +3,56 @@
 \docType{data}
 \name{BosniaHerz}
 \alias{BosniaHerz}
-\title{STRs allelic frequencies from specified country.}
+\title{STR Allele Frequencies from Bosnia and Herzegovina}
 \format{
-A data frame allele frequencies
+A data frame with 63 rows (alleles) and 17 columns:
+\describe{
+\item{Allele}{Allele designation (numeric repeat number)}
+\item{D1S1656, D2S1338, D2S441, ...}{Allele frequencies for each marker
+(values between 0 and 1, summing to 1 per marker)}
+}
+}
+\source{
+Population data from Bosnia and Herzegovina. Format compatible with
+\pkg{pedtools} and \pkg{forrel} packages.
 }
 \usage{
-BosniaHerz
+data(BosniaHerz)
 }
 \description{
-STRs allelic frequencies from specified country.
+Population allele frequency data for 16 autosomal Short Tandem Repeat
+(STR) markers from Bosnia and Herzegovina. These frequencies are
+particularly relevant for identification of missing persons from the
+Balkan conflicts.
+}
+\details{
+This dataset contains allele frequencies for the following 16 STR markers:
+D1S1656, D2S1338, D2S441, D3S1358, D8S1179, D10S1248, D12S391, D16S539,
+D18S51, D19S433, D21S11, D22S1045, FGA, SE33, TH01, VWA.
+
+These markers correspond to the European Standard Set (ESS) of forensic
+STR loci. This database is particularly important for the ongoing
+identification efforts related to the Balkan wars.
+}
+\examples{
+# Load the dataset
+data(BosniaHerz)
+
+# View structure
+head(BosniaHerz)
+
+# Calculate KL divergence with Austria
+# kl_bidirectional(BosniaHerz, Austria)
+}
+\references{
+Marjanovic D, et al. (2006). "Population data at 15 STR loci in
+the population of Bosnia and Herzegovina." \emph{Journal of Forensic
+Sciences}, 51(5), 1190-1192. \doi{10.1111/j.1556-4029.2006.00239.x}
+}
+\seealso{
+\code{\link{get_allele_freqs}} for extracting frequencies,
+\code{\link{sim_lr_genetic}} for LR simulations.
+
+Other European databases: \code{\link{Europe}}, \code{\link{Austria}}
 }
 \keyword{datasets}

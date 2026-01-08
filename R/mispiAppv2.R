@@ -1,13 +1,42 @@
-#' Missing person Shiny app for LR comparison and ROC visualization
+#' Advanced Shiny App for LR Comparison and ROC Analysis
 #'
-#' Launches the interactive Shiny app that compares CPTs, visualizes log10(LR),
-#' and shows ROC-based diagnostics for missing-person inference scenarios.
+#' @description
+#' Launches an advanced interactive Shiny application for comparing
+#' Conditional Probability Tables (CPTs), visualizing Likelihood Ratios,
+#' and evaluating decision performance using ROC curves for missing person
+#' identification.
 #'
-#' @return A Shiny app UI with tabs for CPT comparison, LR plots, and ROC summaries.
-#' @examples
-#' if (interactive()) {
-#'   lrComparisonApp()
+#' @return A Shiny app object. When run interactively, launches a multi-tab
+#'   web interface with:
+#'   \itemize{
+#'     \item \strong{Parameters & Main Plots}: CPTs and LR heatmaps
+#'     \item \strong{Distribution & Calibration}: LR distributions, ROC curves,
+#'       and decision metrics (TPR, FPR, MCC)
+#'     \item \strong{Expected LR}: Calculate LR for specific observations
+#'   }
+#'
+#' @details
+#' This app extends \code{\link{mispiApp}} with:
+#' \itemize{
+#'   \item Overlapped histograms of log10(LR) under H1 and H2
+#'   \item ROC curve with AUC calculation
+#'   \item Threshold-based decision metrics (TPR, FPR, TNR, FNR, MCC)
+#'   \item Expected LR calculator for specific observations
 #' }
+#'
+#' Error rate inputs use step = 0.001 for fine-grained control as
+#' recommended for forensic applications.
+#'
+#' @seealso
+#' \code{\link{mispiApp}} for basic CPT visualization,
+#' \code{\link{decision_threshold}}, \code{\link{threshold_rates}} for
+#' programmatic decision analysis.
+#'
+#' @references
+#' Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+#' in missing person cases." \emph{Forensic Science International: Genetics},
+#' 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
+#'
 #' @import shiny
 #' @import shinythemes
 #' @import ggplot2
@@ -15,6 +44,10 @@
 #' @import patchwork
 #' @import pROC
 #' @export
+#' @examples
+#' if (interactive()) {
+#'   lrComparisonApp()
+#' }
 lrComparisonApp <- function() {
   
   #---------------------------------------------------
@@ -262,9 +295,9 @@ lrComparisonApp <- function() {
               selectInput("MPs", "MP sex:", choices=c("F","M")),
               hr(),
               h4("Error rates"),
-              numericInput("eps", "Sex error:", 0.05, 0, 1),
-              numericInput("epa", "Age error:", 0.05, 0, 1),
-              numericInput("epc", "Hair color error:", 0.02, 0, 1)
+              numericInput("eps", "Sex error:", 0.05, 0, 1, step = 0.001),
+              numericInput("epa", "Age error:", 0.05, 0, 1, step = 0.001),
+              numericInput("epc", "Hair color error:", 0.02, 0, 1, step = 0.001)
             )
           ),
           
@@ -496,5 +529,3 @@ lrComparisonApp <- function() {
   
   shinyApp(ui=ui, server=server)
 }
-
-lrComparisonApp()

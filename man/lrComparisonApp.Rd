@@ -2,19 +2,50 @@
 % Please edit documentation in R/mispiAppv2.R
 \name{lrComparisonApp}
 \alias{lrComparisonApp}
-\title{Missing person Shiny app for LR comparison and ROC visualization}
+\title{Advanced Shiny App for LR Comparison and ROC Analysis}
 \usage{
 lrComparisonApp()
 }
 \value{
-A Shiny app UI with tabs for CPT comparison, LR plots, and ROC summaries.
+A Shiny app object. When run interactively, launches a multi-tab
+web interface with:
+\itemize{
+\item \strong{Parameters & Main Plots}: CPTs and LR heatmaps
+\item \strong{Distribution & Calibration}: LR distributions, ROC curves,
+and decision metrics (TPR, FPR, MCC)
+\item \strong{Expected LR}: Calculate LR for specific observations
+}
 }
 \description{
-Launches the interactive Shiny app that compares CPTs, visualizes log10(LR),
-and shows ROC-based diagnostics for missing-person inference scenarios.
+Launches an advanced interactive Shiny application for comparing
+Conditional Probability Tables (CPTs), visualizing Likelihood Ratios,
+and evaluating decision performance using ROC curves for missing person
+identification.
+}
+\details{
+This app extends \code{\link{mispiApp}} with:
+\itemize{
+\item Overlapped histograms of log10(LR) under H1 and H2
+\item ROC curve with AUC calculation
+\item Threshold-based decision metrics (TPR, FPR, TNR, FNR, MCC)
+\item Expected LR calculator for specific observations
+}
+
+Error rate inputs use step = 0.001 for fine-grained control as
+recommended for forensic applications.
 }
 \examples{
 if (interactive()) {
   lrComparisonApp()
 }
+}
+\references{
+Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+in missing person cases." \emph{Forensic Science International: Genetics},
+66, 102891. \doi{10.1016/j.fsigen.2023.102891}
+}
+\seealso{
+\code{\link{mispiApp}} for basic CPT visualization,
+\code{\link{decision_threshold}}, \code{\link{threshold_rates}} for
+programmatic decision analysis.
 }

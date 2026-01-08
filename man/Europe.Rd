@@ -3,14 +3,58 @@
 \docType{data}
 \name{Europe}
 \alias{Europe}
-\title{STRs allelic frequencies from specified country.}
+\title{STR Allele Frequencies from Europe}
 \format{
-A data frame allele frequencies
+A data frame with 97 rows (alleles) and 24 columns:
+\describe{
+\item{Allele}{Allele designation (numeric repeat number)}
+\item{D1S1656, D2S1338, D2S441, ...}{Allele frequencies for each marker
+(values between 0 and 1, summing to 1 per marker)}
+}
+}
+\source{
+Allele frequency data compiled from European population studies.
+Format compatible with \pkg{pedtools} and \pkg{forrel} packages.
 }
 \usage{
-Europe
+data(Europe)
 }
 \description{
-STRs allelic frequencies from specified country.
+Population allele frequency data for 23 autosomal Short Tandem Repeat
+(STR) markers from European populations. These pan-European frequencies
+are useful for general European cases or when country-specific data
+is unavailable.
+}
+\details{
+This dataset contains allele frequencies for the following 23 STR markers:
+D1S1656, D2S1338, D2S441, D3S1358, D5S818, D7S820, D8S1179, D10S1248,
+D12S391, D13S317, D16S539, D18S51, D19S433, D21S11, D22S1045, CSF1PO,
+FGA, Penta D, Penta E, SE33, TH01, TPOX, VWA.
+
+These frequencies represent a pooled European dataset suitable for
+general forensic applications across Europe.
+}
+\examples{
+# Load the dataset
+data(Europe)
+
+# View structure
+head(Europe)
+
+# Compare number of markers with other databases
+ncol(Europe) - 1  # 23 markers
+}
+\references{
+Butler JM (2006). "Genetics and Genomics of Core Short Tandem Repeat
+Loci Used in Human Identity Testing." \emph{Journal of Forensic Sciences},
+51(2), 253-265. \doi{10.1111/j.1556-4029.2006.00046.x}
+}
+\seealso{
+\code{\link{get_allele_freqs}} for extracting frequencies,
+\code{\link{sim_lr_genetic}} for LR simulations.
+
+Other frequency databases: \code{\link{Argentina}}, \code{\link{Asia}},
+\code{\link{USA}}, \code{\link{Austria}}, \code{\link{BosniaHerz}},
+\code{\link{China}}, \code{\link{Japan}}
 }
 \keyword{datasets}

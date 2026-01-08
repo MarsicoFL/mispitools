@@ -1,0 +1,205 @@
+---
+title: "Introduction to mispitools"
+author: "Franco L. Marsico"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to mispitools}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+## Overview
+
+The **mispitools** package provides tools for missing person identification
+combining genetic and non-genetic evidence within a Bayesian framework.
+It implements likelihood ratio (LR) calculations for various types of
+evidence commonly used in forensic identification.
+
+### Key Features
+
+- **Genetic LR simulations**: Simulate likelihood ratios from DNA profiles
+  using pedigree-based kinship analysis
+- **Non-genetic LR calculations**: Compute LRs for sex, age, hair color,
+  and birthdate evidence
+- **Decision analysis**: Evaluate error rates and optimal thresholds
+- **Visualization**: Plot LR distributions, decision curves, and CPT heatmaps
+- **Interactive exploration**: Shiny apps for parameter exploration
+
+## Installation
+
+```{r eval=FALSE}
+# Install from CRAN (when available)
+install.packages("mispitools")
+
+# Or install the development version from GitHub
+# devtools::install_github("MarsicoFL/mispitools")
+```
+
+## The Bayesian Framework
+
+In missing person identification, we compare two hypotheses:
+
+- **H1**: The person of interest (POI) is the missing person (MP)
+- **H2**: The POI is unrelated to the MP
+
+The **likelihood ratio (LR)** quantifies the relative support for H1 vs H2:
+
+$$LR = \frac{P(Evidence | H1)}{P(Evidence | H2)}$$
+
+Multiple pieces of evidence can be combined by multiplying their LRs:
+
+$$LR_{total} = LR_{genetic} \times LR_{sex} \times LR_{age} \times LR_{color}$$
+
+## Quick Start
+
+### Non-Genetic Evidence
+
+Calculate the LR for sex evidence when the missing person is female:
+
+```{r}
+library(mispitools)
+
+# LR for sex evidence
+# H1: MP is female, POI observed as female
+# eps = probability of sex observation error
+lr_sex(LR = TRUE, H = 1, eps = 0.05)
+```
+
+Calculate the LR for age evidence:
+
+```{r}
+# LR for age evidence
+# MP age = 25, tolerance range = 5 years
+# POI observed age falls within range
+lr_age(LR = TRUE, H = 1, MPa = 25, MPr = 5, epa = 0.05)
+```
+
+### Conditional Probability Tables
+
+The package uses Conditional Probability Tables (CPTs) to model evidence
+under each hypothesis:
+
+```{r}
+# CPT under H2 (population hypothesis)
+cpt_h2 <- cpt_population(
+  propS = c(0.5, 0.5),  # 50% female, 50% male
+  MPa = 30,             # MP age
+  MPr = 5,              # Age range
+  propC = c(0.3, 0.25, 0.2, 0.15, 0.1)  # Hair color proportions
+)
+
+# CPT under H1 (MP hypothesis)
+cpt_h1 <- cpt_missing_person(
+  MPs = 1,    # Female
+  MPc = 2,    # Hair color 2
+  eps = 0.05, # Sex error
+  epa = 0.05, # Age error
+  epc = error_matrix_hair()  # Hair color error matrix
+)
+
+# View dimensions
+dim(cpt_h1)
+```
+
+### Visualizing CPTs
+
+```{r fig.height=4}
+# Visualize both CPTs and LR heatmap
+plot_cpt(cpt_h2, cpt_h1)
+```
+
+## Available Functions
+
+### LR Calculation Functions
+
+| Function | Description |
+|----------|-------------|
+| `lr_sex()` | LR for biological sex evidence |
+| `lr_age()` | LR for age evidence |
+| `lr_hair_color()` | LR for hair color evidence |
+| `lr_birthdate()` | LR for birthdate evidence (Dirichlet model) |
+| `lr_pigmentation()` | LR for multiple pigmentation traits |
+
+### Simulation Functions
+
+| Function | Description |
+|----------|-------------|
+| `sim_lr_genetic()` | Simulate genetic LRs from pedigrees |
+| `sim_lr_prelim()` | Simulate non-genetic LRs |
+| `sim_posterior()` | Combine prior and LRs for posterior odds |
+| `sim_poi_genetic()` | Generate random DNA profiles |
+| `sim_poi_prelim()` | Generate random non-genetic data |
+
+### Decision Analysis
+
+| Function | Description |
+|----------|-------------|
+| `decision_threshold()` | Find optimal LR threshold |
+| `threshold_rates()` | Calculate TPR/FPR at different thresholds |
+| `lr_combine()` | Combine genetic and non-genetic LRs |
+
+### Visualization
+
+| Function | Description |
+|----------|-------------|
+| `plot_lr_distribution()` | Plot LR distributions under H1/H2 |
+| `plot_decision_curve()` | ROC-like decision curves |
+| `plot_cpt()` | Heatmap of CPT values |
+
+### Interactive Apps
+
+Launch interactive Shiny applications:
+
+```{r eval=FALSE}
+# Basic CPT explorer
+mispiApp()
+
+# Advanced LR comparison with ROC analysis
+lrComparisonApp()
+```
+
+## Population Frequency Databases
+
+The package includes allele frequency databases for genetic LR calculations:
+
+```{r}
+# Available databases
+data(Argentina)
+data(Europe)
+data(USA)
+data(Asia)
+data(Austria)
+data(BosniaHerz)
+data(China)
+data(Japan)
+
+# View structure
+dim(Argentina)
+names(Argentina)[1:10]
+```
+
+## Next Steps
+
+See the "Complete Workflow" vignette for a full example combining
+genetic and non-genetic evidence in a missing person case.
+
+## References
+
+Marsico FL, Vigeland MD, Egeland T, Herrera Pinero F (2021). "Making
+decisions in missing person identification cases with low statistical
+power." *Forensic Science International: Genetics*, 52, 102519.
+https://doi.org/10.1016/j.fsigen.2021.102519
+
+Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+in missing person cases." *Forensic Science International: Genetics*,
+66, 102891. https://doi.org/10.1016/j.fsigen.2023.102891

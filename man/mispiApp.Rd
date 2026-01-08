@@ -2,16 +2,48 @@
 % Please edit documentation in R/mispiApp.R
 \name{mispiApp}
 \alias{mispiApp}
-\title{Missing person shiny app}
+\title{Interactive Shiny App for Missing Person CPT Visualization}
 \usage{
 mispiApp()
 }
 \value{
-An user interface for computing non-genetic LRs and conditioned probability tables.
+A Shiny app object. When run interactively, launches a web
+interface with:
+\itemize{
+\item CPT under H2 (population hypothesis)
+\item CPT under H1 (missing person hypothesis)
+\item Log10(LR) heatmap for all evidence combinations
+}
 }
 \description{
-Missing person shiny app
+Launches an interactive Shiny application for visualizing Conditional
+Probability Tables (CPTs) and Likelihood Ratios for non-genetic evidence
+in missing person cases. Allows exploration of sex, age, and hair color
+evidence with customizable error rates and population parameters.
+}
+\details{
+The app provides sliders and inputs for:
+\itemize{
+\item Missing person characteristics (age, sex, hair color)
+\item Error rates (epsilon) for sex, age, and hair color observations
+\item Population proportions for sex and hair color categories
+}
+
+Error rate inputs use step = 0.001 for fine-grained control as
+recommended for forensic applications.
 }
 \examples{
-CPT_MP()
+if (interactive()) {
+  mispiApp()
+}
+}
+\references{
+Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
+in missing person cases." \emph{Forensic Science International: Genetics},
+66, 102891. \doi{10.1016/j.fsigen.2023.102891}
+}
+\seealso{
+\code{\link{lrComparisonApp}} for extended LR analysis with ROC curves,
+\code{\link{cpt_population}}, \code{\link{cpt_missing_person}} for
+programmatic CPT generation.
 }

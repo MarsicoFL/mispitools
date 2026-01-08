@@ -3,14 +3,61 @@
 \docType{data}
 \name{Japan}
 \alias{Japan}
-\title{STRs allelic frequencies from specified country.}
+\title{STR Allele Frequencies from Japan}
 \format{
-A data frame allele frequencies
+A data frame with 82 rows (alleles) and 71 columns:
+\describe{
+\item{Allele}{Allele designation (numeric repeat number)}
+\item{CSF1PO, D1S1656, D2S441, ...}{Allele frequencies for each marker
+(values between 0 and 1, summing to 1 per marker)}
+}
+}
+\source{
+Japanese population frequency data. Format compatible with \pkg{pedtools}
+and \pkg{forrel} packages.
 }
 \usage{
-Japan
+data(Japan)
 }
 \description{
-STRs allelic frequencies from specified country.
+Comprehensive population allele frequency data for 70 autosomal Short
+Tandem Repeat (STR) markers from the Japanese population. One of the
+most extensive STR frequency databases available for East Asian
+populations.
+}
+\details{
+This comprehensive dataset contains allele frequencies for 70 STR markers,
+matching the Chinese database in marker coverage. This enables
+high-powered comparisons and discrimination for Japanese individuals.
+
+Core forensic markers included: CSF1PO, D1S1656, D2S441, D2S1338,
+D3S1358, D5S818, D7S820, D8S1179, D10S1248, D12S391, D13S317, D16S539,
+D18S51, D19S433, D21S11, D22S1045, FGA, TH01, TPOX, vWA, SE33.
+
+Extended markers include: PENTA D, PENTA E, D6S1043, D4S2408, D9S1122,
+and many others for enhanced discrimination.
+}
+\examples{
+# Load the dataset
+data(Japan)
+
+# Compare with China database
+data(China)
+ncol(Japan) == ncol(China)  # TRUE - same number of columns
+
+# Different number of alleles observed
+nrow(Japan)  # 82 alleles
+nrow(China)  # 67 alleles
+}
+\references{
+Fujii K, et al. (2019). "Allele frequencies for 21 autosomal STR loci
+in the Japanese population." \emph{Legal Medicine}, 36, 86-87.
+\doi{10.1016/j.legalmed.2018.11.002}
+}
+\seealso{
+\code{\link{get_allele_freqs}} for extracting frequencies,
+\code{\link{sim_lr_genetic}} for LR simulations.
+
+Other Asian databases: \code{\link{Asia}}, \code{\link{China}}
 }
 \keyword{datasets}

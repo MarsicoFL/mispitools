@@ -3,14 +3,54 @@
 \docType{data}
 \name{Asia}
 \alias{Asia}
-\title{STRs allelic frequencies from specified country.}
+\title{STR Allele Frequencies from Asian Populations}
 \format{
-A data frame allele frequencies
+A data frame with 98 rows (alleles) and 39 columns:
+\describe{
+\item{Allele}{Allele designation (numeric repeat number)}
+\item{D1S1656, D2S1338, D2S441, ...}{Allele frequencies for each marker
+(values between 0 and 1, summing to 1 per marker)}
+}
+}
+\source{
+Allele frequency data compiled from Asian population studies.
+Format compatible with \pkg{pedtools} and \pkg{forrel} packages.
 }
 \usage{
-Asia
+data(Asia)
 }
 \description{
-A dataset of allele frequencies.
+Population allele frequency data for 38 autosomal Short Tandem Repeat
+(STR) markers from Asian populations. This comprehensive dataset includes
+extended markers beyond core forensic loci.
+}
+\details{
+This dataset contains allele frequencies for 38 STR markers including
+both standard forensic core loci and extended markers:
+D1S1656, D2S1338, D2S441, D3S1358, D3S1744, D4S2366, D5S818, D5S2800,
+D6S474, D7S820, D7S3048, D8S1132, D8S1179, D9S1122, D10S1248, D11S2368,
+D12S391, D13S317, D13S325, D14S1434, D15S659, D16S539, D17S1301, D18S51,
+D18S1364, D19S253, D19S433, D20S482, D21S11, D21S2055, D22GATA198B05,
+D22S1045, CSF1PO, FGA, SE33, TH01, TPOX, VWA.
+}
+\examples{
+# Load the dataset
+data(Asia)
+
+# This dataset has more markers than others
+ncol(Asia) - 1  # 38 markers
+}
+\references{
+Phillips C, et al. (2011). "Building a forensic STR allele frequency
+database." \emph{Forensic Science International: Genetics Supplement
+Series}, 3(1), e69-e70. \doi{10.1016/j.fsigss.2011.08.034}
+}
+\seealso{
+\code{\link{get_allele_freqs}} for extracting frequencies,
+\code{\link{sim_lr_genetic}} for LR simulations.
+
+Other frequency databases: \code{\link{Argentina}}, \code{\link{Europe}},
+\code{\link{USA}}, \code{\link{Austria}}, \code{\link{BosniaHerz}},
+\code{\link{China}}, \code{\link{Japan}}
 }
 \keyword{datasets}

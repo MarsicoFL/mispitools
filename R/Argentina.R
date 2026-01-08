@@ -1,5 +1,58 @@
-#' STRs allelic frequencies from specified country.
+#' STR Allele Frequencies from Argentina
 #'
+#' @description
+#' Population allele frequency data for 24 autosomal Short Tandem Repeat
+#' (STR) markers from Argentina. These frequencies are used for calculating
+#' likelihood ratios in forensic genetics and missing person identification.
 #'
-#' @format A data frame allele frequencies
+#' @format A data frame with 93 rows (alleles) and 25 columns:
+#'   \describe{
+#'     \item{Allele}{Allele designation (numeric repeat number)}
+#'     \item{D8S1179, D21S11, D7S820, ...}{Allele frequencies for each marker
+#'       (values between 0 and 1, summing to 1 per marker)}
+#'   }
+#'
+#' @details
+#' This dataset contains allele frequencies for the following 24 STR markers:
+#' D8S1179, D21S11, D7S820, CSF1PO, D3S1358, THO1, D13S317, D16S539, D2S1338,
+#' D19S433, VWA, TPOX, D18S51, D5S818, FGA, PENTAE, PENTAD, D12S391, D1S1656,
+#' D6S1043, D10S1248, D22S1045, D2S441, SE33.
+#'
+#' The markers are compatible with common forensic STR kits including
+#' GlobalFiler, PowerPlex Fusion, and Investigator 24plex.
+#'
+#' @usage data(Argentina)
+#'
+#' @source
+#' Allele frequency data compiled from published Argentinian population
+#' studies. Format compatible with \pkg{pedtools} and \pkg{forrel} packages.
+#'
+#' @references
+#' Marino M, et al. (2009). "Population genetic data for 15 STR loci
+#' in the Argentinian population." \emph{Forensic Science International:
+#' Genetics Supplement Series}, 2(1), 369-370.
+#' \doi{10.1016/j.fsigss.2009.08.178}
+#'
+#' @seealso
+#' \code{\link{get_allele_freqs}} for extracting frequencies,
+#' \code{\link{sim_lr_genetic}} for LR simulations using these frequencies.
+#'
+#' Other frequency databases: \code{\link{Europe}}, \code{\link{Asia}},
+#' \code{\link{USA}}, \code{\link{Austria}}, \code{\link{BosniaHerz}},
+#' \code{\link{China}}, \code{\link{Japan}}
+#'
+#' @examples
+#' # Load the dataset
+#' data(Argentina)
+#'
+#' # View structure
+#' head(Argentina)
+#' dim(Argentina)
+#'
+#' # List available markers
+#' names(Argentina)[-1]
+#'
+#' # Use with pedtools
+#' library(forrel)
+#' freqs <- get_allele_freqs(Argentina)
 "Argentina"

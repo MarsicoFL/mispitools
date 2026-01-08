@@ -1,0 +1,101 @@
+#' mispitools: Missing Person Identification Tools
+#'
+#' @description
+#' The mispitools package provides a comprehensive suite of statistical tools
+#' for missing person identification, combining both genetic and non-genetic
+#' evidence. It enables forensic geneticists and investigators to compute
+#' likelihood ratios (LRs), determine optimal decision thresholds, and assess
+#' error rates in database searches.
+#'
+#' The package implements Bayesian methodology for evaluating evidence in
+#' kinship testing, particularly useful in humanitarian contexts such as
+#' identifying victims of enforced disappearances or natural disasters.
+#'
+#' @section Simulation Functions:
+#' Functions for simulating LR distributions under different hypotheses:
+#' \itemize{
+#'   \item \code{\link{sim_lr_genetic}}: Simulate LRs from genetic (DNA) data
+#'   \item \code{\link{sim_lr_prelim}}: Simulate LRs from preliminary investigation data
+#'   \item \code{\link{sim_posterior}}: Simulate posterior odds combining evidence
+#'   \item \code{\link{sim_reference_pop}}: Simulate a reference population with traits
+#'   \item \code{\link{sim_poi_genetic}}: Generate genetic profiles for persons of interest
+#'   \item \code{\link{sim_poi_prelim}}: Generate preliminary data for persons of interest
+#'   \item \code{\link{sim_mp_prelim}}: Generate preliminary data for missing persons
+#' }
+#'
+#' @section LR Calculation Functions:
+#' Functions for computing likelihood ratios from different types of evidence:
+#' \itemize{
+#'   \item \code{\link{lr_sex}}: LR based on biological sex
+#'   \item \code{\link{lr_age}}: LR based on age
+#'   \item \code{\link{lr_hair_color}}: LR based on hair color
+#'   \item \code{\link{lr_pigmentation}}: LR for combined pigmentation traits
+#'   \item \code{\link{lr_birthdate}}: LR based on birth date discrepancies
+#'   \item \code{\link{lr_combine}}: Combine LRs from independent sources
+#'   \item \code{\link{lr_to_dataframe}}: Convert genetic LR simulations to dataframe
+#' }
+#'
+#' @section Conditional Probability Tables:
+#' Functions for computing conditional probability tables (CPTs):
+#' \itemize{
+#'   \item \code{\link{cpt_population}}: CPT based on population frequencies (H2)
+#'   \item \code{\link{cpt_missing_person}}: CPT conditioned on MP characteristics (H1)
+#'   \item \code{\link{error_matrix_hair}}: Create error/confusion matrix for hair color
+#' }
+#'
+#' @section Visualization Functions:
+#' Functions for visualizing results:
+#' \itemize{
+#'   \item \code{\link{plot_lr_distribution}}: Plot LR distributions under H1 and H2
+#'   \item \code{\link{plot_decision_curve}}: Plot FPR vs FNR for different thresholds
+#'   \item \code{\link{plot_cpt}}: Visualize conditional probability tables
+#' }
+#'
+#' @section Decision Analysis:
+#' Functions for determining optimal thresholds and error rates:
+#' \itemize{
+#'   \item \code{\link{decision_threshold}}: Compute optimal LR threshold
+#'   \item \code{\link{threshold_rates}}: Compute error rates (FPR, FNR, MCC)
+#' }
+#'
+#' @section Population Genetics:
+#' Functions for working with allele frequency databases:
+#' \itemize{
+#'   \item \code{\link{get_allele_freqs}}: Retrieve allele frequencies for a population
+#'   \item \code{\link{kl_bidirectional}}: Compute KL divergence between populations
+#'   \item \code{\link{kl_multi}}: Compare multiple populations
+#' }
+#'
+#' @section Interactive Applications:
+#' Shiny applications for interactive analysis:
+#' \itemize{
+#'   \item \code{\link{app_mispitools}}: Comprehensive analysis application
+#'   \item \code{\link{app_lr_comparison}}: LR comparison and ROC analysis
+#' }
+#'
+#' @section Datasets:
+#' The package includes STR allele frequency databases for multiple populations:
+#' \code{\link{Argentina}}, \code{\link{Asia}}, \code{\link{Austria}},
+#' \code{\link{BosniaHerz}}, \code{\link{China}}, \code{\link{Europe}},
+#' \code{\link{Japan}}, \code{\link{USA}}.
+#'
+#' @section Core Dependencies:
+#' The genetic simulation functionality relies on the \pkg{forrel} and
+#' \pkg{pedtools} packages for pedigree handling and likelihood calculations.
+#'
+#' @references
+#' Marsico FL, Iudica CE, Herrera Pinero F, et al. (2023). "Likelihood ratios
+#' for non-genetic evidence in missing person cases." \emph{Forensic Science
+#' International: Genetics}, 66, 102891.
+#' \doi{10.1016/j.fsigen.2023.102891}
+#'
+#' Marsico FL, Vigeland MD, Egeland T, Herrera Pinero F (2021). "Making
+#' decisions in missing person identification cases with low statistical
+#' power." \emph{Forensic Science International: Genetics}, 52, 102519.
+#' \doi{10.1016/j.fsigen.2021.102519}
+#'
+#' @docType package
+#' @name mispitools-package
+#' @aliases mispitools
+#' @keywords package
+"_PACKAGE"
