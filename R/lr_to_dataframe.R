@@ -53,19 +53,61 @@
 
 lr_to_dataframe <- function(datasim) {
 
-  # Extract LR values from Related simulations (H1)
-  Related <- base::sapply(datasim$Related, function(x) {
+  # Input validation
+  if (!is.list(datasim)) {
+    stop("datasim must be a list (typically from sim_lr_genetic)")
+  }
+
+  if (!all(c("Related", "Unrelated") %in% names(datasim))) {
+    stop("datasim must have 'Related' and 'Unrelated' components")
+  }
+
+  if (length(datasim$Related) == 0 || length(datasim$Unrelated) == 0) {
+    stop("datasim$Related and datasim$Unrelated must not be empty")
+  }
+
+  # Helper function to safely extract LR value
+  .extract_lr <- function(x, component_name) {
+    if (!is.list(x)) {
+      stop(sprintf("Invalid LR object in %s: expected list, got %s",
+                   component_name, class(x)[1]))
+    }
+    if (!"LRtotal" %in% names(x)) {
+      stop(sprintf("LR object in %s missing 'LRtotal' component", component_name))
+    }
+    if (!"H1:H2" %in% names(x[["LRtotal"]])) {
+      stop(sprintf("LRtotal in %s missing 'H1:H2' value", component_name))
+    }
     x[["LRtotal"]][["H1:H2"]]
-  })
+  }
+
+  # Extract LR values from Related simulations (H1)
+  Related <- tryCatch(
+    sapply(datasim$Related, function(x) .extract_lr(x, "Related")),
+    error = function(e) {
+      stop("Error extracting Related LR values: ", conditionMessage(e))
+    }
+  )
 
   # Extract LR values from Unrelated simulations (H2)
-  Unrelated <- base::sapply(datasim$Unrelated, function(x) {
-    x[["LRtotal"]][["H1:H2"]]
-  })
+  Unrelated <- tryCatch(
+    sapply(datasim$Unrelated, function(x) .extract_lr(x, "Unrelated")),
+    error = function(e) {
+      stop("Error extracting Unrelated LR values: ", conditionMessage(e))
+    }
+  )
+
+  # Validate extracted values
+  if (any(is.na(Related))) {
+    warning(sprintf("%d NA values in Related LRs", sum(is.na(Related))))
+  }
+  if (any(is.na(Unrelated))) {
+    warning(sprintf("%d NA values in Unrelated LRs", sum(is.na(Unrelated))))
+  }
 
   # Combine into dataframe
-  LRsimulated <- base::cbind(Unrelated, Related)
-  base::colnames(LRsimulated) <- c("Unrelated", "Related")
+  LRsimulated <- cbind(Unrelated, Related)
+  colnames(LRsimulated) <- c("Unrelated", "Related")
 
-  base::structure(base::as.data.frame(LRsimulated))
+  as.data.frame(LRsimulated)
 }

@@ -109,42 +109,63 @@ lr_birthdate <- function(ABD = "1976-05-31",
                          draw = 500,
                          seed = 123) {
 
+  # Input validation
+  if (!type %in% c(1, 2)) {
+    stop("type must be 1 (open search) or 2 (closed search)")
+  }
+
+  if (length(alpha) != length(cuts) + 1) {
+    stop("length(alpha) must equal length(cuts) + 1. ",
+         "alpha has ", length(alpha), " elements, cuts has ", length(cuts),
+         " elements (expected ", length(cuts) + 1, " alpha values).")
+  }
+
+  if (any(alpha <= 0)) {
+    stop("All alpha values must be positive")
+  }
+
+  if (draw < 10) {
+    stop("draw must be at least 10 for reliable estimation")
+  }
+
+  # Validate date formats
+  ABD <- tryCatch(as.Date(ABD), error = function(e) {
+    stop("ABD must be a valid date in 'YYYY-MM-DD' format")
+  })
+  DBD <- tryCatch(as.Date(DBD), error = function(e) {
+    stop("DBD must be a valid date in 'YYYY-MM-DD' format")
+  })
+
   set.seed(seed)
 
   # Generate Dirichlet samples for H1 probabilities
   x <- DirichletReg::rdirichlet(draw, alpha)
-  temp <- dim(x)
-  n <- temp[1]
-  m <- temp[2]
 
-  # Method of moments estimation
-  lpb <- apply(log(x), 2, mean)
-  mom <- apply(x, 2, mean) * (mean(x[, 1]) - mean(x[, 1]^2)) / (mean(x[, 1]^2) - ((mean(x[, 1]))^2))
+  # Method of moments estimation for Dirichlet parameters
+  # Uses the expected values of the Dirichlet samples
+  mom <- colMeans(x) * (mean(x[, 1]) - mean(x[, 1]^2)) /
+         (mean(x[, 1]^2) - (mean(x[, 1]))^2)
   fit2 <- as.list(mom / sum(mom))
-
-  # Convert dates
-  DBD <- as.Date(DBD)
-  ABD <- as.Date(ABD)
 
   # Calculate difference in days
   Dis0 <- julian(DBD, ABD)
   Dist <- Dis0[1]
 
   # Determine which category the discrepancy falls into
-  i <- 0
-  w <- length(alpha) - 1
+  # Categories: 1 = below cuts[1], 2 = cuts[1] to cuts[2], ..., n = above cuts[n-1]
+  n_cats <- length(alpha)
+  n_cuts <- length(cuts)
 
-  if (Dist <= cuts[1]) {
-    H1 <- fit2[1]
-  }
-  if (Dist >= cuts[w]) {
-    H1 <- fit2[w]
-  }
-  if (Dist >= cuts[1] & Dist <= cuts[w]) {
-    for (i in 1:w) {
-      up <- i + 1
-      if (Dist > cuts[i] & Dist < cuts[up]) {
-        H1 <- fit2[i]
+  if (Dist < cuts[1]) {
+    H1 <- fit2[[1]]
+  } else if (Dist >= cuts[n_cuts]) {
+    H1 <- fit2[[n_cats]]
+  } else {
+    # Find which interval Dist falls into
+    for (i in seq_len(n_cuts - 1)) {
+      if (Dist >= cuts[i] && Dist < cuts[i + 1]) {
+        H1 <- fit2[[i + 1]]
+        break
       }
     }
   }
@@ -175,17 +196,16 @@ lr_birthdate <- function(ABD = "1976-05-31",
     fit3 <- as.list(mom2 / sum(mom2))
 
     # Find H2 probability for the category
-    if (Dist <= cuts[1]) {
-      H2 <- fit3[1]
-    }
-    if (Dist >= cuts[w]) {
-      H2 <- fit3[w]
-    }
-    if (Dist >= cuts[1] & Dist <= cuts[w]) {
-      for (i in 1:w) {
-        up <- i + 1
-        if (Dist > cuts[i] & Dist < cuts[up]) {
-          H2 <- fit3[i]
+    n_cats2 <- length(alpha2)
+    if (Dist < cuts[1]) {
+      H2 <- fit3[[1]]
+    } else if (Dist >= cuts[n_cuts]) {
+      H2 <- fit3[[n_cats2]]
+    } else {
+      for (i in seq_len(n_cuts - 1)) {
+        if (Dist >= cuts[i] && Dist < cuts[i + 1]) {
+          H2 <- fit3[[i + 1]]
+          break
         }
       }
     }

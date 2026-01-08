@@ -19,7 +19,8 @@
 #'   person's age estimation. Default: 1.
 #' @param gam Numeric. Gamma parameter for age uncertainty scaling.
 #'   The uncertainty interval is age +/- (gam * age + UHRr). Default: 0.07.
-#' @param nsims Integer. Number of simulations to perform. Default: 1000.
+#' @param numsims Integer. Number of simulations to perform. Default: 1000.
+#' @param nsims Deprecated. Use \code{numsims} instead.
 #' @param epa Numeric (0-1). Error rate for age categorization. Default: 0.05.
 #' @param erRa Numeric (0-1). Error rate in the reference/database.
 #'   Defaults to \code{epa}.
@@ -73,34 +74,71 @@
 #' @import dplyr
 #' @examples
 #' # Simulate under H1 (related)
-#' sim_h1 <- lr_age(MPa = 40, MPr = 6, H = 1, nsims = 100)
+#' sim_h1 <- lr_age(MPa = 40, MPr = 6, H = 1, numsims = 100)
 #' table(sim_h1$group)
 #'
 #' # Simulate under H2 with LR values
-#' sim_h2 <- lr_age(MPa = 40, MPr = 6, H = 2, nsims = 100, LR = TRUE)
+#' sim_h2 <- lr_age(MPa = 40, MPr = 6, H = 2, numsims = 100, LR = TRUE)
 #' head(sim_h2)
 #'
 #' # Narrower age range (more discriminating)
-#' sim_narrow <- lr_age(MPa = 35, MPr = 3, nsims = 500, LR = TRUE)
+#' sim_narrow <- lr_age(MPa = 35, MPr = 3, numsims = 500, LR = TRUE)
 #' summary(sim_narrow$LRa)
 
 lr_age <- function(MPa = 40,
                    MPr = 6,
                    UHRr = 1,
                    gam = 0.07,
-                   nsims = 1000,
+                   numsims = 1000,
                    epa = 0.05,
                    erRa = epa,
                    H = 1,
                    modelA = c("uniform", "custom")[1],
                    LR = FALSE,
-                   seed = 1234) {
+                   seed = 1234,
+                   nsims = NULL) {
+
+  # Handle deprecated nsims parameter
+  if (!is.null(nsims)) {
+    warning("Parameter 'nsims' is deprecated. Use 'numsims' instead.",
+            call. = FALSE)
+    numsims <- nsims
+  }
+
+  # Input validation
+  if (!is.numeric(MPa) || MPa < 1 || MPa > 80) {
+    stop("MPa must be between 1 and 80")
+  }
+  if (!is.numeric(MPr) || MPr < 0) {
+    stop("MPr must be non-negative")
+  }
+  if (MPa - MPr < 1 || MPa + MPr > 80) {
+    warning("Age range (MPa +/- MPr) extends beyond [1, 80]; results may be affected")
+  }
+  if (!is.numeric(gam) || gam < 0) {
+    stop("gam must be non-negative")
+  }
+  if (!is.numeric(numsims) || numsims < 1) {
+    stop("numsims must be a positive integer")
+  }
+  if (!is.numeric(epa) || epa < 0 || epa > 1) {
+    stop("epa must be between 0 and 1")
+  }
+  if (!is.numeric(erRa) || erRa < 0 || erRa > 1) {
+    stop("erRa must be between 0 and 1")
+  }
+  if (!H %in% c(1, 2)) {
+    stop("H must be 1 or 2")
+  }
+  if (!modelA %in% c("uniform", "custom")) {
+    stop("modelA must be 'uniform' or 'custom'")
+  }
 
   set.seed(seed)
   sims <- list()
   Age <- seq(1, 80)
-  MPmin <- MPa - MPr
-  MPmax <- MPa + MPr
+  MPmin <- max(1, MPa - MPr)  # Ensure valid range
+  MPmax <- min(80, MPa + MPr)
 
   # Calculate probabilities under uniform model
   if (modelA == "uniform") {
@@ -110,13 +148,13 @@ lr_age <- function(MPa = 40,
     LR0 <- epa / T0p
   }
 
-  # Define age groups
-  T1a <- Age[Age < MPmax & Age > MPmin]
-  T0a <- Age[-T1a]
+  # Define age groups (inclusive of boundaries)
+  T1a <- Age[Age <= MPmax & Age >= MPmin]
+  T0a <- Age[Age < MPmin | Age > MPmax]
 
   if (H == 1) {
     # H1: Sample with high probability of being in range
-    group <- unlist(sample(c("T1", "T0"), size = nsims, prob = c(1 - erRa, erRa), replace = TRUE))
+    group <- unlist(sample(c("T1", "T0"), size = numsims, prob = c(1 - erRa, erRa), replace = TRUE))
     ages <- unlist(lapply(group, function(x) ifelse(x == "T1", sample(T1a, 1), sample(T0a, 1))))
 
     sims <- as.data.frame(cbind(group, ages))
@@ -127,8 +165,8 @@ lr_age <- function(MPa = 40,
   }
   else if (H == 2) {
     # H2: Sample uniformly from population
-    ages <- unlist(sample(Age, nsims, replace = TRUE))
-    group <- unlist(lapply(ages, function(x) ifelse(x > MPmin & x < MPmax, "T1", "T0")))
+    ages <- unlist(sample(Age, numsims, replace = TRUE))
+    group <- unlist(lapply(ages, function(x) ifelse(x >= MPmin & x <= MPmax, "T1", "T0")))
 
     sims <- as.data.frame(cbind(group, ages))
     names(sims) <- c("group", "age")

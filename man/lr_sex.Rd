@@ -8,11 +8,12 @@ lr_sex(
   MPs = "F",
   eps = 0.05,
   erRs = eps,
-  nsims = 1000,
+  numsims = 1000,
   Ps = c(0.5, 0.5),
   H = 1,
   LR = FALSE,
-  seed = 1234
+  seed = 1234,
+  nsims = NULL
 )
 }
 \arguments{
@@ -25,7 +26,7 @@ Probability of misclassifying sex when recording. Default: 0.05.}
 \item{erRs}{Numeric (0-1). Error rate in the database/reference.
 Defaults to \code{eps} if not specified.}
 
-\item{nsims}{Integer. Number of simulations to perform. Default: 1000.}
+\item{numsims}{Integer. Number of simulations to perform. Default: 1000.}
 
 \item{Ps}{Numeric vector of length 2. Sex proportions in the population,
 c(proportion_female, proportion_male). Must sum to 1. Default: c(0.5, 0.5).}
@@ -41,6 +42,8 @@ Default: 1.}
 simulated observation. Default: FALSE.}
 
 \item{seed}{Integer. Random seed for reproducibility. Default: 1234.}
+
+\item{nsims}{Deprecated. Use \code{numsims} instead.}
 }
 \value{
 A data.frame with column \code{Sexo} containing simulated sex
@@ -66,18 +69,18 @@ For a non-matching observation: \code{LR = eps / Ps_other}
 }
 \examples{
 # Simulate under H1 (related)
-sim_h1 <- lr_sex(MPs = "F", H = 1, nsims = 100)
+sim_h1 <- lr_sex(MPs = "F", H = 1, numsims = 100)
 table(sim_h1$Sexo)
 
 # Simulate under H2 (unrelated) with LR values
-sim_h2 <- lr_sex(MPs = "F", H = 2, nsims = 100, LR = TRUE)
+sim_h2 <- lr_sex(MPs = "F", H = 2, numsims = 100, LR = TRUE)
 head(sim_h2)
 
 # Different population proportions
 sim_custom <- lr_sex(
   MPs = "M",
   Ps = c(0.52, 0.48),  # 52\% female population
-  nsims = 500,
+  numsims = 500,
   LR = TRUE
 )
 summary(sim_custom$LRs)

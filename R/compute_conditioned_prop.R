@@ -53,35 +53,69 @@
 
 compute_conditioned_prop <- function(data, h, s, y, eh, es, ey) {
 
+  # Input validation
+
+  if (!is.data.frame(data)) {
+    stop("data must be a data.frame")
+  }
+  required_cols <- c("hair_colour", "skin_colour", "eye_colour")
+  if (!all(required_cols %in% names(data))) {
+    stop("data must contain columns: ", paste(required_cols, collapse = ", "))
+  }
+  if (!is.numeric(h) || h < 1 || h > 5) {
+    stop("h (hair color) must be an integer between 1 and 5")
+  }
+  if (!is.numeric(s) || s < 1 || s > 5) {
+    stop("s (skin color) must be an integer between 1 and 5")
+  }
+  if (!is.numeric(y) || y < 1 || y > 5) {
+    stop("y (eye color) must be an integer between 1 and 5")
+  }
+  if (!is.numeric(eh) || eh < 0 || eh > 1) {
+    stop("eh (hair error rate) must be between 0 and 1")
+  }
+  if (!is.numeric(es) || es < 0 || es > 1) {
+    stop("es (skin error rate) must be between 0 and 1")
+  }
+  if (!is.numeric(ey) || ey < 0 || ey > 1) {
+    stop("ey (eye error rate) must be between 0 and 1")
+  }
+
   numerators <- numeric(nrow(data))
 
-  for (i in 1:nrow(data)) {
-    C_h <- as.integer(data$hair_colour[i] == h)
-    C_s <- as.integer(data$skin_colour[i] == s)
-    C_y <- as.integer(data$eye_colour[i] == y)
+  # Probability of correct observation = (1 - error_rate)
+  # Probability of incorrect observation = error_rate
+  # Assuming independence across traits
+  p_h_match <- 1 - eh
+  p_h_mismatch <- eh
+  p_s_match <- 1 - es
+  p_s_mismatch <- es
+  p_y_match <- 1 - ey
+  p_y_mismatch <- ey
 
-    if (C_h && C_s && C_y) {
-      numerators[i] <- 1 - eh - es - ey
-    } else if (C_h && C_s) {
-      numerators[i] <- (1 - ey) * eh * es
-    } else if (C_h && C_y) {
-      numerators[i] <- (1 - es) * eh * ey
-    } else if (C_s && C_y) {
-      numerators[i] <- (1 - eh) * es * ey
-    } else if (C_h) {
-      numerators[i] <- (1 - es - ey) * eh
-    } else if (C_s) {
-      numerators[i] <- (1 - eh - ey) * es
-    } else if (C_y) {
-      numerators[i] <- (1 - eh - es) * ey
-    } else {
-      numerators[i] <- eh * es * ey
-    }
+  for (i in 1:nrow(data)) {
+    match_h <- data$hair_colour[i] == h
+    match_s <- data$skin_colour[i] == s
+    match_y <- data$eye_colour[i] == y
+
+    # Calculate probability as product of independent match/mismatch probabilities
+    p_h <- if (match_h) p_h_match else p_h_mismatch
+    p_s <- if (match_s) p_s_match else p_s_mismatch
+    p_y <- if (match_y) p_y_match else p_y_mismatch
+
+    numerators[i] <- p_h * p_s * p_y
   }
 
   probs <- as.data.frame(cbind(data, numerators))
   probs <- unique(probs)
-  probs$numerators <- probs$numerators / sum(probs$numerators)
+
+  # Normalize to sum to 1
+  total <- sum(probs$numerators)
+  if (total == 0) {
+    warning("All numerators are zero; returning unnormalized values")
+  } else {
+    probs$numerators <- probs$numerators / total
+  }
 
   return(probs)
 }

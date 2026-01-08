@@ -86,13 +86,32 @@ lr_combine <- function(LRdatasim1, LRdatasim2) {
     stop("LRdatasim2 must be a data.frame. Use lr_to_dataframe() to convert genetic simulations.")
   }
 
+  # Check required columns
+  required_cols <- c("Unrelated", "Related")
+  if (!all(required_cols %in% names(LRdatasim1))) {
+    stop("LRdatasim1 must have columns 'Unrelated' and 'Related'")
+  }
+  if (!all(required_cols %in% names(LRdatasim2))) {
+    stop("LRdatasim2 must have columns 'Unrelated' and 'Related'")
+  }
+
+  # Check row counts match
+  n1 <- nrow(LRdatasim1)
+  n2 <- nrow(LRdatasim2)
+  if (n1 != n2) {
+    stop("LRdatasim1 and LRdatasim2 must have the same number of rows (",
+         n1, " vs ", n2, "). ",
+         "LR combination requires paired simulations under the same scenarios.")
+  }
+
   # Multiply LRs (element-wise)
+  # This assumes conditional independence of evidence given each hypothesis
   a <- as.numeric(unlist(LRdatasim1$Unrelated)) * as.numeric(unlist(LRdatasim2$Unrelated))
   b <- as.numeric(unlist(LRdatasim1$Related)) * as.numeric(unlist(LRdatasim2$Related))
 
   # Combine into dataframe
-  LRsimulated <- base::cbind(a, b)
-  base::colnames(LRsimulated) <- c("Unrelated", "Related")
+  LRsimulated <- cbind(a, b)
+  colnames(LRsimulated) <- c("Unrelated", "Related")
 
-  base::structure(base::as.data.frame(LRsimulated))
+  structure(as.data.frame(LRsimulated))
 }

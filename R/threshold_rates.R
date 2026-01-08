@@ -79,25 +79,46 @@
 
 threshold_rates <- function(datasim, threshold) {
 
+  # Input validation
+  if (missing(threshold) || !is.numeric(threshold) || length(threshold) != 1) {
+    stop("threshold must be a single numeric value")
+  }
+
   # Convert list to dataframe if needed
   if (!is.data.frame(datasim)) {
     datasim <- lr_to_dataframe(datasim)
   }
 
+  # Validate required columns
+  if (!all(c("Related", "Unrelated") %in% names(datasim))) {
+    stop("datasim must have columns 'Related' and 'Unrelated'")
+  }
+
   nsims <- nrow(datasim)
+
+  if (nsims < 1) {
+    stop("datasim must have at least 1 row")
+  }
+
   TPED <- datasim$Related
   RPED <- datasim$Unrelated
 
-  # Calculate rates
-  FPR <- sum(RPED > threshold) / nsims
-  FNR <- sum(TPED < threshold) / nsims
-  TPR <- sum(RPED < threshold) / nsims
-  TNR <- sum(TPED > threshold) / nsims
+  # Calculate counts (as numeric to prevent integer overflow in MCC)
+  TP <- as.numeric(sum(TPED > threshold))
+  TN <- as.numeric(sum(RPED < threshold))
+  FP <- as.numeric(sum(RPED > threshold))
+  FN <- as.numeric(sum(TPED < threshold))
 
-  # Matthews Correlation Coefficient
+  # Calculate rates
+  FPR <- FP / nsims
+  FNR <- FN / nsims
+  TPR <- TP / nsims
+  TNR <- TN / nsims
+
+  # Matthews Correlation Coefficient using counts
   # MCC = (TP*TN - FP*FN) / sqrt((TP+FP)(TP+FN)(TN+FP)(TN+FN))
-  MCC <- (TPR * TNR - FPR * FNR) /
-    (sqrt(TPR + FPR) * sqrt(TPR + FNR) * sqrt(TNR + FPR) * sqrt(TNR + FNR))
+  denom <- sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+  MCC <- if (denom == 0) 0 else (TP * TN - FP * FN) / denom
 
   # Print results
   message(paste("FNR =", round(FNR, 4),

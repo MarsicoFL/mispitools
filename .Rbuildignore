@@ -9,3 +9,9 @@
 ^Toys$
 ^UsingAll\.R$
 ^\.claude$
+^\.DS_Store$
+^\.git$
+^\.gitignore$
+^Rplots\.pdf$
+^.*\.Rcheck$
+^\.Rhistory$

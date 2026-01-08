@@ -56,11 +56,40 @@
 
 lr_pigmentation <- function(df, seed = 1234, nsim = 500) {
 
+  # Input validation
+  if (!is.data.frame(df)) {
+    stop("df must be a data.frame (typically from lr_compute_pigmentation)")
+  }
+
+  required_cols <- c("LR", "f_h_s_y", "numerators")
+  missing_cols <- setdiff(required_cols, names(df))
+  if (length(missing_cols) > 0) {
+    stop("df is missing required columns: ", paste(missing_cols, collapse = ", "),
+         "\nExpected columns from lr_compute_pigmentation output.")
+  }
+
+  if (nsim < 1) {
+    stop("nsim must be a positive integer")
+  }
+
   set.seed(seed)
 
   LR <- df$LR
   f_h_s_y <- df$f_h_s_y
   numerators <- df$numerators
+
+  # Check for invalid values
+  if (any(is.na(LR)) || any(is.infinite(LR))) {
+    warning("LR contains NA or Inf values. These will be excluded from sampling.")
+    valid_idx <- !is.na(LR) & !is.infinite(LR)
+    LR <- LR[valid_idx]
+    f_h_s_y <- f_h_s_y[valid_idx]
+    numerators <- numerators[valid_idx]
+  }
+
+  if (length(LR) == 0) {
+    stop("No valid LR values to sample from")
+  }
 
   # Normalize probabilities
   prob_unrelated <- f_h_s_y / sum(f_h_s_y)

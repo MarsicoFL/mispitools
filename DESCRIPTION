@@ -2,6 +2,8 @@ Package: mispitools
 Title: Missing Person Identification Tools
 Version: 1.4.0
 Authors@R: person(given = "Franco", family = "Marsico", role = c("aut", "cre"), email = "franco.lmarsico@gmail.com", comment = c(ORCID = "0000-0002-0740-5516"))
+Author: Franco Marsico [aut, cre] (<https://orcid.org/0000-0002-0740-5516>)
+Maintainer: Franco Marsico <franco.lmarsico@gmail.com>
 Description: A comprehensive toolkit for missing person identification combining
     genetic and non-genetic evidence within a Bayesian framework. Computes
     likelihood ratios (LRs) for DNA profiles, biological sex, age, hair color,

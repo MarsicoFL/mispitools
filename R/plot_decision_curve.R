@@ -75,15 +75,10 @@ plot_decision_curve <- function(datasim, LRmax = 1000) {
   RPED <- datasim$Unrelated
   nsimul <- nrow(datasim)
 
-  # Calculate FPR and FNR for each threshold
+  # Calculate FPR and FNR for each threshold (vectorized)
   ValoresLR <- seq(1, LRmax, length.out = LRmax)
-  FPs <- numeric(length(ValoresLR))
-  FNs <- numeric(length(ValoresLR))
-
-  for (i in seq_along(ValoresLR)) {
-    FPs[i] <- sum(RPED > ValoresLR[i])
-    FNs[i] <- sum(TPED < ValoresLR[i])
-  }
+  FPs <- vapply(ValoresLR, function(t) sum(RPED > t), numeric(1))
+  FNs <- vapply(ValoresLR, function(t) sum(TPED < t), numeric(1))
 
   # Create data frame for plotting
   Datos <- data.frame(

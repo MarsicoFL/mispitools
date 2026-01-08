@@ -14,7 +14,7 @@
 #'   \code{\link{lr_combine}}.
 #' @param weight Numeric. The relative weight of false positives compared to
 #'   false negatives. A value > 1 penalizes false positives more heavily.
-#'   Suggested value: 10 (false positives are 10x worse than false negatives).
+#'   Default: 10 (false positives are 10x worse than false negatives).
 #'
 #' @return Prints and invisibly returns the suggested LR threshold value.
 #'
@@ -66,35 +66,56 @@
 #' # More conservative threshold (FP 20x worse)
 #' decision_threshold(lr_sims, weight = 20)
 
-decision_threshold <- function(datasim, weight) {
+decision_threshold <- function(datasim, weight = 10) {
+
+  # Input validation
+  if (!is.numeric(weight) || length(weight) != 1) {
+    stop("weight must be a single numeric value")
+  }
+  if (weight <= 0) {
+    stop("weight must be positive. Typical values: 1-20. ",
+         "Higher values penalize false positives more heavily.")
+  }
 
   # Convert list to dataframe if needed
   if (!is.data.frame(datasim)) {
     datasim <- lr_to_dataframe(datasim)
   }
 
-  as.data.frame(datasim)
+  # Validate required columns
+  if (!all(c("Related", "Unrelated") %in% names(datasim))) {
+    stop("datasim must have columns 'Related' and 'Unrelated'")
+  }
+
+  datasim <- as.data.frame(datasim)
   nsims <- nrow(datasim)
+
+  if (nsims < 10) {
+    stop("datasim must have at least 10 simulations for reliable threshold estimation")
+  }
+
   TPED <- datasim$Related
   RPED <- datasim$Unrelated
 
-  # Calculate FPR and FNR for each potential threshold
-  ValoresLR <- seq(1, nsims, length.out = nsims)
-  FPs <- numeric(10000)
-  FNs <- numeric(10000)
+  # Create threshold values spanning the actual LR range
+  all_LRs <- c(TPED, RPED)
+  n_thresholds <- 1000
+  ValoresLR <- seq(min(all_LRs), max(all_LRs), length.out = n_thresholds)
 
-  for (i in 1:10000) {
-    FPs[i] <- sum(RPED > ValoresLR[i])
-    FNs[i] <- sum(TPED < ValoresLR[i])
-  }
+  # Vectorized calculation of FPR and FNR for each potential threshold
+  # Using outer comparison and colSums for efficiency
+  FPs <- vapply(ValoresLR, function(t) sum(RPED > t), numeric(1))
+  FNs <- vapply(ValoresLR, function(t) sum(TPED < t), numeric(1))
 
   # Calculate weighted Euclidean distance
-  Dis <- sqrt(((FNs / nsims))^2 + ((weight * FPs / nsims)^2))
+  # Formula: D = sqrt(FNR^2 + (weight * FPR)^2)
+  Dis <- sqrt((FNs / nsims)^2 + (weight * FPs / nsims)^2)
 
   # Find threshold that minimizes distance
-  Tabla <- base::data.frame(x = ValoresLR, y = Dis)
-  DT <- which.min(Tabla$y)
+  Tabla <- data.frame(x = ValoresLR, y = Dis)
+  optimal_idx <- which.min(Tabla$y)
+  DT <- ValoresLR[optimal_idx]
 
-  message(paste("Decision threshold is:", DT))
+  message(paste("Decision threshold is:", round(DT, 4)))
   invisible(DT)
 }

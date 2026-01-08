@@ -102,6 +102,38 @@ sim_poi_prelim <- function(casetype = "children",
                                       "Asia", "Europe", "Oceania"),
                            regionprob = c(0.2, 0.2, 0.2, 0.1, 0.2, 0.1)) {
 
+  # Input validation
+  if (!casetype %in% c("children", "migrants")) {
+    stop("casetype must be 'children' or 'migrants'")
+  }
+
+  if (!is.numeric(femaleprop) || femaleprop < 0 || femaleprop > 1) {
+    stop("femaleprop must be between 0 and 1")
+  }
+
+  if (!is.numeric(numsims) || numsims < 1) {
+    stop("numsims must be a positive integer")
+  }
+
+  if (length(region) != length(regionprob)) {
+    stop("region and regionprob must have the same length")
+  }
+
+  if (abs(sum(regionprob) - 1) > 1e-6) {
+    warning("regionprob does not sum to 1; normalizing")
+    regionprob <- regionprob / sum(regionprob)
+  }
+
+  if (casetype == "children") {
+    if (length(birthprob) != 3) {
+      stop("birthprob must have exactly 3 elements")
+    }
+    if (abs(sum(birthprob) - 1) > 1e-6) {
+      warning("birthprob does not sum to 1; normalizing")
+      birthprob <- birthprob / sum(birthprob)
+    }
+  }
+
   if (casetype == "children") {
     sex <- c("female", "male")
     maleprop <- 1 - femaleprop
@@ -121,8 +153,8 @@ sim_poi_prelim <- function(casetype = "children",
     e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
     PrelimDatasim <- cbind(a, b, c, d, e)
-    base::colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Birth-type", "Region")
-    base::structure(base::as.data.frame(PrelimDatasim))
+    colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Birth-type", "Region")
+    structure(as.data.frame(PrelimDatasim))
 
   } else if (casetype == "migrants") {
     sex <- c("female", "male")
@@ -137,7 +169,7 @@ sim_poi_prelim <- function(casetype = "children",
     e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
     PrelimDatasim <- cbind(a, age, c, height, e)
-    base::colnames(PrelimDatasim) <- c("UHR-ID", "Age", "Sex", "Height", "Region")
-    base::structure(base::as.data.frame(PrelimDatasim))
+    colnames(PrelimDatasim) <- c("UHR-ID", "Age", "Sex", "Height", "Region")
+    structure(as.data.frame(PrelimDatasim))
   }
 }

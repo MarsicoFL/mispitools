@@ -285,15 +285,31 @@ multi_kl_divergence <- function(...) {
 #' @rdname mispitools-deprecated
 #' @export
 mispiApp <- function(...) {
-  .Deprecated("app_mispitools", package = "mispitools",
-              msg = "mispiApp() is deprecated. Use app_mispitools() instead.")
-  app_mispitools(...)
+  .Deprecated("mispitools_app", package = "mispitools",
+              msg = "mispiApp() is deprecated. Use mispitools_app() instead.")
+  mispitools_app(...)
 }
 
 #' @rdname mispitools-deprecated
 #' @export
 lrComparisonApp <- function(...) {
-  .Deprecated("app_lr_comparison", package = "mispitools",
-              msg = "lrComparisonApp() is deprecated. Use app_lr_comparison() instead.")
-  app_lr_comparison(...)
+  .Deprecated("mispitools_app", package = "mispitools",
+              msg = "lrComparisonApp() is deprecated. Use mispitools_app() instead.")
+  mispitools_app(...)
+}
+
+#' @rdname mispitools-deprecated
+#' @export
+app_mispitools <- function(...) {
+  .Deprecated("mispitools_app", package = "mispitools",
+              msg = "app_mispitools() is deprecated. Use mispitools_app() instead.")
+  mispitools_app(...)
+}
+
+#' @rdname mispitools-deprecated
+#' @export
+app_lr_comparison <- function(...) {
+  .Deprecated("mispitools_app", package = "mispitools",
+              msg = "app_lr_comparison() is deprecated. Use mispitools_app() instead.")
+  mispitools_app(...)
 }

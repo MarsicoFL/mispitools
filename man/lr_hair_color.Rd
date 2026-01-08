@@ -8,12 +8,13 @@ lr_hair_color(
   MPc = 1,
   epc = error_matrix_hair(),
   erRc = epc,
-  nsims = 1000,
+  numsims = 1000,
   Pc = c(0.3, 0.2, 0.25, 0.15, 0.1),
   H = 1,
   Qprop = MPc,
   LR = FALSE,
-  seed = 1234
+  seed = 1234,
+  nsims = NULL
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ columns represent observed colors. Default: \code{error_matrix_hair()}.}
 \item{erRc}{Matrix. Error matrix for the reference/database.
 Defaults to \code{epc}.}
 
-\item{nsims}{Integer. Number of simulations to perform. Default: 1000.}
+\item{numsims}{Integer. Number of simulations to perform. Default: 1000.}
 
 \item{Pc}{Numeric vector of length 5. Hair color proportions in the
 population. Must sum to 1. Default: c(0.3, 0.2, 0.25, 0.15, 0.1).}
@@ -43,6 +44,8 @@ Default: 1.}
 \item{LR}{Logical. If TRUE, compute and return LR values. Default: FALSE.}
 
 \item{seed}{Integer. Random seed for reproducibility. Default: 1234.}
+
+\item{nsims}{Deprecated. Use \code{numsims} instead.}
 }
 \value{
 A data.frame with column \code{Col} containing simulated color
@@ -71,11 +74,11 @@ LR = P(observed color | true color is MPc) / P(observed color in population)
 }
 \examples{
 # Simulate under H1 (related) with black hair MP
-sim_h1 <- lr_hair_color(MPc = 1, H = 1, nsims = 100)
+sim_h1 <- lr_hair_color(MPc = 1, H = 1, numsims = 100)
 table(sim_h1$Col)
 
 # Simulate under H2 with LR values
-sim_h2 <- lr_hair_color(MPc = 2, H = 2, nsims = 100, LR = TRUE)
+sim_h2 <- lr_hair_color(MPc = 2, H = 2, numsims = 100, LR = TRUE)
 head(sim_h2)
 summary(sim_h2$LRc)
 
@@ -83,7 +86,7 @@ summary(sim_h2$LRc)
 sim_custom <- lr_hair_color(
   MPc = 3,  # Blonde
   Pc = c(0.1, 0.4, 0.3, 0.1, 0.1),  # Different population
-  nsims = 500,
+  numsims = 500,
   LR = TRUE
 )
 }

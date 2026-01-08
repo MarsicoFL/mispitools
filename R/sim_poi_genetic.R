@@ -78,5 +78,5 @@ sim_poi_genetic <- function(numsims = 100, reference, seed = 123) {
   id <- seq(1, numsims)
   poi <- cbind(id, poi)
 
-  base::structure(base::as.data.frame(poi))
+  as.data.frame(poi)
 }

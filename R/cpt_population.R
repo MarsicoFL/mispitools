@@ -75,6 +75,39 @@ cpt_population <- function(propS = c(0.5, 0.5),
                            MPr = 6,
                            propC = c(0.3, 0.2, 0.25, 0.15, 0.1)) {
 
+  # Input validation
+  if (!is.numeric(propS) || length(propS) != 2) {
+    stop("propS must be a numeric vector of length 2")
+  }
+  if (any(propS < 0) || any(propS > 1)) {
+    stop("propS values must be between 0 and 1")
+  }
+  if (abs(sum(propS) - 1) > 1e-6) {
+    warning("propS does not sum to 1; normalizing")
+    propS <- propS / sum(propS)
+  }
+
+  if (!is.numeric(MPa) || length(MPa) != 1 || MPa < 1 || MPa > 80) {
+    stop("MPa must be a numeric value between 1 and 80")
+  }
+  if (!is.numeric(MPr) || length(MPr) != 1 || MPr < 0) {
+    stop("MPr must be a non-negative numeric value")
+  }
+  if (MPa - MPr < 1 || MPa + MPr > 80) {
+    warning("Age range extends beyond [1, 80]; clamping to valid range")
+  }
+
+  if (!is.numeric(propC) || length(propC) != 5) {
+    stop("propC must be a numeric vector of length 5")
+  }
+  if (any(propC < 0)) {
+    stop("propC values must be non-negative")
+  }
+  if (abs(sum(propC) - 1) > 1e-6) {
+    warning("propC does not sum to 1; normalizing")
+    propC <- propC / sum(propC)
+  }
+
   # Age range for population (assumed uniform 1-80)
   Age <- seq(1, 80)
 

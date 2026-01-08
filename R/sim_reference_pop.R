@@ -67,88 +67,108 @@ sim_reference_pop <- function(n = 1000, seed = 1234) {
 
   set.seed(seed)
 
-  # Hair color probabilities
+  # Input validation
+  if (!is.numeric(n) || n < 1) {
+    stop("n must be a positive integer")
+  }
+  n <- as.integer(n)
+
+  # ==========================================================================
+  # Conditional probability matrices for pigmentation traits
+  # These capture correlations between hair, skin, and eye color
+  # Rows = conditioning variable, Columns = outcome probabilities (categories 1-5)
+  # ==========================================================================
+
+  # P(hair color) - marginal distribution
   prob_hair <- c(0.4, 0.3, 0.15, 0.1, 0.05)
+
+  # P(skin | hair) - 5x5 matrix, rows = hair color, cols = skin color probs
+  prob_skin_given_hair <- matrix(
+    c(0.10, 0.15, 0.40, 0.25, 0.10,  # hair = 1 (blonde)
+      0.10, 0.20, 0.40, 0.20, 0.10,  # hair = 2 (light brown)
+      0.60, 0.30, 0.05, 0.03, 0.02,  # hair = 3 (medium brown)
+      0.70, 0.20, 0.05, 0.03, 0.02,  # hair = 4 (dark brown)
+      0.20, 0.30, 0.20, 0.20, 0.10), # hair = 5 (black)
+    nrow = 5, ncol = 5, byrow = TRUE
+  )
+
+  # P(eye | hair, skin) - stored as list of 5x5 matrices
+  # prob_eye_given_hair_skin[[hair]][skin, eye]
+  prob_eye_given_hair_skin <- list(
+    # hair = 1 (blonde)
+    matrix(c(
+      0.50, 0.20, 0.10, 0.10, 0.10,   # skin = 1
+      0.60, 0.10, 0.10, 0.10, 0.10,   # skin = 2
+      0.70, 0.10, 0.10, 0.05, 0.05,   # skin = 3
+      0.80, 0.05, 0.05, 0.05, 0.05,   # skin = 4
+      0.90, 0.025, 0.025, 0.025, 0.025 # skin = 5
+    ), nrow = 5, ncol = 5, byrow = TRUE),
+    # hair = 2 (light brown)
+    matrix(c(
+      0.30, 0.30, 0.20, 0.10, 0.10,
+      0.40, 0.30, 0.10, 0.10, 0.10,
+      0.50, 0.20, 0.10, 0.10, 0.10,
+      0.60, 0.15, 0.10, 0.10, 0.05,
+      0.70, 0.10, 0.10, 0.05, 0.05
+    ), nrow = 5, ncol = 5, byrow = TRUE),
+    # hair = 3 (medium brown)
+    matrix(c(
+      0.10, 0.60, 0.10, 0.10, 0.10,
+      0.10, 0.70, 0.10, 0.05, 0.05,
+      0.15, 0.60, 0.10, 0.10, 0.05,
+      0.20, 0.50, 0.10, 0.10, 0.10,
+      0.25, 0.50, 0.10, 0.10, 0.05
+    ), nrow = 5, ncol = 5, byrow = TRUE),
+    # hair = 4 (dark brown)
+    matrix(c(
+      0.10, 0.70, 0.05, 0.10, 0.05,
+      0.10, 0.60, 0.10, 0.10, 0.10,
+      0.10, 0.70, 0.05, 0.10, 0.05,
+      0.15, 0.60, 0.10, 0.10, 0.05,
+      0.20, 0.60, 0.05, 0.10, 0.05
+    ), nrow = 5, ncol = 5, byrow = TRUE),
+    # hair = 5 (black)
+    matrix(c(
+      0.40, 0.20, 0.15, 0.15, 0.10,
+      0.50, 0.20, 0.10, 0.10, 0.10,
+      0.50, 0.15, 0.15, 0.10, 0.10,
+      0.60, 0.15, 0.10, 0.10, 0.05,
+      0.40, 0.10, 0.20, 0.20, 0.10
+    ), nrow = 5, ncol = 5, byrow = TRUE)
+  )
+
+  # ==========================================================================
+  # Vectorized sampling
+  # ==========================================================================
+
+  # Sample hair color
   hair_colour <- sample(1:5, n, replace = TRUE, prob = prob_hair)
 
-  skin_colour <- numeric(n)
-  eye_colour <- numeric(n)
-
-  # Skin color conditional on hair color
-  for (i in 1:n) {
-    if (hair_colour[i] == 1) {
-      skin_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.15, 0.4, 0.25, 0.1))
-    } else if (hair_colour[i] == 2) {
-      skin_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.2, 0.4, 0.2, 0.1))
-    } else if (hair_colour[i] == 3) {
-      skin_colour[i] <- sample(1:5, 1, prob = c(0.6, 0.3, 0.05, 0.03, 0.02))
-    } else if (hair_colour[i] == 4) {
-      skin_colour[i] <- sample(1:5, 1, prob = c(0.7, 0.2, 0.05, 0.03, 0.02))
-    } else {
-      skin_colour[i] <- sample(1:5, 1, prob = c(0.2, 0.3, 0.2, 0.2, 0.1))
+  # Sample skin color conditional on hair (vectorized by hair category)
+  skin_colour <- integer(n)
+  for (h in 1:5) {
+    idx <- which(hair_colour == h)
+    if (length(idx) > 0) {
+      skin_colour[idx] <- sample(1:5, length(idx), replace = TRUE,
+                                  prob = prob_skin_given_hair[h, ])
     }
   }
 
-  # Eye color conditional on hair and skin color
-  for (i in 1:n) {
-    if (hair_colour[i] == 1 & skin_colour[i] == 1) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.5, 0.2, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 1 & skin_colour[i] == 2) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.6, 0.1, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 1 & skin_colour[i] == 3) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.7, 0.1, 0.1, 0.05, 0.05))
-    } else if (hair_colour[i] == 1 & skin_colour[i] == 4) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.8, 0.05, 0.05, 0.05, 0.05))
-    } else if (hair_colour[i] == 1 & skin_colour[i] == 5) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.9, 0.025, 0.025, 0.025, 0.025))
-    } else if (hair_colour[i] == 2 & skin_colour[i] == 1) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.3, 0.3, 0.2, 0.1, 0.1))
-    } else if (hair_colour[i] == 2 & skin_colour[i] == 2) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.4, 0.3, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 2 & skin_colour[i] == 3) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.5, 0.2, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 2 & skin_colour[i] == 4) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.6, 0.15, 0.1, 0.1, 0.05))
-    } else if (hair_colour[i] == 2 & skin_colour[i] == 5) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.7, 0.1, 0.1, 0.05, 0.05))
-    } else if (hair_colour[i] == 3 & skin_colour[i] == 1) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.6, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 3 & skin_colour[i] == 2) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.7, 0.1, 0.05, 0.05))
-    } else if (hair_colour[i] == 3 & skin_colour[i] == 3) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.15, 0.6, 0.1, 0.1, 0.05))
-    } else if (hair_colour[i] == 3 & skin_colour[i] == 4) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.2, 0.5, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 3 & skin_colour[i] == 5) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.25, 0.5, 0.1, 0.1, 0.05))
-    } else if (hair_colour[i] == 4 & skin_colour[i] == 1) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.7, 0.05, 0.1, 0.05))
-    } else if (hair_colour[i] == 4 & skin_colour[i] == 2) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.6, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 4 & skin_colour[i] == 3) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.1, 0.7, 0.05, 0.1, 0.05))
-    } else if (hair_colour[i] == 4 & skin_colour[i] == 4) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.15, 0.6, 0.1, 0.1, 0.05))
-    } else if (hair_colour[i] == 4 & skin_colour[i] == 5) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.2, 0.6, 0.05, 0.1, 0.05))
-    } else if (hair_colour[i] == 5 & skin_colour[i] == 1) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.4, 0.2, 0.15, 0.15, 0.1))
-    } else if (hair_colour[i] == 5 & skin_colour[i] == 2) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.5, 0.2, 0.1, 0.1, 0.1))
-    } else if (hair_colour[i] == 5 & skin_colour[i] == 3) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.5, 0.15, 0.15, 0.1, 0.1))
-    } else if (hair_colour[i] == 5 & skin_colour[i] == 4) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.6, 0.15, 0.1, 0.1, 0.05))
-    } else if (hair_colour[i] == 5 & skin_colour[i] == 5) {
-      eye_colour[i] <- sample(1:5, 1, prob = c(0.4, 0.1, 0.2, 0.2, 0.1))
+  # Sample eye color conditional on hair and skin (vectorized by combination)
+  eye_colour <- integer(n)
+  for (h in 1:5) {
+    for (s in 1:5) {
+      idx <- which(hair_colour == h & skin_colour == s)
+      if (length(idx) > 0) {
+        eye_colour[idx] <- sample(1:5, length(idx), replace = TRUE,
+                                   prob = prob_eye_given_hair_skin[[h]][s, ])
+      }
     }
   }
 
-  data <- data.frame(
+  data.frame(
     hair_colour = hair_colour,
     skin_colour = skin_colour,
     eye_colour = eye_colour
   )
-
-  return(data)
 }

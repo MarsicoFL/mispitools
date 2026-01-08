@@ -49,10 +49,41 @@
 
 lr_compute_pigmentation <- function(conditioned, unconditioned) {
 
+  # Input validation
+  if (!is.data.frame(conditioned)) {
+    stop("conditioned must be a data.frame (typically from compute_conditioned_prop)")
+  }
+  if (!is.data.frame(unconditioned)) {
+    stop("unconditioned must be a data.frame (typically from compute_reference_prop)")
+  }
+
+  # Check required columns
+  cond_required <- c("hair_colour", "skin_colour", "eye_colour", "numerators")
+  uncond_required <- c("hair_colour", "skin_colour", "eye_colour", "f_h_s_y")
+
+  cond_missing <- setdiff(cond_required, names(conditioned))
+  if (length(cond_missing) > 0) {
+    stop("conditioned is missing required columns: ", paste(cond_missing, collapse = ", "))
+  }
+
+  uncond_missing <- setdiff(uncond_required, names(unconditioned))
+  if (length(uncond_missing) > 0) {
+    stop("unconditioned is missing required columns: ", paste(uncond_missing, collapse = ", "))
+  }
+
   merged_data <- merge(unconditioned, conditioned,
                        by = c("hair_colour", "skin_colour", "eye_colour"))
 
-  merged_data$LR <- merged_data$numerators / merged_data$f_h_s_y
+  if (nrow(merged_data) == 0) {
+    stop("No matching trait combinations found between conditioned and unconditioned data")
+  }
+
+  # Handle division by zero: set LR to Inf when denominator is 0 but numerator > 0
+  merged_data$LR <- ifelse(
+    merged_data$f_h_s_y == 0,
+    ifelse(merged_data$numerators > 0, Inf, NA),
+    merged_data$numerators / merged_data$f_h_s_y
+  )
 
   return(merged_data)
 }

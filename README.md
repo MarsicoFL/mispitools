@@ -1,310 +1,272 @@
 <img src="/README_files/figure-markdown_github/MispiIcon.png" align="left" width="100">
 
-
-## Mispitools: Kinship inference in Forensic Science
+# mispitools: Missing Person Identification Tools
 
 <!-- badges: start -->
-
 [![CRAN status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
 [![](https://cranlogs.r-pkg.org/badges/grand-total/mispitools?color=blue)](https://cran.r-project.org/package=mispitools)
-
 <!-- badges: end -->
 
-## About mispitools
-'mispitools' is an open-source package written in the R statistical language. It consists of a collection of decision-making tools designed for conducting missing person searches. The package enables the computation of various features, ranging from non-genetic data based likelihood ratios (LRs) to the optimal LR threshold for identifying potential matches in database searches. Examples of non-genetic data are: biological sex, pigmentation traits, age, among others.
+## Overview
 
-To properly cite 'mispitools,' please use the following references: 
-  -  Marsico et al., Forensic Science International: Genetics, 2023 (https://doi.org/10.1016/j.fsigen.2023.102891)
-  -  Marsico et al., Forensic Science International: Genetics, 2021 (https://doi.org/10.1016/j.fsigen.2021.102519)
+**mispitools** is an R package for computing likelihood ratios (LRs) in missing person identification cases. It implements a Bayesian framework for evaluating both genetic (DNA) and non-genetic evidence (biological sex, age, hair color, birth date).
 
-Additionally, an add-on package draft is under construction, and it can be useful for a deeper introduction to the package:
-  -  Marsico, BioRxiv 2024 (https://doi.org/10.1101/2024.08.16.608307)
+## Theoretical Framework
 
-'mispitools' imports two additional packages, namely forrel (https://doi.org/10.1016/j.fsigen.2020.102376) and pedtools (https://doi.org/10.1016/C2020-0-01956-0).
+### The Bayesian Paradigm
+
+Evidence evaluation follows the odds form of Bayes' theorem:
+
+```
+Posterior Odds = Prior Odds × LR
+```
+
+Where:
+- **Prior Odds** = P(H1)/P(H2) before observing evidence
+- **LR** = P(E|H1)/P(E|H2) = weight of evidence
+- **Posterior Odds** = P(H1|E)/P(H2|E) after observing evidence
+
+The hypotheses are:
+- **H1** (prosecution): The unidentified person is the missing person
+- **H2** (defense): The unidentified person is not the missing person
+
+### Likelihood Ratio Interpretation
+
+The LR quantifies evidential weight, not probability of identity:
+
+| LR | log₁₀(LR) | Interpretation |
+|----|-----------|----------------|
+| 1-10 | 0-1 | Weak support for H1 |
+| 10-100 | 1-2 | Support for H1 |
+| 100-10000 | 2-4 | Strong support for H1 |
+| >10000 | >4 | Very strong support for H1 |
+
+For LR < 1, the evidence supports H2 (the person is NOT the missing individual). LR = 1 means uninformative evidence.
+
+### Evidence Combination
+
+Under conditional independence given each hypothesis:
+
+```
+LR_total = LR₁ × LR₂ × ... × LRₙ
+```
+
+**Critical assumption**: This requires that the evidence sources are conditionally independent. For example, sex and age are typically independent given identity, but hair color and skin color are correlated through genetics.
 
 ## Installation
 
-The objective of mispitools is to provide a simulation framework for decision-making in missing person identification cases. You can install it from CRAN by typing the following command on R:
-
-``` r
+From CRAN:
+```r
 install.packages("mispitools")
+```
+
+Development version:
+```r
+devtools::install_github("MarsicoFL/mispitools")
+```
+
+## Worked Examples
+
+### Example 1: Sex Evidence
+
+**Scenario**: Missing person (MP) is female. Unidentified person observed as female.
+
+**Model**:
+- P(observe female | H1, MP=F) = 1 - ε = 0.95 (allowing 5% observation error)
+- P(observe female | H2) = 0.50 (population frequency)
+
+```r
 library(mispitools)
+
+# Direct calculation
+eps <- 0.05       # observation error rate
+freq_F <- 0.50    # female frequency in population
+
+LR <- (1 - eps) / freq_F
+# LR = 0.95 / 0.50 = 1.9
 ```
 
-You can also install the unstable versions of mispitools from  [Github](https://github.com/MarsicoFL/mispitools/) by using the following command:
+**Result**: LR = 1.9
 
-``` r
-install.packages("devtools")
-library(devtools)
-install_github("MarsicoFL/mispitools")
+**Interpretation**: The observation of female sex is 1.9 times more probable if the unidentified person is the missing person than if she is a random person from the population. This provides limited support for H1.
+
+### Example 2: Age Evidence
+
+**Scenario**: MP estimated age 40 years (±6 years). Observed age falls within range.
+
+**Model** (uniform reference):
+- P(in range | H1) = 1 - ε = 0.95
+- P(in range | H2) = range_width / max_age = 12/80 = 0.15
+
+```r
+eps <- 0.05
+range_width <- 12  # 2 × 6 years
+max_age <- 80
+
+p_range_H2 <- range_width / max_age
+LR <- (1 - eps) / p_range_H2
+# LR = 0.95 / 0.15 = 6.33
 ```
 
-Now you can analyze the mispitools documentation, which provides descriptions for all functions and parameters.
+**Result**: LR = 6.33
 
-```r 
-?mispitools
+**Interpretation**: Age matching provides moderate support for H1.
+
+### Example 3: Region Evidence
+
+**Scenario**: Search across 6 geographic regions. MP and observed person from same region.
+
+**Model**:
+- P(match | H1) = 1 - ε = 0.95
+- P(match | H2) = 1/6 ≈ 0.167 (uniform)
+
+```r
+eps <- 0.05
+nreg <- 6
+
+LR <- (1 - eps) / (1 / nreg)
+# LR = 0.95 / 0.167 = 5.7
 ```
 
-NOTE: These packages should be installed automatically as dependencies with mispitools. However, in some cases, it may be necessary to install them manually, especially if you are installing the development version from GitHub. You can do this by using the following lines:
+**Result**: LR = 5.7
 
-```r 
-install.packages("ggplot2")
-install.packages("forrel")
-install.packages("pedtools")
-install.packages("reshape2")
-install.packages("tidyverse")
-install.packages("patchwork")
+### Example 4: Combining Evidence
+
+**Scenario**: All three evidence types match (sex, age, region).
+
+```r
+LR_sex <- 1.9
+LR_age <- 6.33
+LR_region <- 5.7
+
+LR_combined <- LR_sex * LR_age * LR_region
+# LR_combined = 68.6
+# log10(LR) = 1.84
 ```
 
+**Result**: Combined LR = 68.6 (log₁₀ = 1.84)
 
-## Computing LRs for preliminary investigation data
-NOTE: The methodology implemented in this section is explained in: https://doi.org/10.1016/j.fsigen.2023.102891 (or the open pre-print version, available on http://dx.doi.org/10.2139/ssrn.4331033).
+**Interpretation**: The combined non-genetic evidence provides moderate support for H1. This can be further combined with DNA evidence if available.
 
-Now you are able to compute conditional probability phenotype tables considering the variables Age, Sex, and Hair color. Firstly, you can analyze the different parameters from the documentation.
+### Example 5: Simulation and Decision Analysis
 
-``` r
-?CPT_POP
+```r
+# Simulate LR distributions under both hypotheses
+set.seed(123)
+lr_sex <- sim_lr_prelim("sex", numsims = 1000)
+lr_age <- sim_lr_prelim("age", numsims = 1000)
+
+# Combine
+lr_combined <- lr_combine(lr_sex, lr_age)
+
+# Distribution summaries
+# Under H1: median log10(LR) ≈ 0.28
+# Under H2: median log10(LR) ≈ -1.00
+
+# Find decision threshold
+# weight = 10 means false positives are 10× worse than false negatives
+threshold <- decision_threshold(lr_combined, weight = 10)
+# threshold = 1.9
+
+# Error rates at this threshold
+rates <- threshold_rates(lr_combined, threshold)
+# FPR = 0.000 (no false positives)
+# FNR = 0.053 (5.3% false negatives)
+
+# Visualize
+plot_lr_distribution(lr_combined)
 ```
 
-For simplification, the population reference age distribution is assumed to be uniform. However, the function can be easily adapted to incorporate a dataset with the specified frequencies. This feature will be implemented in the near future.
+### Example 6: Sensitivity Analysis
 
-``` r
-CPT_POP(
-  propS = c(0.5, 0.5),
-  MPa = 40,
-  MPr = 6,
-  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
+Understanding how conclusions depend on parameter choices:
+
+```r
+# How does sex LR vary with error rate?
+sens <- lr_sensitivity("sex", param = "eps", range = c(0.01, 0.20))
+
+# At eps = 0.01: LR = 1.98
+# At eps = 0.10: LR = 1.80
+# At eps = 0.20: LR = 1.60
+
+plot(sens$param_value, sens$LR, type = "l",
+     xlab = "Error rate", ylab = "LR",
+     main = "Sex LR sensitivity to observation error")
 ```
 
-    ##        [,1]  [,2]    [,3]    [,4]   [,5]
-    ## F-T1 0.0225 0.015 0.01875 0.01125 0.0075
-    ## F-T0 0.1275 0.085 0.10625 0.06375 0.0425
-    ## M-T1 0.0225 0.015 0.01875 0.01125 0.0075
-    ## M-T0 0.1275 0.085 0.10625 0.06375 0.0425
+## Function Reference
 
-The obtained matrix represents the probabilities of the phenotypes in the reference population. F-T1 represents a female whose age matches with the age of the missing person. F-T0 represents a female with a mismatch in age with the missing person. M-T1 and M-T0 correspond to the same age categories in association with male. The numbers (columns) represent different hair colors. It is important to note that in the following case, the parameters remain the same, but changing the MP (missing person) range will alter the population probabilities.
+### LR Calculation
 
-``` r
-CPT_POP(
-  propS = c(0.5, 0.5),
-  MPa = 40,
-  MPr = 15,
-  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
+| Function | Evidence Type | Key Parameters |
+|----------|--------------|----------------|
+| `lr_sex()` | Biological sex | `MPs`, `eps`, `Ps` |
+| `lr_age()` | Age range | `MPa`, `MPr`, `epa` |
+| `lr_hair_color()` | Hair color (5 categories) | `MPc`, `epc`, `Pc` |
+| `lr_birthdate()` | Birth date discrepancy | `ABD`, `DBD`, `alpha` |
+| `lr_pigmentation()` | Combined pigmentation | `df` from simulation |
+| `lr_combine()` | Combine sources | Two LR dataframes |
+| `lr_sensitivity()` | Parameter sensitivity | `evidence_type`, `param` |
+
+### Simulation
+
+| Function | Purpose |
+|----------|---------|
+| `sim_lr_prelim()` | Simulate LR distributions for non-genetic data |
+| `sim_lr_genetic()` | Simulate LR distributions for DNA evidence |
+| `sim_poi_prelim()` | Generate synthetic POI database |
+| `sim_reference_pop()` | Generate population with correlated pigmentation |
+
+### Decision Analysis
+
+| Function | Purpose |
+|----------|---------|
+| `decision_threshold()` | Compute optimal LR threshold |
+| `threshold_rates()` | Compute FPR, FNR, TPR, TNR, MCC |
+| `plot_decision_curve()` | Plot error rate trade-off |
+| `plot_lr_distribution()` | Plot LR distributions |
+
+### Interactive Application
+
+```r
+mispitools_app()
 ```
 
-    ##         [,1]   [,2]     [,3]     [,4]    [,5]
-    ## F-T1 0.05625 0.0375 0.046875 0.028125 0.01875
-    ## F-T0 0.09375 0.0625 0.078125 0.046875 0.03125
-    ## M-T1 0.05625 0.0375 0.046875 0.028125 0.01875
-    ## M-T0 0.09375 0.0625 0.078125 0.046875 0.03125
-
-This can be counterintuitive because the population frequencies remain the same in both cases. However, the values of T1 and T0 depend on the age of the missing person (MP) and the error rate. Similarly, it is possible to compute MP conditioned probabilities. Once again, I recommend referring to the documentation for more details on this process.
-
-``` r
-?CPT_MP
-```
-
-Then, we can select a specific missing person (MP). One of the parameters is epc, which is derived from the function Cmodel(). Let's take a look at that function:
-
-``` r
-?Cmodel()
-```
-
-The Cmodel() function provides two options: "uniform" and "custom". The "uniform" option assigns the same error probability (ep) for all combinations of colors, while the "custom" option allows you to specify a specific value for each pair. In this case, we will select the "custom" option.
-
-``` r
-Cmodel(
-  errorModel = "custom",
-  ep = 0.01,ep12 = 0.01,ep13 = 0.005,
-  ep14 = 0.01,ep15 = 0.003,ep23 = 0.01,
-  ep24 = 0.003,ep25 = 0.01,ep34 = 0.003,
-  ep35 = 0.003,ep45 = 0.01)
-```
-
-    ##             [,1]        [,2]        [,3]        [,4]        [,5]
-    ## [1,] 0.972762646 0.009727626 0.004863813 0.009727626 0.002918288
-    ## [2,] 0.009680542 0.968054211 0.004840271 0.009680542 0.002904163
-    ## [3,] 0.004897160 0.009794319 0.979431929 0.002938296 0.002938296
-    ## [4,] 0.009746589 0.002923977 0.002923977 0.974658869 0.009746589
-    ## [5,] 0.002923977 0.009746589 0.002923977 0.009746589 0.974658869
-
-Now we can specify the phenotype probabilities conditioned on the characteristics of the missing person (MP).
-
-``` r
-CPT_MP(MPs = "F", MPc = 1, 
-       eps = 0.05, epa = 0.05, 
-       epc = Cmodel())
-```
-
-    ##                1            2            3            4            5
-    ## F-T1 0.877918288 8.779183e-03 4.389591e-03 8.779183e-03 2.633755e-03
-    ## F-T0 0.046206226 4.620623e-04 2.310311e-04 4.620623e-04 1.386187e-04
-    ## M-T1 0.046206226 4.620623e-04 2.310311e-04 4.620623e-04 1.386187e-04
-    ## M-T0 0.002431907 2.431907e-05 1.215953e-05 2.431907e-05 7.295720e-06
-
-Moreover, LR can be computed as follows:
-
-``` r
-MP <- CPT_MP(MPs = "F", MPc = 1, 
-       eps = 0.05, epa = 0.05, 
-       epc = Cmodel())
-POP <- CPT_POP(
-  propS = c(0.5, 0.5),
-  MPa = 40,
-  MPr = 6,
-  propC = c(0.3, 0.2, 0.25, 0.15, 0.1))
+Provides interactive interface for LR calculations, CPT visualization, and decision analysis.
 
-MP/POP
-```
+## Assumptions and Limitations
 
-    ##                1            2            3            4           5
-    ## F-T1 39.01859058 0.5852788586 0.2341115435 0.7803718115 0.351167315
-    ## F-T0  0.36240177 0.0054360266 0.0021744106 0.0072480354 0.003261616
-    ## M-T1  2.05361003 0.0308041505 0.0123216602 0.0410722006 0.018482490
-    ## M-T0  0.01907378 0.0002861067 0.0001144427 0.0003814755 0.000171664
+1. **Conditional Independence**: Evidence combination by multiplication assumes conditional independence given each hypothesis. Violations (e.g., correlated traits) may inflate or deflate combined LRs.
 
-We can see that the sex-age-color: F-T1-1 and M-T1-1 are the only two LR
-values over 1, being the former (perfect match) the largest. All these
-information could be summarized in the following plot:
+2. **Error Rates**: Default error rates (typically ε = 0.05) are illustrative. Actual rates should be estimated from validation studies.
 
-``` r
-library(ggplot2)
-CondPlot(POP,MP)
-```
+3. **Population Frequencies**: Results depend on reference population choice. Frequencies from inappropriate populations may bias LRs.
 
-![](README_files/figure-markdown_github/unnamed-chunk-10-1.png)<!-- -->
+4. **Observation Model**: The package uses simplified error models. Real observation errors may be more complex (e.g., asymmetric, context-dependent).
 
-Furthermore, a ShinyApp could be executed using the following command:
+5. **Dirichlet Model**: Birth date LRs use Dirichlet-based estimation. The alpha parameters should reflect empirical data from solved cases.
 
-``` r
-mispiApp()
-```
-It will open an interactive panel where you can select parameters to compute conditioned probability tables and likelihood ratios (LR) for each phenotype.
-The parameter "PropF" represents the proportion of females in the population, and the male proportion is calculated as 1 minus PropF. "PropC" indicates the proportion of a specific hair color. After defining proportions for five hair colors, mispitools normalizes them so that they sum up to 1.
+## References
 
-![](README_files/figure-markdown_github/shiny.png)<!-- -->
+Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence in missing person cases." *Forensic Science International: Genetics*, 66, 102891. https://doi.org/10.1016/j.fsigen.2023.102891
 
-Note: mispiApp is currently under development. Specifically, the age variable assumes a uniform population frequency distribution from 0 to 80 years old. Introducing inconsistent parameters, such as setting MPa (missing person age) to 40 with a range error (MPr) of 100 (an error that exceeds two times the age and allows negative results), will result in inconsistent probabilities. Please ensure that you select reliable values for accurate calculations.
+Marsico FL, Vigeland MD, Egeland T, Herrera Pinero F (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
 
-## Calculating DNA-based decision threshold and error rates
-NOTE: The methodology used in this section is explained in: https://doi.org/10.1016/j.fsigen.2021.102519
+Balding DJ, Steele CD (2015). *Weight-of-Evidence for Forensic DNA Profiles*. 2nd ed. Wiley.
 
-In this example, forrel and pedtools packages provides the scafold for
-pedigree definition and genetic profile simulations.The allele frequency database from Argentina is used,
-provided by mispitools.
+Kling D, Tillmar AO, Egeland T (2014). "Familias 3-Extensions and new functionality." *Forensic Science International: Genetics*, 13, 121-127. https://doi.org/10.1016/j.fsigen.2014.07.016
 
-``` r
-library(mispitools)
-library(pedtools)
-library(forrel)
-freq = mispitools::getfreqs(Argentina)[1:5]
-x = pedtools::linearPed(2)
-x = pedtools::setMarkers(x, locusAttributes = freq)
-x = forrel::profileSim(x, N = 1, ids = 2)
-plot(x, hatched = typedMembers(x))
-```
+## Related Packages
 
-![](MispitoolsDNA_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+- [forrel](https://github.com/magnusdv/forrel): Forensic pedigree analysis and LR computation
+- [pedtools](https://github.com/magnusdv/pedtools): Pedigree construction and manipulation
 
-Mispitools allows LR distributions simulations considering both, H1: UP
-is MP and H2: UP is not MP, as true, as follows:
+## Authors
 
-``` r
-datasim = simLRgen(x, missing = 5, 1000, 123)
-```
+Franco L. Marsico (maintainer)
 
-Once obtained, false postive (FPR) and false negative rates (FNR) could
-be computed. This allows to calculate Matthews correlation coefficient (MCC)
-for a specific LR threshold (T):
+Contributors: Suisei Nakagawa, Undral Ganbaatar
 
-``` r
-Trates(datasim, 10)
-```
+## License
 
-    ## [1] "FNR = 0.757 ;  FPR = 0.005 ;  MCC = 0.361063897416207"
-
-Likelihoold ratio distributions under both hypothesis, relatedness and
-unrelatedness could be plotted.
-
-``` r
-LRdist(datasim)
-```
-<img src="README_files/figure-markdown_github/Captura desde 2024-08-23 18-26-50.png" width="300" height="250">
-
-Decision plot brings the posibility of analyzing FPR and FNR for each LR
-threshold. It could be obtained doing:
-
-``` r
-deplot(datasim)
-```
-
-<img src="README_files/figure-markdown_github/Captura desde 2024-08-23 18-26-41.png" width="300" height="250">
-
-This last plot show how different thresholds have different FNR and FPR values. The optimal (named decision threshold, DT) could be computed with the following command:
-
-``` r
-DeT(datasim, 10)
-```
-
-where 10 is the weight_1 (please see mispitools related papers on the top for further information)
-
-
-##  The Whole Game: Computing DNA-Based Kinship Test Posterior Odds with Preliminary Investigation Data Based Prior Odds
-
-NOTE: The methodology implemented in this section is explained in: https://doi.org/10.1016/j.fsigen.2023.102891 (or the open pre-print version, available on http://dx.doi.org/10.2139/ssrn.4331033).
-
-In this section, we provide a simple code for computing the posterior odds of the genetic step. The prior odds can be based on two models: (i) preliminary investigation data-based prior odds, or (ii) uniform prior odds. The first option assigns specific prior odds for each missing person (MP) and unidentified person (UP) pair, while the second option assigns the same prior odds for all pairs. To access the documentation for further details, please run the following code:
-
-``` r
-?postSim
-```
-
-As you can see, several parameters correspond to non-genetic LRs simulations, and datasim (output of simLRgen) is taken as the genetic LR simulations. With the following code we can calculate the posteriors of the example analyzed above. 
-
-``` r
-Postdata <- postSim(
-  datasim, Prior = 0.01, PriorModel = "prelim", 
-  eps = 0.05, erRs = 0.01, epc = Cmodel(), 
-  erRc = Cmodel(), MPc = 1, epa = 0.05, 
-  erRa = 0.01, MPa = 10, MPr = 2
-)
-
-LRdist(Postdata)
-```
-
-<img src="README_files/figure-markdown_github/PostPlot.png" width="450" height="450">
-
-
-
-You can compare it with the previous violing plot, elucidating the increasement in distribution separation. This would impact on performance metrics, that could be analyzed with the same function (Trates). Also, decision threshold could be setted for posterior odds. 
-
-## Inferring distant relationships using all available references
-### By Undral Ganbaatar 
-#### Presentation of the cases
-We are using 10 cases from “Making decisions in missing person identification cases with low statistical power” by Marsico et al. (FSIG, 2021), along with one case from Abuelas de Plaza de Mayo, and extending each pedigree by one generation. Given that the missing individuals were often born in the 1970s, it is plausible that they may have had children who are now seeking information about their origins. We aim to assess whether existing statistical methods are sufficient to confirm genetic matches in these 11 cases, or whether more robust approaches are needed for scenarios where the unidentified person is separated by multiple generations from the genotyped relatives.
-
-<img src="README_files/figure-markdown_github/pedigrees.png">
-
-Table 1: All 11 pedigrees. 
-
-#### Statistical power evaluation
-To address the statistical power for the identification, we used simLRgen function, available in mispitools, and allele frequencies from Argentina (23 STRs markers). With rounds of 10.000 simulations per hypothesis (H1: UP is MP and H2: UP is not MP) we obtained the results presented in the plot below. Across all 11 pedigrees, the log-likelihood ratio (LR) distributions for H1 (true child) and H2 (unrelated) show considerable overlap, as seen in the density plots. While the LR distributions are centered at different values under each hypothesis, their significant overlap implies a high risk of misclassification, either failing to identify a true biological child or incorrectly labeling an unrelated individual as such.
-
-<img src="https://raw.githubusercontent.com/undralg/mispitools/main/README_files/figure-markdown_github/output.png">
-
-Table 2: LR plots. 
-
-For practical purposes, we would like to have a simple metric to measure how these curves overlap. To quantify how much the red and blue LR distributions overlap in each plot, we followed a five-step process. First, we extracted the total likelihood ratios from each of the 1,000 simulations under both hypotheses (H1 = true child, H2 = unrelated) and transformed them using log10. Second, we computed kernel density estimates for each log10-distribution. Third, we defined a shared x-axis grid spanning the region where both densities have support. Fourth, we interpolated both density curves onto this grid. Finally, we computed the overlap area by summing the pointwise minimums of the two densities across the grid and multiplying by the grid spacing. This gave us a single overlap value between 0 and 1 for each pedigree.
-
-
-
-
-#### An alternative path
-Recently, dense SNPs panels have allowed good coverage of the genome. This can be used to identify Identity by Descent segments and then define relationships between individuals. This approach proved to be useful in Forensic Investigative Genetic Genealogy efforts. Nevertheless, the main methods rely on pairwise comparisons. Our aim is to propose an alternative approach to compute probabilities based on a given pedigree with multiple sequenced individuals.
-Approximate Bayesian Computation (ABC) offers a promising alternative in complex kinship scenarios. ABC uses simulations to generate expected genetic patterns under different hypotheses. These simulated datasets are then compared to the observed data using summary statistics, allowing us to approximate the posterior probability of each hypothesis.
-
-ABC is especially well-suited for our context because it can incorporate full pedigrees, multiple genotyped relatives, and population-level allele frequencies, while flexibly handling genotyping error and missing data. This makes it a strong candidate for improving identification in human rights cases where biological relatives may span several generations.
-
----
-
-This package is now maintained by Suisei Nakagawa and Franco Marsico. 
+GPL-3

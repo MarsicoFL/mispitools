@@ -90,16 +90,16 @@
 
 sim_lr_genetic <- function(reference, missing, numsims = 100, seed = 123, numCores = 1) {
 
-  st <- base::Sys.time()
+  st <- Sys.time()
 
   # Handle pedList input
-if (pedtools::is.pedList(reference) && base::length(reference) == 1) {
+  if (pedtools::is.pedList(reference) && length(reference) == 1) {
     reference <- reference[[1]]
   }
 
   # Validate input
   if (!pedtools::is.ped(reference)) {
-    base::stop("Expecting a connected pedigree as H1")
+    stop("Expecting a connected pedigree as H1")
   }
 
   set.seed(seed)
@@ -121,19 +121,19 @@ if (pedtools::is.pedList(reference) && base::length(reference) == 1) {
   poi2ped <- forrel::profileSim(reference, numsims, ids = missing, numCores = numCores)
 
   # Extract the missing person as singleton
-  poi2 <- base::as.list(base::rep(NA, numsims))
+  poi2 <- as.list(rep(NA, numsims))
   for (i in 1:numsims) {
-    poi2[[i]] <- base::subset(poi2ped[[i]], missing)
+    poi2[[i]] <- subset(poi2ped[[i]], missing)
   }
 
-  base::rm(poi2ped)
+  rm(poi2ped)
 
   # Calculate LR for each related profile
-  lr2 <- base::as.list(rep(NA, numsims))
+  lr2 <- as.list(rep(NA, numsims))
   for (i in 1:numsims) {
     lr2[[i]] <- forrel::missingPersonLR(reference, missing, poi = poi2[[i]])
   }
 
   # Return as list structure
-  base::structure(list(Unrelated = lr1, Related = lr2))
+  list(Unrelated = lr1, Related = lr2)
 }

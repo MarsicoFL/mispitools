@@ -105,6 +105,59 @@ sim_lr_prelim <- function(vartype,
                           database = NULL,
                           cuts = c(-120, -30, 30, 120, 240, 360)) {
 
+  # Input validation
+  allowed_vartypes <- c("sex", "region", "age", "height", "birthdate")
+  if (!vartype %in% allowed_vartypes) {
+    stop("vartype must be one of: ", paste(allowed_vartypes, collapse = ", "))
+  }
+  if (!is.numeric(numsims) || numsims < 1) {
+    stop("numsims must be a positive integer")
+  }
+  if (!is.numeric(ErrorRate) || ErrorRate < 0 || ErrorRate > 1) {
+    stop("ErrorRate must be between 0 and 1")
+  }
+  if (!is.numeric(numReg) || numReg < 2) {
+    stop("numReg must be at least 2")
+  }
+
+  # Helper function: Dirichlet probability estimation via method of moments
+  # Returns list of estimated category probabilities
+  .estimate_dirichlet_probs <- function(alpha, n_samples = 500) {
+    # Generate Dirichlet samples via gamma distribution
+    x <- matrix(stats::rgamma(n_samples * length(alpha), alpha, 1),
+                ncol = length(alpha), byrow = TRUE)
+    x <- x / rowSums(x)
+
+    # Add small constant to avoid log(0)
+    x <- pmax(x, 1e-10)
+
+    # Method of moments estimation
+    x1_mean <- mean(x[, 1])
+    x1_mean_sq <- mean(x[, 1]^2)
+    denom <- x1_mean_sq - x1_mean^2
+
+    # Guard against division by zero in moment estimation
+    if (abs(denom) < 1e-10) {
+      warning("Dirichlet moment estimation: near-zero denominator, using column means")
+      mom <- colMeans(x)
+    } else {
+      mom <- colMeans(x) * (x1_mean - x1_mean_sq) / denom
+    }
+
+    as.list(mom / sum(mom))
+  }
+
+  # Helper function: Safe LR calculation with division by zero protection
+  .safe_lr <- function(numerator, denominator, varname = "variable") {
+    if (abs(denominator) < 1e-10) {
+      warning(sprintf("Division by near-zero in %s LR calculation (denom=%.6f). ",
+                      varname, denominator),
+              "Consider different parameters or larger database.")
+      return(ifelse(numerator > 0, 1e6, 1))  # Cap at 1e6 to avoid Inf
+    }
+    numerator / denominator
+  }
+
   set.seed(seed)
 
   # Initialize result vectors
@@ -120,10 +173,15 @@ sim_lr_prelim <- function(vartype,
       b <- sample(sexLRvalues, numsims, replace = TRUE, prob = c(0.5, 0.5))
     }
     else if (vartype == "region") {
-      H2 <- 1 / numReg
-      RegLRvalues <- c((1 - ErrorRate) / (1 / H2), ErrorRate / H2)
+      # P(match | H2) = 1/numReg (uniform probability)
+      # P(mismatch | H2) = (numReg-1)/numReg
+      p_match_H2 <- 1 / numReg
+      p_mismatch_H2 <- (numReg - 1) / numReg
+      # LR(match) = P(match|H1) / P(match|H2) = (1-ErrorRate) / (1/numReg)
+      # LR(mismatch) = P(mismatch|H1) / P(mismatch|H2) = ErrorRate / ((numReg-1)/numReg)
+      RegLRvalues <- c((1 - ErrorRate) / p_match_H2, ErrorRate / p_mismatch_H2)
       a <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(1 - ErrorRate, ErrorRate))
-      b <- sample(RegLRvalues, numsims, replace = TRUE)
+      b <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(p_match_H2, p_mismatch_H2))
     }
     else if (vartype == "age") {
       AgeLRvalues <- c((1 - ErrorRate) / 0.5, ErrorRate / 0.5)
@@ -136,18 +194,14 @@ sim_lr_prelim <- function(vartype,
       b <- sample(heightLRvalues, numsims, replace = TRUE, prob = c(0.5, 0.5))
     }
     else if (vartype == "birthdate") {
-      # Generate Dirichlet samples
-      x <- matrix(stats::rgamma(500 * length(alphaBdate), alphaBdate, 1),
-                  ncol = length(alphaBdate), byrow = TRUE)
-      x <- x / rowSums(x)
+      # Estimate category probabilities using Dirichlet model
+      fit2 <- .estimate_dirichlet_probs(alphaBdate)
+      n_cats <- length(fit2)
 
-      # Method of moments estimation
-      lpb <- colMeans(log(x))
-      mom <- colMeans(x) * (mean(x[, 1]) - mean(x[, 1]^2)) / (mean(x[, 1]^2) - (mean(x[, 1]))^2)
-      fit2 <- as.list(mom / sum(mom))
-
-      # LR values for each category
-      bdateLRvalues <- lapply(seq_along(fit2), function(i) fit2[[i]] / (1 / length(fit2)))
+      # LR values for each category: P(cat|H1) / P(cat|H2_uniform)
+      # Under H2, assume uniform distribution across categories
+      h2_uniform <- 1 / n_cats
+      bdateLRvalues <- lapply(fit2, function(p) p / h2_uniform)
 
       a <- sample(unlist(bdateLRvalues), numsims, replace = TRUE, prob = unlist(fit2))
       b <- sample(unlist(bdateLRvalues), numsims, replace = TRUE)
@@ -161,30 +215,59 @@ sim_lr_prelim <- function(vartype,
     }
 
     if (vartype == "sex") {
+      if (!"Sex" %in% names(database)) {
+        stop("database must have 'Sex' column for sex variable")
+      }
       fs <- sum(database$Sex == MP) / length(database$Sex)
-      sexLRvalues <- c((1 - ErrorRate) / fs, ErrorRate / (1 - fs))
+      # Safe LR calculation with division by zero protection
+      lr_match <- .safe_lr(1 - ErrorRate, fs, "sex match")
+      lr_mismatch <- .safe_lr(ErrorRate, 1 - fs, "sex mismatch")
+      sexLRvalues <- c(lr_match, lr_mismatch)
+      # Ensure valid probabilities for sampling
+      fs_safe <- max(min(fs, 1 - 1e-10), 1e-10)
       a <- sample(sexLRvalues, numsims, replace = TRUE, prob = c(1 - ErrorRate, ErrorRate))
-      b <- sample(sexLRvalues, numsims, replace = TRUE, prob = c(fs, 1 - fs))
+      b <- sample(sexLRvalues, numsims, replace = TRUE, prob = c(fs_safe, 1 - fs_safe))
     }
     else if (vartype == "region") {
+      if (!"Region" %in% names(database)) {
+        stop("database must have 'Region' column for region variable")
+      }
       fr <- sum(database$Region == MP) / length(database$Region)
-      RegLRvalues <- c((1 - ErrorRate) / fr, ErrorRate / (1 - fr))
+      lr_match <- .safe_lr(1 - ErrorRate, fr, "region match")
+      lr_mismatch <- .safe_lr(ErrorRate, 1 - fr, "region mismatch")
+      RegLRvalues <- c(lr_match, lr_mismatch)
+      fr_safe <- max(min(fr, 1 - 1e-10), 1e-10)
       a <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(1 - ErrorRate, ErrorRate))
-      b <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(fr, 1 - fr))
+      b <- sample(RegLRvalues, numsims, replace = TRUE, prob = c(fr_safe, 1 - fr_safe))
     }
     else if (vartype == "age") {
+      if (!"Age" %in% names(database)) {
+        stop("database must have 'Age' column for age variable")
+      }
       fa <- sum(database$Age < (MP + int) & database$Age > (MP - int)) / length(database$Age)
-      AgeLRvalues <- c((1 - ErrorRate) / fa, ErrorRate / (1 - fa))
+      lr_match <- .safe_lr(1 - ErrorRate, fa, "age match")
+      lr_mismatch <- .safe_lr(ErrorRate, 1 - fa, "age mismatch")
+      AgeLRvalues <- c(lr_match, lr_mismatch)
+      fa_safe <- max(min(fa, 1 - 1e-10), 1e-10)
       a <- sample(AgeLRvalues, numsims, replace = TRUE, prob = c(1 - ErrorRate, ErrorRate))
-      b <- sample(AgeLRvalues, numsims, replace = TRUE, prob = c(fa, 1 - fa))
+      b <- sample(AgeLRvalues, numsims, replace = TRUE, prob = c(fa_safe, 1 - fa_safe))
     }
     else if (vartype == "height") {
+      if (!"Height" %in% names(database)) {
+        stop("database must have 'Height' column for height variable")
+      }
       fh <- sum(database$Height < (MP + int) & database$Height > (MP - int)) / length(database$Height)
-      heightLRvalues <- c((1 - ErrorRate) / fh, ErrorRate / (1 - fh))
+      lr_match <- .safe_lr(1 - ErrorRate, fh, "height match")
+      lr_mismatch <- .safe_lr(ErrorRate, 1 - fh, "height mismatch")
+      heightLRvalues <- c(lr_match, lr_mismatch)
+      fh_safe <- max(min(fh, 1 - 1e-10), 1e-10)
       a <- sample(heightLRvalues, numsims, replace = TRUE, prob = c(1 - ErrorRate, ErrorRate))
-      b <- sample(heightLRvalues, numsims, replace = TRUE, prob = c(fh, 1 - fh))
+      b <- sample(heightLRvalues, numsims, replace = TRUE, prob = c(fh_safe, 1 - fh_safe))
     }
     else if (vartype == "birthdate") {
+      if (!"DBD" %in% names(database)) {
+        stop("database must have 'DBD' column for birthdate variable")
+      }
       MP <- as.Date(MP)
       PrelimData <- data.frame(
         ABD = MP,
@@ -195,20 +278,18 @@ sim_lr_prelim <- function(vartype,
       cut_results <- cut(PrelimData$Dis, breaks = c(-Inf, cuts, Inf))
       freq_table <- table(cut_results)
       relfreq <- as.vector(freq_table / sum(freq_table))
-      alpha2 <- relfreq
 
-      # Generate Dirichlet samples
-      x <- matrix(stats::rgamma(500 * length(alphaBdate), alphaBdate, 1),
-                  ncol = length(alphaBdate), byrow = TRUE)
-      x <- x / rowSums(x)
+      # Add pseudocount to avoid zero frequencies
+      alpha2 <- pmax(relfreq, 1e-6)
+      alpha2 <- alpha2 / sum(alpha2)  # Renormalize
 
-      # Method of moments estimation
-      lpb <- colMeans(log(x))
-      mom <- colMeans(x) * (mean(x[, 1]) - mean(x[, 1]^2)) / (mean(x[, 1]^2) - (mean(x[, 1]))^2)
-      fit2 <- as.list(mom / sum(mom))
+      # Estimate H1 probabilities using Dirichlet model
+      fit2 <- .estimate_dirichlet_probs(alphaBdate)
 
-      # LR values using database frequencies
-      bdateLRvalues <- lapply(seq_along(fit2), function(i) fit2[[i]] / alpha2[i])
+      # LR values using database frequencies with safe division
+      bdateLRvalues <- lapply(seq_along(fit2), function(i) {
+        .safe_lr(fit2[[i]], alpha2[i], paste0("birthdate cat ", i))
+      })
 
       a <- sample(unlist(bdateLRvalues), numsims, replace = TRUE, prob = unlist(fit2))
       b <- sample(unlist(bdateLRvalues), numsims, replace = TRUE, prob = alpha2)

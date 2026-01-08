@@ -106,9 +106,9 @@ sim_posterior <- function(datasim,
     LRgenH2 <- datasim$Unrelated
 
     # Simulations for H2
-    LRs2 <- lr_sex(LR = TRUE, H = 2, nsims = nsims, eps = eps, erRs = erRs)
-    LRc2 <- lr_hair_color(LR = TRUE, H = 2, nsims = nsims, epc = epc, erRc = erRc, MPc = MPc)
-    LRa2 <- lr_age(LR = TRUE, H = 2, nsims = nsims, epa = epa, erRa = erRa, MPa = MPa, MPr = MPr)
+    LRs2 <- lr_sex(LR = TRUE, H = 2, numsims = nsims, eps = eps, erRs = erRs)
+    LRc2 <- lr_hair_color(LR = TRUE, H = 2, numsims = nsims, epc = epc, erRc = erRc, MPc = MPc)
+    LRa2 <- lr_age(LR = TRUE, H = 2, numsims = nsims, epa = epa, erRa = erRa, MPa = MPa, MPr = MPr)
 
     datasim2 <- data.frame(
       LRs = LRs2$LRs,
@@ -126,9 +126,9 @@ sim_posterior <- function(datasim,
     # Simulations for H1
     LRgenH1 <- datasim$Related
 
-    LRs1 <- lr_sex(LR = TRUE, H = 1, nsims = nsims, eps = eps, erRs = erRs)
-    LRc1 <- lr_hair_color(LR = TRUE, H = 1, nsims = nsims, epc = epc, erRc = erRc, MPc = MPc)
-    LRa1 <- lr_age(LR = TRUE, H = 1, nsims = nsims, epa = epa, erRa = erRa, MPa = MPa, MPr = MPr)
+    LRs1 <- lr_sex(LR = TRUE, H = 1, numsims = nsims, eps = eps, erRs = erRs)
+    LRc1 <- lr_hair_color(LR = TRUE, H = 1, numsims = nsims, epc = epc, erRc = erRc, MPc = MPc)
+    LRa1 <- lr_age(LR = TRUE, H = 1, numsims = nsims, epa = epa, erRa = erRa, MPa = MPa, MPr = MPr)
 
     datasim1 <- data.frame(
       LRs = LRs1$LRs,

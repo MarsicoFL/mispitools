@@ -90,8 +90,8 @@ sim_mp_prelim <- function(casetype = "children",
     e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
     PrelimDatasim <- cbind(a, b, c, d, e)
-    base::colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Month", "Birth place")
-    base::structure(base::as.data.frame(PrelimDatasim))
+    colnames(PrelimDatasim) <- c("POI-ID", "DBD", "Sex", "Month", "Birth place")
+    as.data.frame(PrelimDatasim)
 
   } else if (casetype == "migrants") {
     sex <- c("female", "male")
@@ -106,7 +106,7 @@ sim_mp_prelim <- function(casetype = "children",
     e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
     PrelimDatasim <- cbind(a, age, c, height, e)
-    base::colnames(PrelimDatasim) <- c("UHR-ID", "Age", "Sex", "Height", "Region")
-    base::structure(base::as.data.frame(PrelimDatasim))
+    colnames(PrelimDatasim) <- c("UHR-ID", "Age", "Sex", "Height", "Region")
+    as.data.frame(PrelimDatasim)
   }
 }

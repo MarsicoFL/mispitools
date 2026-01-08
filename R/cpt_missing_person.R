@@ -83,7 +83,38 @@ cpt_missing_person <- function(MPs = "F",
 
   # Handle numeric input for sex (1=Female, 2=Male)
   if (is.numeric(MPs)) {
+    if (!MPs %in% c(1, 2)) {
+      stop("Numeric MPs must be 1 (Female) or 2 (Male)")
+    }
     MPs <- if (MPs == 1) "F" else "M"
+  }
+
+  # Input validation
+  if (!MPs %in% c("F", "M")) {
+    stop("MPs must be 'F' (Female) or 'M' (Male)")
+  }
+
+  if (!is.numeric(MPc) || length(MPc) != 1 || !MPc %in% 1:5) {
+    stop("MPc must be an integer from 1 to 5 (hair color category)")
+  }
+
+  if (!is.numeric(eps) || length(eps) != 1 || eps < 0 || eps > 1) {
+    stop("eps must be a numeric value between 0 and 1")
+  }
+
+  if (!is.numeric(epa) || length(epa) != 1 || epa < 0 || epa > 1) {
+    stop("epa must be a numeric value between 0 and 1")
+  }
+
+  if (!is.matrix(epc) || nrow(epc) != 5 || ncol(epc) != 5) {
+    stop("epc must be a 5x5 matrix (hair color error matrix)")
+  }
+
+  # Check that error matrix rows sum to approximately 1
+  row_sums <- rowSums(epc)
+  if (any(abs(row_sums - 1) > 1e-6)) {
+    warning("Error matrix rows do not sum to 1; normalizing")
+    epc <- epc / row_sums
   }
 
   # Create joint probability vector for sex-age combinations

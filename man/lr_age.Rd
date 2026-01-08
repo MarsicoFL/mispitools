@@ -9,13 +9,14 @@ lr_age(
   MPr = 6,
   UHRr = 1,
   gam = 0.07,
-  nsims = 1000,
+  numsims = 1000,
   epa = 0.05,
   erRa = epa,
   H = 1,
   modelA = c("uniform", "custom")[1],
   LR = FALSE,
-  seed = 1234
+  seed = 1234,
+  nsims = NULL
 )
 }
 \arguments{
@@ -30,7 +31,7 @@ person's age estimation. Default: 1.}
 \item{gam}{Numeric. Gamma parameter for age uncertainty scaling.
 The uncertainty interval is age +/- (gam * age + UHRr). Default: 0.07.}
 
-\item{nsims}{Integer. Number of simulations to perform. Default: 1000.}
+\item{numsims}{Integer. Number of simulations to perform. Default: 1000.}
 
 \item{epa}{Numeric (0-1). Error rate for age categorization. Default: 0.05.}
 
@@ -53,6 +54,8 @@ Default: 1.}
 \item{LR}{Logical. If TRUE, compute and return LR values. Default: FALSE.}
 
 \item{seed}{Integer. Random seed for reproducibility. Default: 1234.}
+
+\item{nsims}{Deprecated. Use \code{numsims} instead.}
 }
 \value{
 A data.frame with columns:
@@ -92,15 +95,15 @@ Age is sampled uniformly from 1-80, then categorized.
 }
 \examples{
 # Simulate under H1 (related)
-sim_h1 <- lr_age(MPa = 40, MPr = 6, H = 1, nsims = 100)
+sim_h1 <- lr_age(MPa = 40, MPr = 6, H = 1, numsims = 100)
 table(sim_h1$group)
 
 # Simulate under H2 with LR values
-sim_h2 <- lr_age(MPa = 40, MPr = 6, H = 2, nsims = 100, LR = TRUE)
+sim_h2 <- lr_age(MPa = 40, MPr = 6, H = 2, numsims = 100, LR = TRUE)
 head(sim_h2)
 
 # Narrower age range (more discriminating)
-sim_narrow <- lr_age(MPa = 35, MPr = 3, nsims = 500, LR = TRUE)
+sim_narrow <- lr_age(MPa = 35, MPr = 3, numsims = 500, LR = TRUE)
 summary(sim_narrow$LRa)
 }
 \references{

@@ -39,6 +39,22 @@
 #' ref_prop[order(-ref_prop$f_h_s_y), ][1:5, ]
 
 compute_reference_prop <- function(data) {
+
+  # Input validation
+  if (!is.data.frame(data)) {
+    stop("data must be a data.frame (typically from sim_reference_pop)")
+  }
+
+  required_cols <- c("hair_colour", "skin_colour", "eye_colour")
+  missing_cols <- setdiff(required_cols, names(data))
+  if (length(missing_cols) > 0) {
+    stop("data is missing required columns: ", paste(missing_cols, collapse = ", "))
+  }
+
+  if (nrow(data) == 0) {
+    stop("data has no rows. Cannot compute proportions from empty data.")
+  }
+
   temp <- as.data.frame(table(data$hair_colour, data$skin_colour, data$eye_colour))
   names(temp) <- c("hair_colour", "skin_colour", "eye_colour", "count")
 

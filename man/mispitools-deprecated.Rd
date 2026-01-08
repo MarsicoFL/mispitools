@@ -33,6 +33,8 @@
 \alias{multi_kl_divergence}
 \alias{mispiApp}
 \alias{lrComparisonApp}
+\alias{app_mispitools}
+\alias{app_lr_comparison}
 \title{Deprecated functions in mispitools}
 \usage{
 simLRgen(...)
@@ -96,6 +98,10 @@ multi_kl_divergence(...)
 mispiApp(...)
 
 lrComparisonApp(...)
+
+app_mispitools(...)
+
+app_lr_comparison(...)
 }
 \description{
 These functions are deprecated and will be removed in a future version

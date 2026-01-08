@@ -11,7 +11,8 @@
 #'   Probability of misclassifying sex when recording. Default: 0.05.
 #' @param erRs Numeric (0-1). Error rate in the database/reference.
 #'   Defaults to \code{eps} if not specified.
-#' @param nsims Integer. Number of simulations to perform. Default: 1000.
+#' @param numsims Integer. Number of simulations to perform. Default: 1000.
+#' @param nsims Deprecated. Use \code{numsims} instead.
 #' @param Ps Numeric vector of length 2. Sex proportions in the population,
 #'   c(proportion_female, proportion_male). Must sum to 1. Default: c(0.5, 0.5).
 #' @param H Integer (1 or 2). Hypothesis to simulate under:
@@ -52,18 +53,18 @@
 #' @export
 #' @examples
 #' # Simulate under H1 (related)
-#' sim_h1 <- lr_sex(MPs = "F", H = 1, nsims = 100)
+#' sim_h1 <- lr_sex(MPs = "F", H = 1, numsims = 100)
 #' table(sim_h1$Sexo)
 #'
 #' # Simulate under H2 (unrelated) with LR values
-#' sim_h2 <- lr_sex(MPs = "F", H = 2, nsims = 100, LR = TRUE)
+#' sim_h2 <- lr_sex(MPs = "F", H = 2, numsims = 100, LR = TRUE)
 #' head(sim_h2)
 #'
 #' # Different population proportions
 #' sim_custom <- lr_sex(
 #'   MPs = "M",
 #'   Ps = c(0.52, 0.48),  # 52% female population
-#'   nsims = 500,
+#'   numsims = 500,
 #'   LR = TRUE
 #' )
 #' summary(sim_custom$LRs)
@@ -71,11 +72,46 @@
 lr_sex <- function(MPs = "F",
                    eps = 0.05,
                    erRs = eps,
-                   nsims = 1000,
+                   numsims = 1000,
                    Ps = c(0.5, 0.5),
                    H = 1,
                    LR = FALSE,
-                   seed = 1234) {
+                   seed = 1234,
+                   nsims = NULL) {
+
+  # Handle deprecated nsims parameter
+  if (!is.null(nsims)) {
+    warning("Parameter 'nsims' is deprecated. Use 'numsims' instead.",
+            call. = FALSE)
+    numsims <- nsims
+  }
+
+  # Input validation
+  if (!MPs %in% c("F", "M")) {
+    stop("MPs must be 'F' or 'M'")
+  }
+  if (!is.numeric(eps) || eps < 0 || eps > 1) {
+    stop("eps must be between 0 and 1")
+  }
+  if (!is.numeric(erRs) || erRs < 0 || erRs > 1) {
+    stop("erRs must be between 0 and 1")
+  }
+  if (!is.numeric(numsims) || numsims < 1) {
+    stop("numsims must be a positive integer")
+  }
+  if (!is.numeric(Ps) || length(Ps) != 2) {
+    stop("Ps must be a numeric vector of length 2")
+  }
+  if (any(Ps < 0) || any(Ps > 1)) {
+    stop("Ps values must be between 0 and 1")
+  }
+  if (abs(sum(Ps) - 1) > 1e-6) {
+    warning("Ps does not sum to 1; normalizing")
+    Ps <- Ps / sum(Ps)
+  }
+  if (!H %in% c(1, 2)) {
+    stop("H must be 1 or 2")
+  }
 
   set.seed(seed)
   sims <- list()
@@ -89,13 +125,13 @@ lr_sex <- function(MPs = "F",
   if (H == 1) {
     # H1: Sample with high probability of matching MP's sex
     x <- c(S[MPss], S[noMPs])
-    sims <- as.data.frame(sample(x, size = nsims, prob = c(1 - erRs, erRs), replace = TRUE))
+    sims <- as.data.frame(sample(x, size = numsims, prob = c(1 - erRs, erRs), replace = TRUE))
     names(sims) <- "Sexo"
   }
   else if (H == 2) {
     # H2: Sample from population proportions
     x <- c(S[MPss], S[noMPs])
-    sims <- as.data.frame(sample(x, size = nsims, prob = c(Ps[1], Ps[2]), replace = TRUE))
+    sims <- as.data.frame(sample(x, size = numsims, prob = c(Ps[1], Ps[2]), replace = TRUE))
     names(sims) <- "Sexo"
   }
 
