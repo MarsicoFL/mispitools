@@ -1,6 +1,6 @@
-<img src="/README_files/figure-markdown_github/MispiIcon.png" align="left" width="100">
+<img src="inst/www/MispiIcon.png" align="left" width="100">
 
-# mispitools: Missing Person Identification Tools
+# mispitools: Likelihood ratios in forensic Sciences
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/mispitools)](https://CRAN.R-project.org/package=mispitools)
