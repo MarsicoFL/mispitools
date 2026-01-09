@@ -157,11 +157,11 @@ It provides tools for calculating LRs from non-genetic evidence, visualizing pro
 
 ## Citations
 
-Marsico FL, Vigeland MD, Herrera Pinero F, Egeland T (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
+Marsico FL, Caridi I (2023). "Incorporating non-genetic evidence in large scale missing person searches: A general approach beyond filtering." *Forensic Science International: Genetics*, 66, 102891. https://doi.org/10.1016/j.fsigen.2023.102891
 
-Marsico FL, Rodríguez Cardozo MB, Egeland T, Herrera Pinero F (2023). "Likelihood ratios for non-genetic evidence in missing person cases." *Forensic Science International: Genetics*, 66, 102891. https://doi.org/10.1016/j.fsigen.2023.102891
+Marsico FL, Vigeland MD, et al. (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
 
-Marsico FL, et al. (2026). "Using all available information in missing person identification." *Under review*.
+Egeland T, Marsico FL (2026). "Using all available information in missing person identification." *Under review*.
 
 ## Related Packages
 
