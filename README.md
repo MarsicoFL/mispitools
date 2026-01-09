@@ -11,7 +11,7 @@
 
 ## The Problem
 
-When unidentified human remains are found, forensic scientists must search databases of missing persons to find potential identifications. **mispitools** provides a statistical framework based on likelihood ratios (LRs) to quantify the weight of evidence—combining genetic and non-genetic information—and support decision-making in these investigations.
+When unidentified human remains are found, forensic scientists must search databases of missing persons to find potential identifications. **mispitools** provides a statistical framework based on likelihood ratios (LRs) to quantify the weight of evidence, combining genetic and non-genetic information, and support decision-making in these investigations.
 
 ## Why Likelihood Ratios?
 
