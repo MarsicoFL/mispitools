@@ -11,16 +11,7 @@
 
 ## The Problem
 
-Thousands of people go missing every year worldwide. In many cases, unidentified human remains are recovered but cannot be immediately linked to a missing person. Forensic scientists face the challenge of searching databases of missing persons to find potential identifications.
-
-**The core question is: given a set of unidentified remains and a database of missing persons, how do we quantify the weight of evidence for or against a proposed identification?**
-
-Traditional approaches often rely on arbitrary thresholds or subjective assessments. **mispitools** provides a rigorous statistical framework based on likelihood ratios (LRs) that:
-
-- Quantifies the evidential value of both genetic (DNA) and non-genetic information
-- Combines multiple independent evidence sources in a coherent Bayesian framework
-- Enables informed decision-making by analyzing error rates at different thresholds
-- Supports database searches by ranking candidates according to evidential support
+When unidentified human remains are found, forensic scientists must search databases of missing persons to find potential identifications. **mispitools** provides a statistical framework based on likelihood ratios (LRs) to quantify the weight of evidence—combining genetic and non-genetic information—and support decision-making in these investigations.
 
 ## Why Likelihood Ratios?
 
@@ -147,7 +138,9 @@ For users who prefer a graphical interface, **mispitools** includes an interacti
 mispitools_app()
 ```
 
-The app provides tools for calculating LRs from non-genetic evidence, visualizing probability tables, and exploring decision thresholds.
+The app is also available online at: **https://francomarsico.shinyapps.io/mispitools/**
+
+It provides tools for calculating LRs from non-genetic evidence, visualizing probability tables, and exploring decision thresholds.
 
 ## Main Functions
 
@@ -162,9 +155,13 @@ The app provides tools for calculating LRs from non-genetic evidence, visualizin
 | `plot_lr_distribution()` | Visualize LR distributions |
 | `mispitools_app()` | Interactive Shiny application |
 
-## Citation
+## Citations
 
 Marsico FL, Vigeland MD, Herrera Pinero F, Egeland T (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
+
+Marsico FL, Rodríguez Cardozo MB, Egeland T, Herrera Pinero F (2023). "Likelihood ratios for non-genetic evidence in missing person cases." *Forensic Science International: Genetics*, 66, 102891. https://doi.org/10.1016/j.fsigen.2023.102891
+
+Marsico FL, et al. (2026). "Using all available information in missing person identification." *Under review*.
 
 ## Related Packages
 
