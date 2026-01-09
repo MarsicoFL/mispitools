@@ -15,3 +15,5 @@
 ^Rplots\.pdf$
 ^.*\.Rcheck$
 ^\.Rhistory$
+^doc$
+^Meta$

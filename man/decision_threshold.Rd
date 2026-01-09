@@ -4,7 +4,7 @@
 \alias{decision_threshold}
 \title{Compute Optimal Decision Threshold}
 \usage{
-decision_threshold(datasim, weight)
+decision_threshold(datasim, weight = 10)
 }
 \arguments{
 \item{datasim}{A data.frame with columns \code{Related} and \code{Unrelated}
@@ -14,7 +14,7 @@ containing LR values. Can be output from \code{\link{sim_lr_genetic}},
 
 \item{weight}{Numeric. The relative weight of false positives compared to
 false negatives. A value > 1 penalizes false positives more heavily.
-Suggested value: 10 (false positives are 10x worse than false negatives).}
+Default: 10 (false positives are 10x worse than false negatives).}
 }
 \value{
 Prints and invisibly returns the suggested LR threshold value.

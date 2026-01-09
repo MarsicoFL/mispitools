@@ -48,18 +48,15 @@ if (interactive()) {
 }
 }
 \references{
-Marsico FL, et al. (2023). "Likelihood ratios for non-genetic evidence
-in missing person cases." \emph{Forensic Science International: Genetics},
-66, 102891. \doi{10.1016/j.fsigen.2023.102891}
+Marsico FL, Caridi I (2023). "Incorporating non-genetic evidence in large
+scale missing person searches: A general approach beyond filtering."
+\emph{Forensic Science International: Genetics}, 66, 102891.
+\doi{10.1016/j.fsigen.2023.102891}
 
-Marsico FL, Vigeland MD, Egeland T, Herrera Pinero F (2021). "Making
-decisions in missing person identification cases with low statistical
-power." \emph{Forensic Science International: Genetics}, 52, 102519.
+Marsico FL, Vigeland MD, et al. (2021). "Making decisions in missing person
+identification cases with low statistical power."
+\emph{Forensic Science International: Genetics}, 52, 102519.
 \doi{10.1016/j.fsigen.2021.102519}
-
-Kling D, Tillmar AO, Egeland T (2014). "Familias 3-Extensions and new
-functionality." \emph{Forensic Science International: Genetics}, 13, 121-127.
-\doi{10.1016/j.fsigen.2014.07.016}
 }
 \seealso{
 \code{\link{lr_sex}}, \code{\link{lr_age}}, \code{\link{lr_hair_color}},

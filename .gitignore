@@ -36,3 +36,5 @@ build/
 
 # test cache
 .pytest_cache/
+/doc/
+/Meta/
