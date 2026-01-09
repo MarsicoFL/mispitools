@@ -23,58 +23,104 @@ install.packages("mispitools")
 devtools::install_github("MarsicoFL/mispitools")
 ```
 
-## The Problem
+## The Likelihood Ratio Framework
 
-In missing person cases, investigators must search databases of unidentified individuals. The challenge: **how to rank candidates and quantify the weight of evidence?**
+In missing person cases, we evaluate evidence under two competing hypotheses:
 
-The likelihood ratio provides a principled answer:
+- **H1**: The person of interest (POI) **is** the missing person (MP)
+- **H2**: The POI is **not** the MP (comes from the reference population)
 
-$$LR = \frac{P(\text{Evidence} \mid \text{H}_1: \text{Match})}{P(\text{Evidence} \mid \text{H}_2: \text{No match})}$$
+The likelihood ratio quantifies how the evidence updates our belief:
 
-## Practical Example: Database Search
+$$LR = \frac{P(\text{Evidence} \mid H_1)}{P(\text{Evidence} \mid H_2)}$$
 
-Consider searching a database of 100 candidates using combined evidence:
-- **DNA**: 15 STR markers (grandparent-grandchild relationship)
-- **Non-genetic**: Sex and age
+An LR > 1 indicates the evidence is more probable under H1; an LR < 1 favors H2. The LR is **not** a probability of identification—it measures the relative support provided by the evidence.
+
+## Tutorial: Simulating LR Distributions
+
+### Step 1: Genetic Evidence
+
+First, we simulate LR distributions from DNA evidence. This requires defining a pedigree structure connecting the MP to a reference individual.
 
 ```r
 library(mispitools)
 library(forrel)
+library(pedtools)
 
-# Genetic evidence
-ped <- linearPed(2)
+# Define pedigree: grandparent-grandchild relationship
+ped <- linearPed(2)  # 3-generation pedigree
 ped <- setMarkers(ped, locusAttributes = NorwegianFrequencies[1:15])
-ped <- profileSim(ped, N = 1, ids = 2)
+ped <- profileSim(ped, N = 1, ids = 2)  # Simulate reference profile
+
+# Simulate LRs: under H1 (POI is MP) and H2 (POI is unrelated)
 lr_dna <- sim_lr_genetic(ped, missing = 5, numsims = 500)
 lr_dna_df <- lr_to_dataframe(lr_dna)
 
-# Non-genetic evidence
+head(lr_dna_df)
+#>      Related  Unrelated
+#> 1  1247.3201  0.0023415
+#> 2   892.1547  0.0001823
+#> ...
+```
+
+The `Related` column contains LRs simulated under H1, while `Unrelated` contains LRs under H2.
+
+### Step 2: Non-Genetic Evidence
+
+Non-genetic evidence (sex, age, anthropological features) also contributes to identification:
+
+```r
+# Simulate LR distributions for sex and age
 lr_sex <- sim_lr_prelim("sex", numsims = 500)
 lr_age <- sim_lr_prelim("age", numsims = 500)
 
-# Combine all evidence
+head(lr_sex)
+#>    Related Unrelated
+#> 1    1.863    0.1052
+#> 2    1.863    1.8627
+#> ...
+```
+
+### Step 3: Combining Evidence
+
+Under conditional independence, LRs from different evidence sources multiply:
+
+```r
+# Combine DNA + sex + age
 lr_total <- lr_combine(lr_dna_df, lr_sex)
 lr_total <- lr_combine(lr_total, lr_age)
 
-# Visualize
+# Visualize the combined LR distribution
 plot_lr_distribution(lr_total)
 ```
 
-### LR Distributions: Separating Matches from Non-Matches
-
 <p align="center">
-<img src="man/figures/combined_evidence.png" width="750">
+<img src="man/figures/combined_evidence.png" width="550">
 </p>
 
-The combined evidence creates separation between the LR distributions under H1 (true matches) and H2 (non-matches). This separation is what enables effective database searching.
+The separation between distributions under H1 (blue) and H2 (red) reflects the discriminating power of the combined evidence. Greater separation means better ability to distinguish between the two hypotheses.
 
-### Database Search: Finding the True Match
+### Step 4: Database Search Application
+
+In practice, we search databases containing unidentified individuals. The LR ranks candidates by evidential support:
 
 <p align="center">
-<img src="man/figures/database_search.png" width="750">
+<img src="man/figures/database_search.png" width="550">
 </p>
 
-When candidates are ranked by their combined LR, the true match rises to the top. This illustrates the practical utility of combining multiple evidence sources.
+Candidates are ranked by their combined LR. The individual who is actually the MP (blue) rises to the top of the ranking, demonstrating the practical utility of combining multiple evidence sources.
+
+### Step 5: Decision Analysis
+
+To make decisions, we can compute error rates at different LR thresholds:
+
+```r
+# Find optimal threshold balancing false positives and false negatives
+threshold <- decision_threshold(lr_total, weight = 10)
+
+# Examine error rates at this threshold
+threshold_rates(lr_total, threshold)
+```
 
 ## Main Functions
 
@@ -83,14 +129,15 @@ When candidates are ranked by their combined LR, the true match rises to the top
 | `sim_lr_genetic()` | Simulate LRs from DNA evidence |
 | `sim_lr_prelim()` | Simulate LRs from non-genetic evidence |
 | `lr_combine()` | Combine independent evidence sources |
-| `lr_to_dataframe()` | Convert genetic LR results |
+| `lr_to_dataframe()` | Convert genetic LR results to data frame |
 | `decision_threshold()` | Find optimal classification threshold |
+| `threshold_rates()` | Compute error rates at a given threshold |
 | `plot_lr_distribution()` | Visualize LR distributions |
 | `mispitools_app()` | Interactive Shiny application |
 
 ## Citation
 
-Marsico FL, Vigeland MD, et al (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
+Marsico FL, Vigeland MD, Herrera Pinero F, Egeland T (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
 
 ## Related Packages
 
@@ -99,10 +146,10 @@ Marsico FL, Vigeland MD, et al (2021). "Making decisions in missing person ident
 
 ## Authors
 
-**Franco L. Marsico** — Head Maintainer
+**Franco L. Marsico** — Creator and Head Maintainer
 [![GitHub](https://img.shields.io/badge/GitHub-MarsicoFL-blue?logo=github)](https://github.com/MarsicoFL)
 
-**Development Team:**
+**Main contributors:**
 - Suisei Nakagawa [![GitHub](https://img.shields.io/badge/GitHub-SuiseiNakagawa-blue?logo=github)](https://github.com/SuiseiNakagawa)
 - Undral Ganbaatar [![GitHub](https://img.shields.io/badge/GitHub-undralg-blue?logo=github)](https://github.com/undralg)
 
