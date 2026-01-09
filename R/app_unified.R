@@ -78,27 +78,6 @@ mispitools_app <- function() {
 
   # ============================================================================
 
-  # LR interpretation based on order of magnitude
-  # Following conventions used in forensic genetics (Familias, forrel)
-  interpret_lr <- function(lr) {
-    log_lr <- log10(lr)
-    if (is.na(log_lr) || is.infinite(log_lr)) return("Unable to calculate")
-    if (log_lr < 0) {
-      # Evidence supports H2 (not the MP)
-      abs_log <- abs(log_lr)
-      if (abs_log < 1) return("Weak support for H2")
-      if (abs_log < 2) return("Support for H2")
-      if (abs_log < 4) return("Strong support for H2")
-      return("Very strong support for H2")
-    } else {
-      # Evidence supports H1 (is the MP)
-      if (log_lr < 1) return("Weak support for H1")
-      if (log_lr < 2) return("Support for H1")
-      if (log_lr < 4) return("Strong support for H1")
-      return("Very strong support for H1")
-    }
-  }
-
   # Realistic population hair color frequencies (European population)
   # Source: Walsh et al. (2017) Forensic Sci Int Genet
   DEFAULT_HAIR_FREQ <- c(
@@ -514,18 +493,6 @@ mispitools_app <- function() {
           color: #2d3748;
         }
 
-        .lr-badge {
-          display: inline-block;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-weight: 600;
-          font-size: 13px;
-          margin-top: 10px;
-        }
-
-        .lr-h1 { background: #c6f6d5; color: #22543d; }
-        .lr-h2 { background: #fed7d7; color: #742a2a; }
-        .lr-neutral { background: #fefcbf; color: #744210; }
       "))
     ),
 
@@ -578,24 +545,14 @@ mispitools_app <- function() {
               ),
               shiny::column(6,
                 shiny::div(class = "info-box",
-                  shiny::h4("Interpreting the LR"),
-                  shiny::p("The LR quantifies how many times more likely the evidence is under H1 vs H2:"),
-                  shiny::tags$table(class = "table table-sm",
-                    shiny::tags$thead(
-                      shiny::tags$tr(
-                        shiny::tags$th("LR"),
-                        shiny::tags$th(HTML("log<sub>10</sub>(LR)")),
-                        shiny::tags$th("Interpretation")
-                      )
-                    ),
-                    shiny::tags$tbody(
-                      shiny::tags$tr(shiny::tags$td("1-10"), shiny::tags$td("0-1"), shiny::tags$td("Weak support for H1")),
-                      shiny::tags$tr(shiny::tags$td("10-100"), shiny::tags$td("1-2"), shiny::tags$td("Support for H1")),
-                      shiny::tags$tr(shiny::tags$td("100-10000"), shiny::tags$td("2-4"), shiny::tags$td("Strong support for H1")),
-                      shiny::tags$tr(shiny::tags$td(">10000"), shiny::tags$td(">4"), shiny::tags$td("Very strong support for H1"))
-                    )
+                  shiny::h4("Using the LR"),
+                  shiny::p("The LR quantifies how many times more likely the evidence is under H1 vs H2."),
+                  shiny::tags$ul(
+                    shiny::tags$li("LR > 1: Evidence more probable under H1"),
+                    shiny::tags$li("LR < 1: Evidence more probable under H2"),
+                    shiny::tags$li("LR = 1: Evidence equally probable under both hypotheses")
                   ),
-                  shiny::p(class = "text-muted", "LR < 1 indicates support for H2 (not the MP)")
+                  shiny::p("The numeric LR value should be reported without verbal qualifiers.")
                 )
               )
             ),
@@ -720,12 +677,7 @@ mispitools_app <- function() {
             shiny::div(class = "result-box",
               shiny::h4("Likelihood Ratio"),
               shiny::h2(shiny::textOutput("indiv_lr_value")),
-              shiny::p(shiny::textOutput("indiv_lr_log")),
-              shiny::uiOutput("indiv_lr_badge")
-            ),
-            shiny::div(class = "info-box",
-              shiny::h5("Interpretation"),
-              shiny::p(class = "interpretation-text", shiny::textOutput("indiv_interpretation"))
+              shiny::p(shiny::textOutput("indiv_lr_log"))
             ),
             shiny::div(class = "formula-box",
               shiny::h5(style = "color: #a0aec0; margin-top: 0;", "Calculation Details"),
@@ -899,7 +851,6 @@ mispitools_app <- function() {
               shiny::h4("Combined Result"),
               shiny::h2(shiny::textOutput("comb_lr_total")),
               shiny::p(shiny::textOutput("comb_lr_log")),
-              shiny::uiOutput("comb_lr_badge"),
               shiny::hr(),
               shiny::verbatimTextOutput("comb_formula")
             )
@@ -989,10 +940,7 @@ mispitools_app <- function() {
                 "P(observed female | H2) = 0.51\n",
                 "LR = 0.95 / 0.51 = 1.86"
               ),
-              shiny::p(shiny::strong("Interpretation:"), " The evidence of matching sex
-                       provides ", shiny::em("weak support"), " for the proposition
-                       that the remains belong to the missing person.
-                       The evidence is 1.86 times more probable under H1 than H2.")
+              shiny::p("The evidence is 1.86 times more probable under H1 than H2.")
             ),
 
             shiny::div(class = "tutorial-section",
@@ -1009,8 +957,7 @@ mispitools_app <- function() {
                 "P(age in range | H2) = 10/80 = 0.125\n",
                 "LR = 0.95 / 0.125 = 7.6"
               ),
-              shiny::p(shiny::strong("Interpretation:"), " Age matching provides
-                       ", shiny::em("limited to moderate support"), " for H1.")
+              shiny::p("The evidence is 7.6 times more probable under H1 than H2.")
             ),
 
             shiny::div(class = "tutorial-section",
@@ -1084,29 +1031,6 @@ mispitools_app <- function() {
 
     output$indiv_lr_log <- shiny::renderText({
       sprintf("log10(LR) = %.3f", log10(indiv_lr()))
-    })
-
-    output$indiv_lr_badge <- shiny::renderUI({
-      lr <- indiv_lr()
-      verbal <- interpret_lr(lr)
-      badge_class <- if (log10(lr) >= 0) "lr-h1" else "lr-h2"
-      if (abs(log10(lr)) < 0.1) badge_class <- "lr-neutral"
-      shiny::span(class = paste("lr-badge", badge_class), verbal)
-    })
-
-    output$indiv_interpretation <- shiny::renderText({
-      lr <- indiv_lr()
-      verbal <- interpret_lr(lr)
-
-      if (lr > 1) {
-        sprintf("The observed evidence is %.2f times more probable if the person
-IS the missing individual than if they are not. This represents %s.", lr, tolower(verbal))
-      } else if (lr < 1) {
-        sprintf("The observed evidence is %.2f times more probable if the person
-is NOT the missing individual. This represents %s.", 1/lr, tolower(verbal))
-      } else {
-        "The evidence is equally likely under both hypotheses (uninformative)."
-      }
     })
 
     output$indiv_formula <- shiny::renderPrint({
@@ -1286,14 +1210,6 @@ is NOT the missing individual. This represents %s.", 1/lr, tolower(verbal))
 
     output$comb_lr_log <- shiny::renderText({
       sprintf("log10(LR) = %.3f", log10(comb_total()))
-    })
-
-    output$comb_lr_badge <- shiny::renderUI({
-      lr <- comb_total()
-      verbal <- interpret_lr(lr)
-      badge_class <- if (log10(lr) >= 0) "lr-h1" else "lr-h2"
-      if (abs(log10(lr)) < 0.1) badge_class <- "lr-neutral"
-      shiny::span(class = paste("lr-badge", badge_class), verbal)
     })
 
     output$comb_formula <- shiny::renderPrint({
