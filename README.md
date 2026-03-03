@@ -17,7 +17,9 @@ When unidentified human remains are found, forensic scientists must search datab
 ## Video Tutorial
 
 <p align="center">
-https://github.com/user-attachments/assets/29a43d60-5d82-4465-be30-c42f3f062ca3
+<a href="https://github.com/user-attachments/assets/29a43d60-5d82-4465-be30-c42f3f062ca3">
+<img src="man/figures/video_thumbnail.png" alt="Video Tutorial" width="700">
+</a>
 </p>
 
 *Tutorial by [Suisei Nakagawa](https://github.com/SuiseiNakagawa)*
