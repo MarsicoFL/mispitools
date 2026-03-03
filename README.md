@@ -14,6 +14,14 @@
 
 When unidentified human remains are found, forensic scientists must search databases of missing persons to find potential identifications. **mispitools** provides a statistical framework based on likelihood ratios (LRs) to quantify the weight of evidence, combining genetic and non-genetic information, and support decision-making in these investigations.
 
+## Video Tutorial
+
+<p align="center">
+<video src="man/figures/mispitools_tutorial.mp4" controls width="700"></video>
+</p>
+
+*Tutorial by [Suisei Nakagawa](https://github.com/SuiseiNakagawa)*
+
 ## Why Likelihood Ratios?
 
 The likelihood ratio is the gold standard for evidence evaluation in forensic science. Rather than providing a binary "yes/no" answer, the LR tells us how much the evidence should change our belief about an identification.
