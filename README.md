@@ -172,7 +172,7 @@ Marsico FL, Caridi I (2023). "Incorporating non-genetic evidence in large scale 
 
 Marsico FL, Vigeland MD, et al. (2021). "Making decisions in missing person identification cases with low statistical power." *Forensic Science International: Genetics*, 52, 102519. https://doi.org/10.1016/j.fsigen.2021.102519
 
-Egeland T, Marsico FL (2026). "Using all available information in missing person identification." *Under review*.
+Egeland T, Marsico FL (2026). "Using all available information in missing person identification." *International Journal of Legal Medicine*. https://doi.org/10.1007/s00414-026-03773-6
 
 ## Related Packages
 
