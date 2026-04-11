@@ -128,5 +128,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Franco Marsico \email{franco.lmarsico@gmail.com} (\href{https://orcid.org/0000-0002-0740-5516}{ORCID})
 
+Authors:
+\itemize{
+  \item Suisei Nakagawa \email{suisei.nakagawa@uni.minerva.edu}
+}
+
 }
 \keyword{package}
