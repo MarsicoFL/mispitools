@@ -53,8 +53,7 @@
 #' \emph{Forensic Science International: Genetics}, 52, 102519.
 #' \doi{10.1016/j.fsigen.2021.102519}
 #'
-#' @import shiny
-#' @import shinythemes
+#' @importFrom shiny img HTML
 #' @import ggplot2
 #' @import patchwork
 #' @import pROC
