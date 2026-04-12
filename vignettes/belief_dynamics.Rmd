@@ -254,6 +254,45 @@ independent review. The balanced profile at $C_W^+ \approx 0.08$ is well
 below even the 50th percentile and passes the fragility filter without
 flag.
 
+### Calibration and reporting helpers
+
+The two steps of the workflow above — calibrating the pedigree-specific
+cutoff under $H_p$ and producing a per-case reportable statement — are
+exposed as the high-level helpers `calibrate_concentration_cutoff()` and
+`fragility_report()`. They internally invoke `sim_lr_genetic()` and
+`concentration_index_positive()`, so a complete pipeline from a
+`pedtools::ped` object to a printable sentence is just two function
+calls:
+
+```{r calibrate_helpers, eval = FALSE}
+library(pedtools); library(forrel)
+
+# Reference pedigree with founder profiles simulated
+ped <- linearPed(2)
+ped <- setMarkers(ped, locusAttributes = NorwegianFrequencies[1:15])
+ped <- profileSim(ped, N = 1, ids = 2, seed = 1)
+
+# Calibrate the pedigree-specific cutoff under H_p (90th percentile by default)
+cal <- calibrate_concentration_cutoff(
+  reference = ped, missing = 5,
+  numsims   = 1500, probs = 0.90, seed = 42
+)
+cal$cutoff
+
+# Per-case fragility report against the calibrated cutoff
+fr <- fragility_report(
+  per_marker_lrs = lrs_concentrated,
+  cutoff = cal$cutoff, probs = cal$probs
+)
+fr$flag        # TRUE -> leave-one-out review required
+fr$statement   # natural-language sentence ready for the case file
+```
+
+The returned `statement` field is a single character string of the form
+*"Combined weight of evidence W = w bans, C_W+ = c, ... a successful
+challenge of the top marker would leave (1-c)w bans of residual support"*,
+suitable to paste verbatim into the laboratory's case report.
+
 ## 6. Combining genetic and non-genetic evidence
 
 Real missing-person casework often combines DNA evidence with
