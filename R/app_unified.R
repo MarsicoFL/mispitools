@@ -780,6 +780,12 @@ mispitools_app <- function() {
               shiny::verbatimTextOutput("dist_stats_h2")
             )
           )
+        ),
+        shiny::fluidRow(
+          shiny::column(12, style = "text-align: center; padding: 15px;",
+            shiny::downloadButton("dl_dist_plot", "Download LR Distribution (PDF)",
+                                  class = "btn-primary")
+          )
         )
       ),
 
@@ -895,6 +901,12 @@ mispitools_app <- function() {
           ),
           shiny::column(8,
             shiny::plotOutput("dec_roc_plot", height = "400px")
+          )
+        ),
+        shiny::fluidRow(
+          shiny::column(12, style = "text-align: center; padding: 15px;",
+            shiny::downloadButton("dl_dec_plot", "Download Decision Plot (PDF)",
+                                  class = "btn-primary")
           )
         )
       ),
@@ -1308,6 +1320,48 @@ mispitools_app <- function() {
           panel.grid.minor = ggplot2::element_blank()
         )
     }, res = 100)
+
+    # ------------------------------------------------------------------
+    # DOWNLOAD HANDLERS
+    # ------------------------------------------------------------------
+
+    output$dl_dist_plot <- shiny::downloadHandler(
+      filename = function() paste0("lr_distribution_", Sys.Date(), ".pdf"),
+      content = function(file) {
+        dists <- lr_dists()
+        if (is.null(dists)) return()
+        grDevices::pdf(file, width = 7, height = 5)
+        h1_log <- log10(dists$H1[dists$H1 > 0])
+        h2_log <- log10(dists$H2[dists$H2 > 0])
+        all_vals <- c(h1_log, h2_log)
+        lims <- range(all_vals, na.rm = TRUE)
+        graphics::hist(h1_log, breaks = 30, col = grDevices::rgb(0.2, 0.4, 0.8, 0.5),
+             main = "LR Distribution under H1 and H2",
+             xlab = expression(log[10](LR)), xlim = lims, freq = FALSE)
+        graphics::hist(h2_log, breaks = 30, col = grDevices::rgb(0.8, 0.2, 0.2, 0.5),
+             add = TRUE, freq = FALSE)
+        graphics::legend("topright", c("H1 (Related)", "H2 (Unrelated)"),
+               fill = c(grDevices::rgb(0.2, 0.4, 0.8, 0.5),
+                        grDevices::rgb(0.8, 0.2, 0.2, 0.5)))
+        grDevices::dev.off()
+      }
+    )
+
+    output$dl_dec_plot <- shiny::downloadHandler(
+      filename = function() paste0("decision_analysis_", Sys.Date(), ".pdf"),
+      content = function(file) {
+        dists <- lr_dists()
+        if (is.null(dists)) return()
+        roc_obj <- build_roc(dists$H1, dists$H2)
+        df_roc <- roc_obj$data
+        p <- ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
+          ggplot2::geom_line(color = "#2C5282", linewidth = 1) +
+          ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey") +
+          ggplot2::labs(title = "ROC Curve", x = "False Positive Rate", y = "True Positive Rate") +
+          ggplot2::theme_minimal()
+        ggplot2::ggsave(file, plot = p, width = 7, height = 5, device = "pdf")
+      }
+    )
   }
 
   # Add resource path for logo
