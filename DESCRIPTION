@@ -30,11 +30,10 @@ Imports:
     patchwork,
     graphics,
     ggplot2,
-    DirichletReg,
-    pROC,
-    shiny,
-    shinythemes
+    shiny
 Suggests:
+    DirichletReg,
+    shinythemes,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)

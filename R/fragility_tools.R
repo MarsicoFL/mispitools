@@ -194,8 +194,12 @@ calibrate_concentration_cutoff <- function(reference, missing,
 fragility_report <- function(per_marker_lrs, cutoff = NULL, probs = NULL) {
   if (!is.numeric(per_marker_lrs))
     stop("per_marker_lrs must be a numeric vector.")
-  if (any(per_marker_lrs <= 0))
-    stop("per_marker_lrs must be strictly positive.")
+  if (any(per_marker_lrs <= 0)) {
+    bad <- per_marker_lrs[per_marker_lrs <= 0]
+    stop("All per_marker_lrs must be > 0. Values < 1 (excluding markers) are allowed; ",
+         "zero or negative LR values are not. Got: ",
+         paste(bad[seq_len(min(3, length(bad)))], collapse = ", "))
+  }
 
   marker_names <- names(per_marker_lrs)
   if (is.null(marker_names))

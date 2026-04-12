@@ -68,7 +68,6 @@
 #' 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 #'
 #' @export
-#' @import DirichletReg
 #' @import dplyr
 #' @examples
 #' # Type 1: Open search - close match (45 days difference)
@@ -108,6 +107,10 @@ lr_birthdate <- function(ABD = "1976-05-31",
                          PrelimData = NULL,
                          draw = 500,
                          seed = 123) {
+
+  if (!requireNamespace("DirichletReg", quietly = TRUE))
+    stop("The 'DirichletReg' package is required for lr_birthdate(). ",
+         "Install it with install.packages('DirichletReg').")
 
   # Input validation
   if (!type %in% c(1, 2)) {

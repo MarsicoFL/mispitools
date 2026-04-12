@@ -41,7 +41,7 @@ test_that("fragility_report does not flag balanced cases below the cutoff", {
 
 test_that("fragility_report validates inputs", {
   expect_error(fragility_report("not numeric"), "numeric vector")
-  expect_error(fragility_report(c(1, 0, 2)), "strictly positive")
+  expect_error(fragility_report(c(1, 0, 2)), "must be > 0")
   expect_error(fragility_report(c(1, 2), cutoff = "bad"), "single numeric")
 })
 

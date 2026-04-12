@@ -56,7 +56,6 @@
 #' @importFrom shiny img HTML
 #' @import ggplot2
 #' @import patchwork
-#' @import pROC
 #' @import reshape2
 #' @import dplyr
 #' @export
@@ -342,7 +341,8 @@ mispitools_app <- function() {
   # ============================================================================
 
   ui <- shiny::fluidPage(
-    theme = shinythemes::shinytheme("flatly"),
+    theme = if (requireNamespace("shinythemes", quietly = TRUE))
+              shinythemes::shinytheme("flatly") else NULL,
 
     # Custom CSS for professional appearance
     shiny::tags$head(
@@ -582,6 +582,13 @@ mispitools_app <- function() {
             ),
 
             shiny::hr(),
+            shiny::div(style = "text-align: center; padding: 20px;",
+              shiny::actionButton("go_tutorial",
+                                  "New here? Start the Tutorial",
+                                  icon = shiny::icon("graduation-cap"),
+                                  class = "btn-primary btn-lg",
+                                  style = "margin-bottom: 20px;")
+            ),
             shiny::div(style = "text-align: center; color: #718096; padding: 20px;",
               shiny::p(shiny::strong("References")),
               shiny::p("Marsico et al. (2023). FSI:Genetics 66:102891 |
@@ -1002,10 +1009,35 @@ mispitools_app <- function() {
   server <- function(input, output, session) {
 
     # --------------------------------------------------------------------------
+    # OVERVIEW: Tutorial navigation button
+    # --------------------------------------------------------------------------
+    shiny::observeEvent(input$go_tutorial, {
+      shiny::updateTabsetPanel(session, "main_tabs", selected = "Tutorial")
+    })
+
+    # --------------------------------------------------------------------------
     # INDIVIDUAL EVIDENCE TAB
     # --------------------------------------------------------------------------
 
     indiv_lr <- shiny::reactive({
+      if (input$indiv_type == "age") {
+        shiny::validate(
+          shiny::need(is.numeric(input$indiv_MPa) && input$indiv_MPa > 0 && input$indiv_MPa <= 120,
+                      "MP age must be between 1 and 120"),
+          shiny::need(is.numeric(input$indiv_MPr) && input$indiv_MPr > 0,
+                      "Age range must be positive"),
+          shiny::need(is.numeric(input$indiv_epa) && input$indiv_epa > 0 && input$indiv_epa < 1,
+                      "Error rate must be between 0 and 1")
+        )
+      }
+      if (input$indiv_type == "sex") {
+        shiny::validate(
+          shiny::need(is.numeric(input$indiv_eps_sex) && input$indiv_eps_sex >= 0 && input$indiv_eps_sex < 1,
+                      "Sex error rate must be between 0 and 1"),
+          shiny::need(is.numeric(input$indiv_propF) && input$indiv_propF > 0 && input$indiv_propF < 1,
+                      "Female proportion must be between 0 and 1")
+        )
+      }
       if (input$indiv_type == "sex") {
         calc_lr_sex(input$indiv_MPs, input$indiv_obsSex,
                     input$indiv_eps_sex, input$indiv_propF)
