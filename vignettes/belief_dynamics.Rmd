@@ -49,8 +49,8 @@ grandparent--grandchild missing-person scenario:
    contrasting concentration.
 4. Compute the trajectory metrics and the leave-one-out fragility table.
 5. Combine the genetic evidence with non-genetic evidence (sex, age,
-   pigmentation) via `combLR()`.
-6. Integrate with decision thresholds via `DeT()`.
+   pigmentation) via `lr_combine()`.
+6. Integrate with decision thresholds via `decision_threshold()`.
 
 ```{r libs, message = FALSE, warning = FALSE}
 library(mispitools)
@@ -303,9 +303,9 @@ framework to combined (FDE + SE) sequences.
 
 ```{r se_integration, eval = FALSE}
 # Supplementary evidence LRs (numerical example from Egeland & Marsico 2026)
-LR_sex  <- 2.0    # LRsex(...)
-LR_age  <- 7.7    # LRage(...)
-LR_hair <- 3.3    # LRcol(...)
+LR_sex  <- 2.0    # lr_sex(...)
+LR_age  <- 7.7    # lr_age(...)
+LR_hair <- 3.3    # lr_hair_color(...)
 
 # Extended per-marker LR vector: 15 STRs + 3 SE items
 lrs_combined <- c(lrs_balanced,
@@ -325,7 +325,7 @@ contributor overall, whether it is a STR or an SE item.
 ## 7. Decision thresholds
 
 Once you have per-marker LRs for a case, you can feed the combined $W$
-into `mispitools`'s decision-threshold machinery (`DeT()`, `deplot()`,
+into `mispitools`'s decision-threshold machinery (`decision_threshold()`, `plot_decision_curve()`,
 `LRdist()`) to obtain a weighted-error-minimized cutoff. The fragility
 diagnostic of $C_W^+$ complements the decision threshold: a case may
 exceed the inclusion threshold while still being flagged as fragile, in
