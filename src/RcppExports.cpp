@@ -11,19 +11,140 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// mispitools_bootstrap_check
-int mispitools_bootstrap_check();
-RcppExport SEXP _mispitools_mispitools_bootstrap_check() {
+// cpp_pedigree_placeholder
+int cpp_pedigree_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_pedigree_placeholder(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(mispitools_bootstrap_check());
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_pedigree_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_marker_placeholder
+int cpp_marker_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_marker_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_marker_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_mutation_models_placeholder
+int cpp_mutation_models_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_mutation_models_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_mutation_models_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_cpt_engine_placeholder
+int cpp_cpt_engine_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_cpt_engine_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_cpt_engine_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_kl_engine_placeholder
+int cpp_kl_engine_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_kl_engine_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_kl_engine_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lr_dist_placeholder
+int cpp_lr_dist_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_lr_dist_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_nongenetic_lr_placeholder
+int cpp_nongenetic_lr_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_nongenetic_lr_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_nongenetic_lr_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_evidence_combine_placeholder
+int cpp_evidence_combine_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_evidence_combine_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_evidence_combine_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_concentration_placeholder
+int cpp_concentration_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_concentration_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_concentration_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_decision_placeholder
+int cpp_decision_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_decision_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_decision_placeholder(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_linkage_placeholder
+int cpp_linkage_placeholder(int x);
+RcppExport SEXP _mispitools_cpp_linkage_placeholder(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_linkage_placeholder(x));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mispitools_mispitools_bootstrap_check", (DL_FUNC) &_mispitools_mispitools_bootstrap_check, 0},
+    {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
+    {"_mispitools_cpp_marker_placeholder", (DL_FUNC) &_mispitools_cpp_marker_placeholder, 1},
+    {"_mispitools_cpp_mutation_models_placeholder", (DL_FUNC) &_mispitools_cpp_mutation_models_placeholder, 1},
+    {"_mispitools_cpp_cpt_engine_placeholder", (DL_FUNC) &_mispitools_cpp_cpt_engine_placeholder, 1},
+    {"_mispitools_cpp_kl_engine_placeholder", (DL_FUNC) &_mispitools_cpp_kl_engine_placeholder, 1},
+    {"_mispitools_cpp_lr_dist_placeholder", (DL_FUNC) &_mispitools_cpp_lr_dist_placeholder, 1},
+    {"_mispitools_cpp_nongenetic_lr_placeholder", (DL_FUNC) &_mispitools_cpp_nongenetic_lr_placeholder, 1},
+    {"_mispitools_cpp_evidence_combine_placeholder", (DL_FUNC) &_mispitools_cpp_evidence_combine_placeholder, 1},
+    {"_mispitools_cpp_concentration_placeholder", (DL_FUNC) &_mispitools_cpp_concentration_placeholder, 1},
+    {"_mispitools_cpp_decision_placeholder", (DL_FUNC) &_mispitools_cpp_decision_placeholder, 1},
+    {"_mispitools_cpp_linkage_placeholder", (DL_FUNC) &_mispitools_cpp_linkage_placeholder, 1},
     {NULL, NULL, 0}
 };
 
