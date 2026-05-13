@@ -31,8 +31,8 @@
 #' Kullback S, Leibler RA (1951). "On Information and Sufficiency."
 #' \emph{The Annals of Mathematical Statistics}, 22(1), 79-86.
 #'
-#' @export
-#' @import dplyr
+#' @noRd
+#' @keywords internal
 #' @examples
 #' # Compare three populations
 #' kl_matrix <- kl_multi(list(Argentina, BosniaHerz, Europe))

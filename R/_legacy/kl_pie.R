@@ -36,7 +36,8 @@
 #' Kullback S, Leibler RA (1951). "On Information and Sufficiency."
 #' \emph{The Annals of Mathematical Statistics}, 22(1), 79-86.
 #'
-#' @export
+#' @noRd
+#' @keywords internal
 #' @examples
 #' # Compare two CPTs
 #' cpt1 <- cpt_population()

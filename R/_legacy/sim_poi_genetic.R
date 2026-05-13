@@ -40,9 +40,8 @@
 #' power." \emph{Forensic Science International: Genetics}, 52, 102519.
 #' \doi{10.1016/j.fsigen.2021.102519}
 #'
-#' @export
-#' @import pedtools
-#' @import dplyr
+#' @noRd
+#' @keywords internal
 #' @examples
 #' library(forrel)
 #'

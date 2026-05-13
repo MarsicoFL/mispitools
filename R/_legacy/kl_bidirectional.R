@@ -46,8 +46,8 @@
 #' Kullback S, Leibler RA (1951). "On Information and Sufficiency."
 #' \emph{The Annals of Mathematical Statistics}, 22(1), 79-86.
 #'
-#' @export
-#' @import dplyr
+#' @noRd
+#' @keywords internal
 #' @examples
 #' # Compare Argentina and Bosnia-Herzegovina populations
 #' result <- kl_bidirectional(Argentina, BosniaHerz)

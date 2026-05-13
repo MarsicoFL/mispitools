@@ -53,7 +53,8 @@
 #' in missing person cases." \emph{Forensic Science International: Genetics},
 #' 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 #'
-#' @export
+#' @noRd
+#' @keywords internal
 #' @examples
 #' library(forrel)
 #'

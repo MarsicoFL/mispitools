@@ -136,8 +136,6 @@ plot_cpt(cpt_h2, cpt_h1)
 |----------|-------------|
 | `sim_lr_genetic()` | Simulate genetic LRs from pedigrees |
 | `sim_lr_prelim()` | Simulate non-genetic LRs |
-| `sim_posterior()` | Combine prior and LRs for posterior odds |
-| `sim_poi_genetic()` | Generate random DNA profiles |
 | `sim_poi_prelim()` | Generate random non-genetic data |
 
 ### Decision Analysis

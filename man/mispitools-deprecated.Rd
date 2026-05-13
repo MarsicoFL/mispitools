@@ -6,10 +6,8 @@
 \alias{simLRprelim}
 \alias{simLR2dataframe}
 \alias{simRef}
-\alias{makePOIgen}
 \alias{makePOIprelim}
 \alias{makeMPprelim}
-\alias{postSim}
 \alias{LRsex}
 \alias{LRage}
 \alias{LRcol}
@@ -28,9 +26,6 @@
 \alias{getfreqs}
 \alias{conditionedProp}
 \alias{refProp}
-\alias{bidirectionalKL}
-\alias{klPIE}
-\alias{multi_kl_divergence}
 \alias{mispiApp}
 \alias{lrComparisonApp}
 \alias{app_mispitools}
@@ -45,13 +40,9 @@ simLR2dataframe(...)
 
 simRef(...)
 
-makePOIgen(...)
-
 makePOIprelim(...)
 
 makeMPprelim(...)
-
-postSim(...)
 
 LRsex(...)
 
@@ -88,12 +79,6 @@ getfreqs(...)
 conditionedProp(...)
 
 refProp(...)
-
-bidirectionalKL(...)
-
-klPIE(...)
-
-multi_kl_divergence(...)
 
 mispiApp(...)
 
