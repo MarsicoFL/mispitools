@@ -17,3 +17,9 @@
 ^\.Rhistory$
 ^doc$
 ^Meta$
+^wasm$
+^web$
+^benchmarks$
+^mispitools_2_loop$
+^src/.*\.o$
+^src/.*\.so$

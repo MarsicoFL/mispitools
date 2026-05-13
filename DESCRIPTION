@@ -1,6 +1,6 @@
 Package: mispitools
 Title: Missing Person Identification Tools
-Version: 1.4.0
+Version: 2.0.0.9000
 Authors@R: c(
     person(given = "Franco", family = "Marsico", role = c("aut", "cre"),
            email = "franco.lmarsico@gmail.com",
@@ -30,13 +30,19 @@ Imports:
     patchwork,
     graphics,
     ggplot2,
-    shiny
+    shiny,
+    Rcpp,
+    RcppArmadillo
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
 Suggests:
     DirichletReg,
     shinythemes,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
+SystemRequirements: GNU make, C++17
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

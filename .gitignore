@@ -38,3 +38,10 @@ build/
 .pytest_cache/
 /doc/
 /Meta/
+
+# C++ build artifacts
+src/*.o
+src/*.so
+src/*.dll
+src/RcppExports.o
+

@@ -1,0 +1,3 @@
+CXX_STD = CXX17
+PKG_CPPFLAGS = -I./core
+PKG_CXXFLAGS = -O3 -Wall

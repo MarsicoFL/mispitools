@@ -98,4 +98,7 @@
 #' @name mispitools-package
 #' @aliases mispitools
 #' @keywords package
+#' @useDynLib mispitools, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+#' @importFrom RcppArmadillo armadillo_version
 "_PACKAGE"
