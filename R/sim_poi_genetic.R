@@ -41,7 +41,6 @@
 #' \doi{10.1016/j.fsigen.2021.102519}
 #'
 #' @export
-#' @import forrel
 #' @import pedtools
 #' @import dplyr
 #' @examples
