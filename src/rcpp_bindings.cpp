@@ -1,4 +1,4 @@
-// F0.5 — Rcpp bindings over the pure-C++ core in src/core/.
+// F0.5 / F2.5 — Rcpp(+Armadillo) bindings over the pure-C++ core in src/core/.
 //
 // Layered architecture for mispitools 2.0:
 //
@@ -11,8 +11,16 @@
 // at every build. Keeping the wrappers at top-level src/ lets the
 // generated src/RcppExports.cpp and R/RcppExports.R stay in sync
 // automatically. The pure C++ engine remains in src/core/ as planned.
+//
+// F2.5 — RcppArmadillo is enabled here (not in src/core/, which stays
+// portable to Emscripten — see DESIGN.md §2 / §11.1). The boundary uses
+// `arma::mat` / `arma::imat` for the dense outputs of mutation_matrix_cpp
+// and cpt_marker_joint_cpp so the row-major → column-major transpose runs
+// through Armadillo's vectorised copy + `Rcpp::wrap()` zero-copy
+// conversion, instead of an element-wise R-side `out(i, j) = ...` loop.
 
-#include <Rcpp.h>
+// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
 
 #include "core/pedigree.h"
 #include "core/marker.h"
@@ -27,6 +35,50 @@
 #include "core/linkage.h"
 
 namespace mc = mispitools::core;
+
+namespace {
+
+// Row-major std::vector<double> (length K*K, M[i,j] = flat[i*K + j])
+// → arma::mat (K x K). Armadillo is column-major, so we read the buffer
+// into a column-major view (advisory_ok = false, copy_aux_mem = true to
+// own the memory) and then transpose. The transpose is a contiguous
+// vectorised copy under Armadillo's standard kernel, faster than the
+// cell-wise loop the F2.3 binding used.
+inline arma::mat row_major_to_arma(
+        const std::vector<double>& flat,
+        arma::uword K) {
+    if (K == 0) return arma::mat();
+    arma::mat view(const_cast<double*>(flat.data()), K, K,
+                   /*copy_aux_mem=*/false, /*strict=*/true);
+    return view.t();
+}
+
+// Row-major std::vector<GenotypeIndex> states_flat (n_rows * n_members)
+// → arma::imat (n_rows x n_members), 1-based to match R-side genotype
+// indices in `cpt_marker_joint_R`. Same trick: column-major view +
+// transpose, then unary `+ 1`.
+inline arma::imat states_flat_to_arma(
+        const std::vector<mc::GenotypeIndex>& flat,
+        arma::uword n_rows,
+        arma::uword n_members) {
+    if (n_rows == 0 || n_members == 0) return arma::imat();
+    // GenotypeIndex is std::int32_t; arma::imat element is sword
+    // (typically long long). Copy through a transposed view rather
+    // than reinterpret, since the element widths differ.
+    arma::imat out(n_rows, n_members);
+    // Fill column-by-column; each column reads strided from the
+    // row-major source (member i runs at offset i, stride n_members).
+    for (arma::uword i = 0; i < n_members; ++i) {
+        arma::sword* col = out.colptr(i);
+        const mc::GenotypeIndex* src = flat.data() + i;
+        for (arma::uword r = 0; r < n_rows; ++r) {
+            col[r] = static_cast<arma::sword>(src[r * n_members]) + 1;
+        }
+    }
+    return out;
+}
+
+}  // namespace
 
 // [[Rcpp::export]]
 int cpp_pedigree_placeholder(int x)         { return mc::pedigree_placeholder(x); }
@@ -119,17 +171,17 @@ Rcpp::List cpt_marker_joint_cpp(
     if (!r.ok()) Rcpp::stop(r.error);
     const mc::JointTable& jt = *r;
 
-    const int n_rows = static_cast<int>(jt.p_h1.size());
-    const int n_mem = ped.n_members;
+    const arma::uword n_rows = jt.p_h1.size();
+    const arma::uword n_mem = static_cast<arma::uword>(ped.n_members);
 
-    // 1-based genotype indices on the R side (matches the R-reference engine).
-    Rcpp::IntegerMatrix states(n_rows, n_mem);
-    for (int r_ = 0; r_ < n_rows; ++r_) {
-        for (int i = 0; i < n_mem; ++i) {
-            states(r_, i) = jt.states_flat[
-                static_cast<std::size_t>(r_) * n_mem + i] + 1;
-        }
-    }
+    // F2.5 — row-major (core) → column-major (R) handled by an Armadillo
+    // strided copy inside states_flat_to_arma. arma::imat → R `integer`
+    // matrix via Rcpp::wrap (zero-copy of Armadillo's storage). The
+    // probability vectors stay as plain Rcpp::NumericVector — arma::vec
+    // wraps to a 1-column matrix (dim attribute) which is the wrong
+    // shape for the R-side `out$P_H1 <- res$P_H1` assignment in
+    // R/cpt_marker_joint_cpp.R.
+    arma::imat states = states_flat_to_arma(jt.states_flat, n_rows, n_mem);
     Rcpp::NumericVector p_h1(jt.p_h1.begin(), jt.p_h1.end());
     Rcpp::NumericVector p_h2(jt.p_h2.begin(), jt.p_h2.end());
 
@@ -142,17 +194,19 @@ Rcpp::List cpt_marker_joint_cpp(
 }
 
 // ---------------------------------------------------------------------------
-// F2.3 — mutation_matrix_cpp(): K x K mutation matrix for None/Equal/Stepwise.
+// F2.3 / F2.5 — mutation_matrix_cpp(): K x K mutation matrix for
+// None/Equal/Stepwise.
 //
-// Dispatches to the pure-core builders in mutation_models.cpp. Returns a
-// K x K NumericMatrix in row-major-equivalent layout (R matrix populated
-// from M[i, j] = mat[i * K + j]). Mutation kinds outside {0, 1, 2} raise
-// an R error to surface the boundary clearly; Asymmetric (4) arrives in
-// F5.1.
+// Dispatches to the pure-core builders in mutation_models.cpp. F2.5
+// returns an arma::mat carrying the same `M[i, j]` semantics as the
+// previous Rcpp::NumericMatrix; the row-major → column-major conversion
+// happens once inside `row_major_to_arma()` via an Armadillo transpose.
+// Mutation kinds outside {0, 1, 2} raise an R error to surface the
+// boundary clearly; Asymmetric (4) arrives in F5.1.
 // ---------------------------------------------------------------------------
 
 // [[Rcpp::export]]
-Rcpp::NumericMatrix mutation_matrix_cpp(
+arma::mat mutation_matrix_cpp(
         int K,
         int mutation_kind = 0,
         double mutation_rate = 0.0,
@@ -174,13 +228,9 @@ Rcpp::NumericMatrix mutation_matrix_cpp(
     auto r = mc::build_mutation_matrix(
         mut, static_cast<mc::AlleleIndex>(K), labels);
     if (!r.ok()) Rcpp::stop(r.error);
-    const std::vector<double>& flat = *r;
 
-    Rcpp::NumericMatrix out(K, K);
-    for (int i = 0; i < K; ++i) {
-        for (int j = 0; j < K; ++j) {
-            out(i, j) = flat[static_cast<std::size_t>(i) * K + j];
-        }
-    }
-    return out;
+    // F2.5 — row-major (core) → column-major (R) via Armadillo's
+    // vectorised transpose. Replaces the previous O(K^2) element-wise
+    // assignment loop into Rcpp::NumericMatrix.
+    return row_major_to_arma(*r, static_cast<arma::uword>(K));
 }

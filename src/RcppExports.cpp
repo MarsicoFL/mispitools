@@ -153,7 +153,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // mutation_matrix_cpp
-Rcpp::NumericMatrix mutation_matrix_cpp(int K, int mutation_kind, double mutation_rate, double mutation_range, Rcpp::NumericVector numeric_labels);
+arma::mat mutation_matrix_cpp(int K, int mutation_kind, double mutation_rate, double mutation_range, Rcpp::NumericVector numeric_labels);
 RcppExport SEXP _mispitools_mutation_matrix_cpp(SEXP KSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labelsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

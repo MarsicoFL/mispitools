@@ -746,6 +746,16 @@ that:
   core returns `arma::mat`-friendly contiguous storage that the wrapper
   zero-copies into Armadillo).
 
+**F2.5 status:** the boundary now uses RcppArmadillo for the dense
+return paths of `mutation_matrix_cpp` (K×K `arma::mat`) and
+`cpt_marker_joint_cpp` (n_rows × n_members `arma::imat`), via two
+private helpers `row_major_to_arma` / `states_flat_to_arma` defined at
+the top of `src/rcpp_bindings.cpp`. The probability vectors (`P_H1`,
+`P_H2`) stay as `Rcpp::NumericVector` because `arma::vec` wraps to a
+1-column matrix in R (dim attribute), which is the wrong shape for the
+R-side data.frame assignment in `R/cpt_marker_joint_cpp.R`. Bench
+results: `mispitools_2_loop/benchmarks/F2.5_summary.md`.
+
 The R-side public API (`R/marker_model.R`, `R/per_marker_kl.R` etc.) sits
 *above* the binding layer and is the surface that user code calls. The
 binding layer never gets called directly by user code — only by the R-side
