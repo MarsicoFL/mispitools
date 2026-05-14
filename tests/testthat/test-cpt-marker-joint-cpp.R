@@ -103,16 +103,17 @@ test_that("AAxAB Mendelian no-mutation: child is AA or AB with prob 0.5", {
   expect_gt(rBB$P_H2, 0)
 })
 
-test_that("cpt_marker_joint_cpp_wrap() rejects non-none mutation", {
+test_that("cpt_marker_joint_cpp_wrap() rejects asymmetric mutation (F2.4)", {
   skip_if_no_pedtools()
   mm <- marker_model(pedtools::nuclearPed(1), "M1",
                      c("12" = 0.5, "13" = 0.5),
-                     mutation = list(model = "equal", rate = 0.005))
+                     mutation = list(model = "asymmetric", rate = 0.005,
+                                     ratio = 0.1, bias = 0.5))
   expect_error(mispitools:::cpt_marker_joint_cpp_wrap(mm),
-               "mutation")
+               "asymmetric|F5\\.1")
 })
 
-test_that("cpt_marker_joint_cpp() raw binding rejects unsupported mutation_kind", {
+test_that("cpt_marker_joint_cpp() raw binding rejects Asymmetric kind (F2.4)", {
   skip_if_no_pedtools()
   expect_error(
     cpt_marker_joint_cpp(
@@ -120,8 +121,27 @@ test_that("cpt_marker_joint_cpp() raw binding rejects unsupported mutation_kind"
       mother = c(-1L, -1L, 1L),
       poi = 2L,
       freqs = c(0.5, 0.5),
-      mutation_kind = 1L
+      mutation_kind = 4L,
+      mutation_rate = 0.005,
+      mutation_range = 0.1,
+      mutation_bias = 0.5,
+      numeric_labels = c(12, 13)
     ),
-    "None"
+    "Asymmetric|F5\\.1"
+  )
+})
+
+test_that("cpt_marker_joint_cpp() raw binding rejects Proportional kind", {
+  skip_if_no_pedtools()
+  expect_error(
+    cpt_marker_joint_cpp(
+      father = c(-1L, -1L, 0L),
+      mother = c(-1L, -1L, 1L),
+      poi = 2L,
+      freqs = c(0.5, 0.5),
+      mutation_kind = 3L,
+      mutation_rate = 0.005
+    ),
+    "Proportional"
   )
 })

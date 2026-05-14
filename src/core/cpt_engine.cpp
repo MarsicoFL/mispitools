@@ -305,12 +305,9 @@ Result<JointTable> cpt_marker_joint(
         return err_result<JointTable>(
             "cpt_marker_joint: poi index out of range.");
     }
-    if (mut.kind != MutationKind::None) {
-        return err_result<JointTable>(
-            "cpt_marker_joint: only mutation kind=None is implemented in "
-            "F2.2. Equal/Stepwise are wired in F2.4.");
-    }
 
+    // F2.4: None / Equal / Stepwise are wired through build_mutation_matrix.
+    // Proportional and Asymmetric still surface as Result::error from there.
     auto mm = build_mutation_matrix(mut, marker.n_alleles, marker.numeric_labels);
     if (!mm.ok()) {
         return err_result<JointTable>(

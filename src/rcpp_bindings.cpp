@@ -62,14 +62,15 @@ int cpp_decision_placeholder(int x)         { return mc::decision_placeholder(x)
 int cpp_linkage_placeholder(int x)          { return mc::linkage_placeholder(x); }
 
 // ---------------------------------------------------------------------------
-// F2.2 — cpt_marker_joint_cpp(): joint genotype CPT under H1 / H2.
+// F2.2 / F2.4 — cpt_marker_joint_cpp(): joint genotype CPT under H1 / H2.
 //
 // The binding flattens the marker_model + pedtools::ped object into POD
 // vectors on the R side (see R/cpt_marker_joint_cpp.R) and the core
 // computes the sparse joint table. The R-side wrapper rebuilds the
 // data.frame view with labelled genotype strings to match the R-reference
-// engine cpt_marker_joint_R(). Mutation kinds other than 0 (None) return
-// an error in F2.2; Equal/Stepwise arrive in F2.4.
+// engine cpt_marker_joint_R(). F2.4 wires kinds 0 (None), 1 (Equal),
+// 2 (Stepwise); kinds 3 (Proportional) and 4 (Asymmetric) error out at
+// build_mutation_matrix() until F5.1.
 // ---------------------------------------------------------------------------
 
 // [[Rcpp::export]]

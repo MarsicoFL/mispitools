@@ -11,10 +11,10 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
   if (!inherits(model, "marker_model")) {
     stop("`model` must be a 'marker_model' object.", call. = FALSE)
   }
-  if (model$mutation$model != "none") {
-    stop("`cpt_marker_joint_cpp_wrap()` supports only mutation model ",
-         "\"none\" in F2.2; Equal/Stepwise arrive in F2.4.",
-         call. = FALSE)
+  if (!model$mutation$model %in% c("none", "equal", "stepwise")) {
+    stop("`cpt_marker_joint_cpp_wrap()` supports mutation models ",
+         "\"none\", \"equal\", \"stepwise\" (F2.4). The asymmetric model ",
+         "arrives in F5.1.", call. = FALSE)
   }
   if (!is.null(model$linkage)) {
     stop("`cpt_marker_joint_cpp_wrap()` does not handle linked markers; ",
@@ -47,17 +47,33 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
   alleles <- model$alleles
   K <- length(alleles)
 
+  mut <- model$mutation
+  mut_kind   <- switch(mut$model, none = 0L, equal = 1L, stepwise = 2L)
+  mut_rate   <- if (mut$model == "none") 0.0 else as.numeric(mut$rate)
+  mut_range  <- if (mut$model == "stepwise") as.numeric(mut$ratio) else 0.0
+  mut_labels <- if (mut$model == "stepwise") {
+    s <- suppressWarnings(as.numeric(alleles))
+    if (anyNA(s)) {
+      stop("Stepwise mutation requires numeric allele labels; got non-",
+           "numeric: ", paste(alleles[is.na(s)], collapse = ", "),
+           call. = FALSE)
+    }
+    s
+  } else {
+    rep(NA_real_, K)
+  }
+
   res <- cpt_marker_joint_cpp(
     father = as.integer(father),
     mother = as.integer(mother),
     poi = as.integer(poi_idx),
     freqs = as.numeric(unname(freqs)),
-    mutation_kind = 0L,
-    mutation_rate = 0.0,
-    mutation_range = 0.0,
+    mutation_kind = mut_kind,
+    mutation_rate = mut_rate,
+    mutation_range = mut_range,
     mutation_rate2 = 0.0,
     mutation_bias = 0.5,
-    numeric_labels = rep(NA_real_, K)
+    numeric_labels = mut_labels
   )
 
   G <- res$n_genotypes
