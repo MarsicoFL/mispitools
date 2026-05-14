@@ -151,10 +151,20 @@ test_that("invalid poi errors", {
                "non-empty")
 })
 
-test_that("mutation != none errors in F1.2", {
+test_that("stepwise mutation still errors in F1.4 (arrives in F1.5)", {
   skip_if_no_pedtools()
   mm <- marker_model(pedtools::nuclearPed(1), "M1", trio_freqs(),
-                     mutation = list(model = "equal", rate = 1e-3))
+                     mutation = list(model = "stepwise", rate = 1e-3,
+                                     ratio = 0.5))
+  expect_error(mispitools:::cpt_marker_joint_R(mm),
+               "mutation model")
+})
+
+test_that("asymmetric mutation still errors in F1.4 (arrives in F5.1)", {
+  skip_if_no_pedtools()
+  mm <- marker_model(pedtools::nuclearPed(1), "M1", trio_freqs(),
+                     mutation = list(model = "asymmetric", rate = 1e-3,
+                                     ratio = 0.5, bias = 0.4))
   expect_error(mispitools:::cpt_marker_joint_R(mm),
                "mutation model")
 })

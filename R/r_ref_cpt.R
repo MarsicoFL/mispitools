@@ -1,12 +1,20 @@
-## R reference engine — joint CPT for a single marker (F1.2).
+## R reference engine — joint CPT for a single marker (F1.2 / F1.4).
 ##
 ## Pure-R, brute-force-but-pruned implementation used as the oracle
 ## against which the C++ engine (F2.x) is later validated. Internal:
 ## not exported, no public API surface. Slow on large pedigrees by
 ## design — F1 scope is correctness, not performance.
 ##
+## F1.4 adds equal-rate mutation. Founders are still drawn from HWE on
+## the (pre-mutation) population allele frequencies; transmissions from
+## parent to child go through a K×K mutation matrix M with
+## M[i,i] = 1-R, M[i,j] = R/(K-1) for i != j. The "transmission-aware"
+## genotype table T_trans is right-multiplied by M to obtain the
+## mutated transmission probabilities, after which the rest of the
+## propagation logic is unchanged.
+##
 ## P_H1: joint over all pedigree members under the pedigree topology
-## (HWE founders + Mendelian propagation, no mutation).
+## (HWE founders + Mendelian + mutation propagation).
 ##
 ## P_H2: P_HWE(g_POI) × marginal over typed members under the
 ## sub-pedigree obtained by removing POI; if POI was a parent, the
@@ -19,10 +27,11 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
   if (!inherits(model, "marker_model")) {
     stop("`model` must be a 'marker_model' object.", call. = FALSE)
   }
-  if (model$mutation$model != "none") {
-    stop("`cpt_marker_joint_R()` (F1.2 reference engine) only supports ",
-         "mutation model \"none\". Mutation support is added in F1.4 ",
-         "and later milestones.", call. = FALSE)
+  if (!model$mutation$model %in% c("none", "equal")) {
+    stop("`cpt_marker_joint_R()` (F1.4 reference engine) supports ",
+         "mutation models \"none\" and \"equal\". Other models arrive ",
+         "in later milestones (F1.5 stepwise, F5.1 asymmetric).",
+         call. = FALSE)
   }
   if (!is.null(model$linkage)) {
     stop("`cpt_marker_joint_R()` does not handle linked markers; linkage ",
@@ -44,7 +53,8 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
   poi_id <- resolve_poi(ped, poi)
   others <- setdiff(members, poi_id)
 
-  prim <- precompute_genotype_tables(freqs)
+  mut_matrix <- mutation_matrix_R(model$mutation, K)
+  prim <- precompute_genotype_tables(freqs, mut_matrix = mut_matrix)
   G <- prim$G
 
   h1 <- build_joint(ped, prim, founder_ids, nonfounder_ids,
@@ -110,7 +120,25 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
 }
 
 #' @noRd
-precompute_genotype_tables <- function(freqs) {
+mutation_matrix_R <- function(mutation, K) {
+  if (mutation$model == "none") {
+    return(diag(K))
+  }
+  if (mutation$model == "equal") {
+    R <- mutation$rate
+    if (K < 2L) {
+      stop("Equal-rate mutation requires at least 2 alleles.", call. = FALSE)
+    }
+    M <- matrix(R / (K - 1L), nrow = K, ncol = K)
+    diag(M) <- 1 - R
+    return(M)
+  }
+  stop("Internal error: mutation model \"", mutation$model,
+       "\" not supported by mutation_matrix_R().", call. = FALSE)
+}
+
+#' @noRd
+precompute_genotype_tables <- function(freqs, mut_matrix = NULL) {
   K <- length(freqs)
   alleles <- names(freqs)
   geno_idx <- expand.grid(a1 = seq_len(K), a2 = seq_len(K),
@@ -135,6 +163,13 @@ precompute_genotype_tables <- function(freqs) {
       T_trans[g, i] <- 0.5
       T_trans[g, j] <- 0.5
     }
+  }
+  if (!is.null(mut_matrix)) {
+    if (!is.matrix(mut_matrix) || nrow(mut_matrix) != K ||
+        ncol(mut_matrix) != K) {
+      stop("`mut_matrix` must be a K x K numeric matrix.", call. = FALSE)
+    }
+    T_trans <- T_trans %*% mut_matrix
   }
 
   child_dist <- array(0.0, dim = c(G, G, G))
