@@ -152,6 +152,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mutation_matrix_cpp
+Rcpp::NumericMatrix mutation_matrix_cpp(int K, int mutation_kind, double mutation_rate, double mutation_range, Rcpp::NumericVector numeric_labels);
+RcppExport SEXP _mispitools_mutation_matrix_cpp(SEXP KSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type K(KSEXP);
+    Rcpp::traits::input_parameter< int >::type mutation_kind(mutation_kindSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_rate(mutation_rateSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_range(mutation_rangeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type numeric_labels(numeric_labelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(mutation_matrix_cpp(K, mutation_kind, mutation_rate, mutation_range, numeric_labels));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
@@ -166,6 +181,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_decision_placeholder", (DL_FUNC) &_mispitools_cpp_decision_placeholder, 1},
     {"_mispitools_cpp_linkage_placeholder", (DL_FUNC) &_mispitools_cpp_linkage_placeholder, 1},
     {"_mispitools_cpt_marker_joint_cpp", (DL_FUNC) &_mispitools_cpt_marker_joint_cpp, 10},
+    {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 5},
     {NULL, NULL, 0}
 };
 

@@ -139,3 +139,47 @@ Rcpp::List cpt_marker_joint_cpp(
         Rcpp::_["n_genotypes"] = static_cast<int>(jt.n_genotypes)
     );
 }
+
+// ---------------------------------------------------------------------------
+// F2.3 — mutation_matrix_cpp(): K x K mutation matrix for None/Equal/Stepwise.
+//
+// Dispatches to the pure-core builders in mutation_models.cpp. Returns a
+// K x K NumericMatrix in row-major-equivalent layout (R matrix populated
+// from M[i, j] = mat[i * K + j]). Mutation kinds outside {0, 1, 2} raise
+// an R error to surface the boundary clearly; Asymmetric (4) arrives in
+// F5.1.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix mutation_matrix_cpp(
+        int K,
+        int mutation_kind = 0,
+        double mutation_rate = 0.0,
+        double mutation_range = 0.0,
+        Rcpp::NumericVector numeric_labels = Rcpp::NumericVector::create()) {
+    if (K <= 0) {
+        Rcpp::stop("mutation_matrix_cpp: K must be positive.");
+    }
+    if (mutation_kind < 0 || mutation_kind > 4) {
+        Rcpp::stop("mutation_matrix_cpp: mutation_kind out of range [0, 4].");
+    }
+
+    mc::MutationModel mut;
+    mut.kind = static_cast<mc::MutationKind>(mutation_kind);
+    mut.rate = mutation_rate;
+    mut.range = mutation_range;
+
+    std::vector<double> labels(numeric_labels.begin(), numeric_labels.end());
+    auto r = mc::build_mutation_matrix(
+        mut, static_cast<mc::AlleleIndex>(K), labels);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const std::vector<double>& flat = *r;
+
+    Rcpp::NumericMatrix out(K, K);
+    for (int i = 0; i < K; ++i) {
+        for (int j = 0; j < K; ++j) {
+            out(i, j) = flat[static_cast<std::size_t>(i) * K + j];
+        }
+    }
+    return out;
+}
