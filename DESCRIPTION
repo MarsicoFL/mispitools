@@ -39,6 +39,8 @@ Suggests:
     forrel,
     Familias,
     pedprobr,
+    pedmut,
+    fbnet,
     DirichletReg,
     shinythemes,
     knitr,

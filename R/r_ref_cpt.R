@@ -1,4 +1,4 @@
-## R reference engine — joint CPT for a single marker (F1.2 / F1.4).
+## R reference engine — joint CPT for a single marker (F1.2 / F1.4 / F1.5).
 ##
 ## Pure-R, brute-force-but-pruned implementation used as the oracle
 ## against which the C++ engine (F2.x) is later validated. Internal:
@@ -12,6 +12,15 @@
 ## genotype table T_trans is right-multiplied by M to obtain the
 ## mutated transmission probabilities, after which the rest of the
 ## propagation logic is unchanged.
+##
+## F1.5 adds stepwise mutation, parameterized by `rate` (overall
+## per-meiosis mutation probability R) and `ratio` (geometric step
+## ratio r in (0, 1)). Allele labels must be coercible to numeric to
+## define step distances. M[i, i] = 1 - R; for j != i,
+## M[i, j] = (R / sum_{k != i} r^|s_i - s_k|) * r^|s_i - s_j|, where
+## s_i are the numeric allele labels. Matches the canonical Familias /
+## pedmut / fbnet stepwise mutation matrix when there are no
+## microvariant groups (rate2 = 0).
 ##
 ## P_H1: joint over all pedigree members under the pedigree topology
 ## (HWE founders + Mendelian + mutation propagation).
@@ -27,10 +36,10 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
   if (!inherits(model, "marker_model")) {
     stop("`model` must be a 'marker_model' object.", call. = FALSE)
   }
-  if (!model$mutation$model %in% c("none", "equal")) {
-    stop("`cpt_marker_joint_R()` (F1.4 reference engine) supports ",
-         "mutation models \"none\" and \"equal\". Other models arrive ",
-         "in later milestones (F1.5 stepwise, F5.1 asymmetric).",
+  if (!model$mutation$model %in% c("none", "equal", "stepwise")) {
+    stop("`cpt_marker_joint_R()` (F1.5 reference engine) supports ",
+         "mutation models \"none\", \"equal\", \"stepwise\". The ",
+         "asymmetric model arrives in F5.1.",
          call. = FALSE)
   }
   if (!is.null(model$linkage)) {
@@ -53,7 +62,7 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
   poi_id <- resolve_poi(ped, poi)
   others <- setdiff(members, poi_id)
 
-  mut_matrix <- mutation_matrix_R(model$mutation, K)
+  mut_matrix <- mutation_matrix_R(model$mutation, K, alleles = alleles)
   prim <- precompute_genotype_tables(freqs, mut_matrix = mut_matrix)
   G <- prim$G
 
@@ -120,7 +129,7 @@ cpt_marker_joint_R <- function(model, poi = NULL) {
 }
 
 #' @noRd
-mutation_matrix_R <- function(mutation, K) {
+mutation_matrix_R <- function(mutation, K, alleles = NULL) {
   if (mutation$model == "none") {
     return(diag(K))
   }
@@ -131,6 +140,41 @@ mutation_matrix_R <- function(mutation, K) {
     }
     M <- matrix(R / (K - 1L), nrow = K, ncol = K)
     diag(M) <- 1 - R
+    return(M)
+  }
+  if (mutation$model == "stepwise") {
+    R <- mutation$rate
+    r <- mutation$ratio
+    if (is.null(r)) {
+      stop("Stepwise mutation requires `mutation$ratio` (geometric step ",
+           "ratio in (0, 1)).", call. = FALSE)
+    }
+    if (K < 2L) {
+      stop("Stepwise mutation requires at least 2 alleles.", call. = FALSE)
+    }
+    if (is.null(alleles) || length(alleles) != K) {
+      stop("Stepwise mutation requires `alleles` (the K allele labels) ",
+           "to compute step distances.", call. = FALSE)
+    }
+    s <- suppressWarnings(as.numeric(alleles))
+    if (anyNA(s)) {
+      stop("Stepwise mutation requires numeric allele labels; got non-",
+           "numeric: ", paste(alleles[is.na(s)], collapse = ", "),
+           call. = FALSE)
+    }
+    M <- matrix(0.0, nrow = K, ncol = K)
+    for (i in seq_len(K)) {
+      steps <- abs(s - s[i])
+      w <- r ^ steps
+      w[i] <- 0
+      sw <- sum(w)
+      if (!is.finite(sw) || sw <= 0) {
+        stop("Stepwise mutation: row weights for allele \"", alleles[i],
+             "\" sum to 0; cannot normalize.", call. = FALSE)
+      }
+      M[i, ] <- (R / sw) * w
+      M[i, i] <- 1 - R
+    }
     return(M)
   }
   stop("Internal error: mutation model \"", mutation$model,
