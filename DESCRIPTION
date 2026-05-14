@@ -38,6 +38,7 @@ LinkingTo:
 Suggests:
     forrel,
     Familias,
+    pedprobr,
     DirichletReg,
     shinythemes,
     knitr,
