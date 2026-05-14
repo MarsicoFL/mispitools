@@ -205,6 +205,46 @@ Rcpp::List cpt_marker_joint_cpp(
 // boundary clearly; Asymmetric (4) arrives in F5.1.
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// F3.1 — cpp_per_marker_kl(): bidirectional KL + expected log10 LR over a
+// pre-computed sparse joint (P_H1, P_H2).
+//
+// Takes the joint as two parallel numeric vectors (the columns produced by
+// cpt_marker_joint_cpp / cpt_marker_joint_R). Returns a list with both KLs,
+// both expectations, and the KLde-style absolute-continuity diagnostics.
+// The R-side wrapper that consumes a marker_model directly arrives in F3.2.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_per_marker_kl(
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2) {
+    if (p_h1.size() != p_h2.size()) {
+        Rcpp::stop("cpp_per_marker_kl: p_h1 and p_h2 must have the same length.");
+    }
+
+    mc::JointTable jt;
+    jt.n_members = 0;
+    jt.n_genotypes = 0;
+    jt.p_h1.assign(p_h1.begin(), p_h1.end());
+    jt.p_h2.assign(p_h2.begin(), p_h2.end());
+
+    auto r = mc::per_marker_kl(jt);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::PerMarkerKL& v = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["e_log10_lr_h1"]            = v.e_log10_lr_h1,
+        Rcpp::_["e_log10_lr_h2"]            = v.e_log10_lr_h2,
+        Rcpp::_["kl_h1_to_h2"]              = v.kl_h1_to_h2,
+        Rcpp::_["kl_h2_to_h1"]              = v.kl_h2_to_h1,
+        Rcpp::_["abs_cont_violations_h2"]   = static_cast<int>(v.abs_cont_violations_h2),
+        Rcpp::_["abs_cont_violations_h1"]   = static_cast<int>(v.abs_cont_violations_h1),
+        Rcpp::_["mass_violations_h2"]       = v.mass_violations_h2,
+        Rcpp::_["mass_violations_h1"]       = v.mass_violations_h1
+    );
+}
+
 // [[Rcpp::export]]
 arma::mat mutation_matrix_cpp(
         int K,
