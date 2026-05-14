@@ -132,6 +132,26 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpt_marker_joint_cpp
+Rcpp::List cpt_marker_joint_cpp(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::NumericVector freqs, int mutation_kind, double mutation_rate, double mutation_range, double mutation_rate2, double mutation_bias, Rcpp::NumericVector numeric_labels);
+RcppExport SEXP _mispitools_cpt_marker_joint_cpp(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqsSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP mutation_rate2SEXP, SEXP mutation_biasSEXP, SEXP numeric_labelsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type father(fatherSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type mother(motherSEXP);
+    Rcpp::traits::input_parameter< int >::type poi(poiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type freqs(freqsSEXP);
+    Rcpp::traits::input_parameter< int >::type mutation_kind(mutation_kindSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_rate(mutation_rateSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_range(mutation_rangeSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_rate2(mutation_rate2SEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_bias(mutation_biasSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type numeric_labels(numeric_labelsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpt_marker_joint_cpp(father, mother, poi, freqs, mutation_kind, mutation_rate, mutation_range, mutation_rate2, mutation_bias, numeric_labels));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
@@ -145,6 +165,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_concentration_placeholder", (DL_FUNC) &_mispitools_cpp_concentration_placeholder, 1},
     {"_mispitools_cpp_decision_placeholder", (DL_FUNC) &_mispitools_cpp_decision_placeholder, 1},
     {"_mispitools_cpp_linkage_placeholder", (DL_FUNC) &_mispitools_cpp_linkage_placeholder, 1},
+    {"_mispitools_cpt_marker_joint_cpp", (DL_FUNC) &_mispitools_cpt_marker_joint_cpp, 10},
     {NULL, NULL, 0}
 };
 
