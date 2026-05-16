@@ -155,13 +155,20 @@ Result<PerMarkerKLBatch> per_marker_kl_batch(
     }
 
     PerMarkerKLBatch out;
-    out.entries.reserve(markers.size());
 
     // std::map keyed on the bit-exact serialisation built above. We use
     // map instead of unordered_map to avoid wiring a custom hash; the
     // expected key count (#distinct mutation signatures across a typical
     // STR panel) is small (<= a few), so the log-factor is negligible.
     std::map<std::string, std::vector<double>> mm_cache;
+
+    // Phase 1: build one sparse joint per marker, reusing the K x K
+    // mutation matrix across markers whose (kind, K, rate, range, labels)
+    // signature collides. Building from a cached matrix is bit-for-bit
+    // identical to rebuilding it: cpt_marker_joint_with_mm() consumes the
+    // same row-major matrix regardless of provenance.
+    std::vector<JointTable> joints;
+    joints.reserve(markers.size());
 
     for (std::size_t i = 0; i < markers.size(); ++i) {
         const Marker& m = markers[i];
@@ -192,15 +199,17 @@ Result<PerMarkerKLBatch> per_marker_kl_batch(
                 "per_marker_kl_batch: marker " + std::to_string(i)
                 + ": " + joint.error);
         }
-
-        auto kl = per_marker_kl(*joint);
-        if (!kl.ok()) {
-            return err_result<PerMarkerKLBatch>(
-                "per_marker_kl_batch: marker " + std::to_string(i)
-                + ": " + kl.error);
-        }
-        out.entries.push_back(*kl);
+        joints.push_back(std::move(*joint));
     }
+
+    // Phase 2: delegate the KL pass to the F3.4a pure batch primitive so
+    // the cache path and the pre-built-joint path share one kernel. Errors
+    // are already marker-indexed by per_marker_kl_batch(joints).
+    auto kls = per_marker_kl_batch(joints);
+    if (!kls.ok()) {
+        return err_result<PerMarkerKLBatch>(kls.error);
+    }
+    out.entries = std::move(*kls);
 
     return ok_result(std::move(out));
 }

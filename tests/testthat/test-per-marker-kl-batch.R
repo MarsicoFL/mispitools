@@ -147,6 +147,45 @@ test_that("batch does NOT share cache across mismatched (kind, K, rate, range)",
 })
 
 # ---------------------------------------------------------------------------
+# F3.4b: cached batch == uncached scalar route, bit-for-bit (1e-12)
+# ---------------------------------------------------------------------------
+#
+# The scalar `per_marker_kl(model)` rebuilds the K x K mutation matrix
+# independently for every marker (no cache), so it is the uncached oracle
+# for the cached batch path. A profile with a repeated mutation signature
+# exercises a real cache hit (asserted) while the numbers must remain
+# identical to the per-marker rebuild down to 1e-12.
+
+test_that("cached batch result is bit-for-bit the uncached scalar route", {
+  skip_if_no_pedtools()
+  ped <- pedtools::nuclearPed(1)
+  ## Markers 1/2/4 share (equal, K=2, rate=0.005) → 2 cache hits; marker 3
+  ## is K=3 (fresh miss); marker 5 is stepwise (fresh miss). Net: >= 1 hit.
+  models <- list(
+    marker_model(ped, "G1", c("a" = 0.4, "b" = 0.6),
+                 mutation = list(model = "equal", rate = 0.005)),
+    marker_model(ped, "G2", c("p" = 0.8, "q" = 0.2),
+                 mutation = list(model = "equal", rate = 0.005)),
+    marker_model(ped, "G3", c("a" = 0.2, "b" = 0.3, "c" = 0.5),
+                 mutation = list(model = "equal", rate = 0.005)),
+    marker_model(ped, "G4", c("a" = 0.55, "b" = 0.45),
+                 mutation = list(model = "equal", rate = 0.005)),
+    marker_model(ped, "G5", c("12" = 0.3, "13" = 0.4, "14" = 0.3),
+                 mutation = list(model = "stepwise", rate = 0.005,
+                                 ratio = 0.1))
+  )
+  out <- per_marker_kl_profile(models)
+  expect_gte(attr(out, "cache_hits"), 1L)
+  for (i in seq_along(models)) {
+    uncached <- per_marker_kl(models[[i]])
+    for (col in setdiff(batch_cols, "marker")) {
+      expect_equal(out[[col]][i], uncached[[col]],
+                   tolerance = 1e-12, info = paste(col, i))
+    }
+  }
+})
+
+# ---------------------------------------------------------------------------
 # Fallback path: heterogeneous topology must produce the same numbers
 # ---------------------------------------------------------------------------
 

@@ -81,6 +81,12 @@ Result<std::vector<PerMarkerKL>> per_marker_kl_batch(
 /// The single-pedigree assumption matches the typical forensic LR setup
 /// (one MP case, N loci). The R-side wrapper falls back to a per-marker
 /// loop when topologies differ.
+///
+/// F3.4b: this overload builds the per-marker sparse joints from the
+/// cached mutation matrices and then delegates the KL pass to the
+/// `per_marker_kl_batch(const std::vector<JointTable>&)` primitive
+/// (F3.4a), so the cached path and the pre-built-joint path share one
+/// kernel and stay bit-for-bit identical to the uncached scalar route.
 struct PerMarkerKLBatch {
     std::vector<PerMarkerKL> entries;          ///< length == markers.size()
     std::int32_t mutation_matrix_cache_hits   = 0; ///< F3.4 cache diagnostic
