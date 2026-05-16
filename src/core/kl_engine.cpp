@@ -2,8 +2,14 @@
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <limits>
+#include <map>
 #include <string>
+#include <utility>
+
+#include "mutation_models.h"
 
 namespace mispitools {
 namespace core {
@@ -79,6 +85,102 @@ Result<PerMarkerKL> per_marker_kl(const JointTable& joint) {
     }
 
     return ok_result(out);
+}
+
+namespace {
+
+// Serialise the mutation matrix signature into a bit-exact byte string.
+// Two markers hit the same cache slot iff the produced K x K matrix is
+// identical: (kind, K, rate, range) always participate; numeric_labels
+// participate only for Stepwise (where build_mutation_matrix() reads
+// them) so an Equal-rate profile with stale label arrays still hits.
+std::string make_mutation_matrix_key(
+        const MutationModel& mut,
+        AlleleIndex K,
+        const std::vector<double>& labels) {
+    std::string s;
+    const std::size_t label_bytes =
+        (mut.kind == MutationKind::Stepwise)
+            ? labels.size() * sizeof(double) : 0;
+    s.reserve(1 + sizeof(std::int32_t) + 2 * sizeof(double) + label_bytes);
+
+    const std::uint8_t kind_byte = static_cast<std::uint8_t>(mut.kind);
+    s.append(reinterpret_cast<const char*>(&kind_byte), 1);
+
+    const std::int32_t k_val = K;
+    s.append(reinterpret_cast<const char*>(&k_val), sizeof(k_val));
+
+    const double rate_val  = mut.rate;
+    const double range_val = mut.range;
+    s.append(reinterpret_cast<const char*>(&rate_val),  sizeof(rate_val));
+    s.append(reinterpret_cast<const char*>(&range_val), sizeof(range_val));
+
+    if (label_bytes > 0) {
+        s.append(reinterpret_cast<const char*>(labels.data()), label_bytes);
+    }
+    return s;
+}
+
+}  // namespace
+
+Result<PerMarkerKLBatch> per_marker_kl_batch(
+        const Pedigree& ped,
+        const std::vector<Marker>& markers,
+        const std::vector<MutationModel>& mutations) {
+    if (markers.size() != mutations.size()) {
+        return err_result<PerMarkerKLBatch>(
+            "per_marker_kl_batch: markers.size() != mutations.size().");
+    }
+
+    PerMarkerKLBatch out;
+    out.entries.reserve(markers.size());
+
+    // std::map keyed on the bit-exact serialisation built above. We use
+    // map instead of unordered_map to avoid wiring a custom hash; the
+    // expected key count (#distinct mutation signatures across a typical
+    // STR panel) is small (<= a few), so the log-factor is negligible.
+    std::map<std::string, std::vector<double>> mm_cache;
+
+    for (std::size_t i = 0; i < markers.size(); ++i) {
+        const Marker& m = markers[i];
+        const MutationModel& mut = mutations[i];
+
+        std::string key = make_mutation_matrix_key(mut, m.n_alleles,
+                                                   m.numeric_labels);
+        auto it = mm_cache.find(key);
+        const std::vector<double>* mm_ptr = nullptr;
+        if (it != mm_cache.end()) {
+            mm_ptr = &it->second;
+            out.mutation_matrix_cache_hits += 1;
+        } else {
+            auto mm = build_mutation_matrix(mut, m.n_alleles, m.numeric_labels);
+            if (!mm.ok()) {
+                return err_result<PerMarkerKLBatch>(
+                    "per_marker_kl_batch: marker " + std::to_string(i)
+                    + ": " + mm.error);
+            }
+            auto ins = mm_cache.emplace(std::move(key), std::move(*mm));
+            mm_ptr = &ins.first->second;
+            out.mutation_matrix_cache_misses += 1;
+        }
+
+        auto joint = cpt_marker_joint_with_mm(ped, m, *mm_ptr);
+        if (!joint.ok()) {
+            return err_result<PerMarkerKLBatch>(
+                "per_marker_kl_batch: marker " + std::to_string(i)
+                + ": " + joint.error);
+        }
+
+        auto kl = per_marker_kl(*joint);
+        if (!kl.ok()) {
+            return err_result<PerMarkerKLBatch>(
+                "per_marker_kl_batch: marker " + std::to_string(i)
+                + ": " + kl.error);
+        }
+        out.entries.push_back(*kl);
+    }
+
+    return ok_result(std::move(out));
 }
 
 }  // namespace core

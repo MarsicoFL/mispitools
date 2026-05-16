@@ -49,6 +49,24 @@ Result<JointTable> cpt_marker_joint(
     const Marker& marker,
     const MutationModel& mut);
 
+/// @brief Joint CPT with a pre-built mutation matrix.
+///
+/// Same contract as `cpt_marker_joint()` above, except the K x K
+/// row-major mutation matrix is supplied directly instead of being
+/// rebuilt from `MutationModel`. Enables `per_marker_kl_batch()` to
+/// share one matrix across markers that have identical mutation
+/// parameters (F3.4).
+///
+/// The caller is responsible for the matrix being the correct shape
+/// (`marker.n_alleles * marker.n_alleles`) and a valid stochastic
+/// matrix — typically obtained via `build_mutation_matrix()`. The
+/// function validates the size and reports the same error as the
+/// `MutationModel`-driven overload otherwise.
+Result<JointTable> cpt_marker_joint_with_mm(
+    const Pedigree& ped,
+    const Marker& marker,
+    const std::vector<double>& mut_matrix);
+
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int cpt_engine_placeholder(int x);
 

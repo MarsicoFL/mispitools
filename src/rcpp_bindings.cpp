@@ -245,6 +245,110 @@ Rcpp::List cpp_per_marker_kl(
     );
 }
 
+// ---------------------------------------------------------------------------
+// F3.4 — cpp_per_marker_kl_batch(): N-marker batch over one shared pedigree.
+//
+// All markers share the topology (`father`, `mother`, `poi`). For each
+// marker the binding flattens freqs + numeric_labels + mutation parameters
+// into POD vectors and the core loops once, caching mutation matrices
+// across markers with identical (kind, K, rate, range, labels) keys.
+// Returns the per-marker KL columns + cache diagnostics.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_per_marker_kl_batch(
+        Rcpp::IntegerVector father,
+        Rcpp::IntegerVector mother,
+        int poi,
+        Rcpp::List freqs_list,
+        Rcpp::IntegerVector mutation_kind,
+        Rcpp::NumericVector mutation_rate,
+        Rcpp::NumericVector mutation_range,
+        Rcpp::List numeric_labels_list) {
+    if (father.size() != mother.size()) {
+        Rcpp::stop("cpp_per_marker_kl_batch: father and mother must be the same length.");
+    }
+    const R_xlen_t N = freqs_list.size();
+    if (mutation_kind.size() != N || mutation_rate.size() != N
+            || mutation_range.size() != N
+            || numeric_labels_list.size() != N) {
+        Rcpp::stop("cpp_per_marker_kl_batch: per-marker vectors must all have the same length.");
+    }
+
+    mc::Pedigree ped;
+    ped.n_members = static_cast<mc::MemberIndex>(father.size());
+    ped.father.assign(static_cast<std::size_t>(ped.n_members), mc::kNoParent);
+    ped.mother.assign(static_cast<std::size_t>(ped.n_members), mc::kNoParent);
+    for (int i = 0; i < ped.n_members; ++i) {
+        ped.father[static_cast<std::size_t>(i)] = father[i];
+        ped.mother[static_cast<std::size_t>(i)] = mother[i];
+    }
+    ped.poi = poi;
+
+    std::vector<mc::Marker> markers;
+    std::vector<mc::MutationModel> mutations;
+    markers.reserve(static_cast<std::size_t>(N));
+    mutations.reserve(static_cast<std::size_t>(N));
+
+    for (R_xlen_t i = 0; i < N; ++i) {
+        Rcpp::NumericVector f = freqs_list[i];
+        Rcpp::NumericVector lab = numeric_labels_list[i];
+        const int kind_i = mutation_kind[i];
+        if (kind_i < 0 || kind_i > 4) {
+            Rcpp::stop("cpp_per_marker_kl_batch: mutation_kind out of range [0, 4] at marker %d.",
+                       static_cast<int>(i + 1));
+        }
+
+        mc::Marker m;
+        m.id = "";
+        m.n_alleles = static_cast<mc::AlleleIndex>(f.size());
+        m.freqs.assign(f.begin(), f.end());
+        m.numeric_labels.assign(lab.begin(), lab.end());
+        markers.push_back(std::move(m));
+
+        mc::MutationModel mut;
+        mut.kind  = static_cast<mc::MutationKind>(kind_i);
+        mut.rate  = mutation_rate[i];
+        mut.range = mutation_range[i];
+        mut.rate2 = 0.0;
+        mut.bias  = 0.5;
+        mutations.push_back(mut);
+    }
+
+    auto r = mc::per_marker_kl_batch(ped, markers, mutations);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::PerMarkerKLBatch& batch = *r;
+
+    Rcpp::NumericVector e_h1(N), e_h2(N), kl_12(N), kl_21(N);
+    Rcpp::IntegerVector vio_h1(N), vio_h2(N);
+    Rcpp::NumericVector mass_h1(N), mass_h2(N);
+
+    for (R_xlen_t i = 0; i < N; ++i) {
+        const mc::PerMarkerKL& v = batch.entries[static_cast<std::size_t>(i)];
+        e_h1[i]   = v.e_log10_lr_h1;
+        e_h2[i]   = v.e_log10_lr_h2;
+        kl_12[i]  = v.kl_h1_to_h2;
+        kl_21[i]  = v.kl_h2_to_h1;
+        vio_h1[i] = static_cast<int>(v.abs_cont_violations_h1);
+        vio_h2[i] = static_cast<int>(v.abs_cont_violations_h2);
+        mass_h1[i] = v.mass_violations_h1;
+        mass_h2[i] = v.mass_violations_h2;
+    }
+
+    return Rcpp::List::create(
+        Rcpp::_["e_log10_lr_h1"]          = e_h1,
+        Rcpp::_["e_log10_lr_h2"]          = e_h2,
+        Rcpp::_["kl_h1_to_h2"]            = kl_12,
+        Rcpp::_["kl_h2_to_h1"]            = kl_21,
+        Rcpp::_["abs_cont_violations_h1"] = vio_h1,
+        Rcpp::_["abs_cont_violations_h2"] = vio_h2,
+        Rcpp::_["mass_violations_h1"]     = mass_h1,
+        Rcpp::_["mass_violations_h2"]     = mass_h2,
+        Rcpp::_["cache_hits"]   = static_cast<int>(batch.mutation_matrix_cache_hits),
+        Rcpp::_["cache_misses"] = static_cast<int>(batch.mutation_matrix_cache_misses)
+    );
+}
+
 // [[Rcpp::export]]
 arma::mat mutation_matrix_cpp(
         int K,

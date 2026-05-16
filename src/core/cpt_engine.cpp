@@ -282,6 +282,22 @@ Result<JointTable> cpt_marker_joint(
         const Pedigree& p,
         const Marker& marker,
         const MutationModel& mut) {
+    // F3.4: factored out so per_marker_kl_batch() can supply a cached
+    // mutation matrix without rebuilding it per marker. This wrapper
+    // keeps the historical single-shot entry point: build the K x K
+    // matrix from the MutationModel parameters, then delegate.
+    auto mm = build_mutation_matrix(mut, marker.n_alleles, marker.numeric_labels);
+    if (!mm.ok()) {
+        return err_result<JointTable>(
+            std::string("cpt_marker_joint: ") + mm.error);
+    }
+    return cpt_marker_joint_with_mm(p, marker, *mm);
+}
+
+Result<JointTable> cpt_marker_joint_with_mm(
+        const Pedigree& p,
+        const Marker& marker,
+        const std::vector<double>& mut_matrix) {
     if (marker.n_alleles <= 0
             || marker.freqs.size() != static_cast<std::size_t>(marker.n_alleles)) {
         return err_result<JointTable>(
@@ -306,14 +322,7 @@ Result<JointTable> cpt_marker_joint(
             "cpt_marker_joint: poi index out of range.");
     }
 
-    // F2.4: None / Equal / Stepwise are wired through build_mutation_matrix.
-    // Proportional and Asymmetric still surface as Result::error from there.
-    auto mm = build_mutation_matrix(mut, marker.n_alleles, marker.numeric_labels);
-    if (!mm.ok()) {
-        return err_result<JointTable>(
-            std::string("cpt_marker_joint: ") + mm.error);
-    }
-    auto pt = precompute_tables(marker.freqs, *mm);
+    auto pt = precompute_tables(marker.freqs, mut_matrix);
     if (!pt.ok()) {
         return err_result<JointTable>(
             std::string("cpt_marker_joint: ") + pt.error);

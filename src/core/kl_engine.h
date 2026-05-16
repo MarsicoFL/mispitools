@@ -48,6 +48,38 @@ struct PerMarkerKL {
 /// @complexity O(n_rows). One linear pass over the sorted joint.
 Result<PerMarkerKL> per_marker_kl(const JointTable& joint);
 
+/// @brief Per-marker bidirectional KL over a marker profile sharing one
+/// pedigree.
+///
+/// F3.4 batch entry point. Loops over `markers` and reuses one mutation
+/// matrix per distinct `(MutationModel.kind, K, rate, range, numeric_labels)`
+/// signature (Stepwise consumes the labels; None/Equal ignore them). The
+/// cache key is bit-exact on the floating-point parameters; markers with
+/// equal allele counts and identical mutation parameters share the K x K
+/// matrix, while markers with distinct parameters rebuild as usual.
+///
+/// The single-pedigree assumption matches the typical forensic LR setup
+/// (one MP case, N loci). The R-side wrapper falls back to a per-marker
+/// loop when topologies differ.
+struct PerMarkerKLBatch {
+    std::vector<PerMarkerKL> entries;          ///< length == markers.size()
+    std::int32_t mutation_matrix_cache_hits   = 0; ///< F3.4 cache diagnostic
+    std::int32_t mutation_matrix_cache_misses = 0; ///< F3.4 cache diagnostic
+};
+
+/// @param ped         Shared pedigree (POI applies to all markers).
+/// @param markers     Vector of `Marker` (freqs / labels per marker).
+/// @param mutations   Vector of `MutationModel`; `mutations.size()` must
+///                    equal `markers.size()`.
+/// @return Length-N batch result with per-marker KL + cache diagnostics.
+///         Errors short-circuit and propagate the offending marker index.
+/// @complexity Sum of single-marker costs; cache amortises the K x K
+/// mutation matrix construction across markers with matching keys.
+Result<PerMarkerKLBatch> per_marker_kl_batch(
+    const Pedigree& ped,
+    const std::vector<Marker>& markers,
+    const std::vector<MutationModel>& mutations);
+
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int kl_engine_placeholder(int x);
 

@@ -147,14 +147,25 @@ per_marker_kl_profile <- function(models, poi = NULL) {
     }
   }
 
-  rows <- vector("list", length(models))
-  pois <- character(length(models))
-  for (i in seq_along(models)) {
-    r <- per_marker_kl(models[[i]], poi = poi)
-    pois[i] <- attr(r, "poi")
-    rows[[i]] <- r
+  ## F3.4 — batch path when all models share pedigree topology, none use
+  ## linkage, and the mutation kinds are all wired to the C++ backend
+  ## (none / equal / stepwise). Falls through to the per-marker loop
+  ## otherwise.
+  batch <- per_marker_kl_profile_batch(models, poi)
+  out <- if (!is.null(batch)) {
+    batch
+  } else {
+    rows <- vector("list", length(models))
+    pois <- character(length(models))
+    for (i in seq_along(models)) {
+      r <- per_marker_kl(models[[i]], poi = poi)
+      pois[i] <- attr(r, "poi")
+      rows[[i]] <- r
+    }
+    out0 <- do.call(rbind, c(rows, list(make.row.names = FALSE)))
+    attr(out0, "poi") <- if (!is.null(poi)) poi else pois
+    out0
   }
-  out <- do.call(rbind, c(rows, list(make.row.names = FALSE)))
 
   nm <- names(models)
   if (!is.null(nm)) {
@@ -164,6 +175,102 @@ per_marker_kl_profile <- function(models, poi = NULL) {
     }
   }
 
-  attr(out, "poi") <- if (!is.null(poi)) poi else pois
+  out
+}
+
+#' @noRd
+per_marker_kl_profile_batch <- function(models, poi) {
+  ## Returns a data.frame in the per_marker_kl()-output shape when the
+  ## batch path applies, or NULL when the caller must use the R-level
+  ## fallback (heterogeneous topology, linkage, unsupported mutation).
+  m1 <- models[[1L]]
+  if (!is.null(m1$linkage)) return(NULL)
+  if (!m1$mutation$model %in% c("none", "equal", "stepwise")) return(NULL)
+  if (length(models) > 1L) {
+    for (i in 2:length(models)) {
+      m <- models[[i]]
+      if (!is.null(m$linkage)) return(NULL)
+      if (!m$mutation$model %in% c("none", "equal", "stepwise")) return(NULL)
+      if (!identical(m$ped, m1$ped)) return(NULL)
+    }
+  }
+
+  if (!requireNamespace("pedtools", quietly = TRUE)) {
+    stop("Package 'pedtools' is required.", call. = FALSE)
+  }
+
+  ped <- m1$ped
+  members <- as.character(labels(ped))
+  n <- length(members)
+  name_to_idx <- stats::setNames(seq_len(n) - 1L, members)
+  father <- integer(n)
+  mother <- integer(n)
+  for (i in seq_len(n)) {
+    fa <- as.character(pedtools::father(ped, id = members[i]))
+    mo <- as.character(pedtools::mother(ped, id = members[i]))
+    father[i] <- if (length(fa) == 0L || !nzchar(fa) || is.na(fa)) -1L else
+      unname(name_to_idx[[fa]])
+    mother[i] <- if (length(mo) == 0L || !nzchar(mo) || is.na(mo)) -1L else
+      unname(name_to_idx[[mo]])
+  }
+  poi_id <- resolve_poi(ped, poi)
+  poi_idx <- unname(name_to_idx[[poi_id]])
+
+  N <- length(models)
+  freqs_list <- vector("list", N)
+  labels_list <- vector("list", N)
+  kind_vec <- integer(N)
+  rate_vec <- numeric(N)
+  range_vec <- numeric(N)
+  marker_ids <- character(N)
+
+  for (i in seq_len(N)) {
+    m <- models[[i]]
+    freqs_list[[i]] <- as.numeric(unname(m$freqs))
+    K <- length(m$alleles)
+    kind_vec[i] <- switch(m$mutation$model, none = 0L, equal = 1L, stepwise = 2L)
+    rate_vec[i] <- if (m$mutation$model == "none") 0.0 else as.numeric(m$mutation$rate)
+    range_vec[i] <- if (m$mutation$model == "stepwise")
+      as.numeric(m$mutation$ratio) else 0.0
+    if (m$mutation$model == "stepwise") {
+      s <- suppressWarnings(as.numeric(m$alleles))
+      if (anyNA(s)) {
+        stop("Stepwise mutation requires numeric allele labels; got non-",
+             "numeric: ", paste(m$alleles[is.na(s)], collapse = ", "),
+             call. = FALSE)
+      }
+      labels_list[[i]] <- s
+    } else {
+      labels_list[[i]] <- rep(NA_real_, K)
+    }
+    marker_ids[i] <- m$marker_id
+  }
+
+  res <- cpp_per_marker_kl_batch(
+    father = as.integer(father),
+    mother = as.integer(mother),
+    poi = as.integer(poi_idx),
+    freqs_list = freqs_list,
+    mutation_kind = kind_vec,
+    mutation_rate = rate_vec,
+    mutation_range = range_vec,
+    numeric_labels_list = labels_list
+  )
+
+  out <- data.frame(
+    marker = marker_ids,
+    e_log10_lr_h1 = res$e_log10_lr_h1,
+    e_log10_lr_h2 = res$e_log10_lr_h2,
+    kl_h1_to_h2  = res$kl_h1_to_h2,
+    kl_h2_to_h1  = res$kl_h2_to_h1,
+    abs_cont_violations_h1 = as.integer(res$abs_cont_violations_h1),
+    abs_cont_violations_h2 = as.integer(res$abs_cont_violations_h2),
+    mass_violations_h1 = res$mass_violations_h1,
+    mass_violations_h2 = res$mass_violations_h2,
+    stringsAsFactors = FALSE
+  )
+  attr(out, "poi") <- if (!is.null(poi)) poi else rep(poi_id, N)
+  attr(out, "cache_hits")   <- as.integer(res$cache_hits)
+  attr(out, "cache_misses") <- as.integer(res$cache_misses)
   out
 }
