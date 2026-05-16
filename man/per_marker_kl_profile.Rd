@@ -24,8 +24,11 @@ attribute \code{"poi"} of length \code{length(models)}.
 \description{
 Vectorised wrapper around \code{\link[=per_marker_kl]{per_marker_kl()}} for a list of \code{marker_model}
 objects. Returns a \code{data.frame} with one row per input model in input
-order. F3.2 loops at the R level; the cross-marker C++ batch entry point
-(with mutation matrix caching) arrives in F3.4.
+order. When the profile shares one pedigree topology, uses no linkage,
+and every mutation model is wired to the C++ backend
+(\code{none} / \code{equal} / \code{stepwise}), evaluation routes through a single
+cross-marker C++ batch call with a shared mutation-matrix cache;
+otherwise it falls back to a per-marker R-level loop.
 
 All models must share the same pedigree topology if \code{poi} is supplied as
 a scalar; otherwise the POI is resolved independently for each model.

@@ -3,8 +3,10 @@
 ## Thin wrapper layer over `cpt_marker_joint_cpp_wrap()` + `cpp_per_marker_kl()`.
 ## Mirrors the column set of the F1.6 reference engine `per_marker_kl_R()` and
 ## extends it with the KLde-style absolute-continuity diagnostics surfaced by
-## the C++ kernel (F3.1). Core-side vectorisation across markers + mutation
-## matrix caching lands in F3.4; here the profile entry point loops in R.
+## the C++ kernel (F3.1). As of F3.4c the profile entry point routes through
+## the single-trip core batch path (F3.4a primitive + F3.4b mutation-matrix
+## cache); the R-level per-marker loop survives only as a fallback for
+## heterogeneous topology, linkage, or unsupported mutation models.
 
 #' Per-marker bidirectional Kullback-Leibler divergence and expected log10 LR
 #'
@@ -93,8 +95,11 @@ per_marker_kl <- function(model, poi = NULL) {
 #' @description
 #' Vectorised wrapper around [per_marker_kl()] for a list of `marker_model`
 #' objects. Returns a `data.frame` with one row per input model in input
-#' order. F3.2 loops at the R level; the cross-marker C++ batch entry point
-#' (with mutation matrix caching) arrives in F3.4.
+#' order. When the profile shares one pedigree topology, uses no linkage,
+#' and every mutation model is wired to the C++ backend
+#' (`none` / `equal` / `stepwise`), evaluation routes through a single
+#' cross-marker C++ batch call with a shared mutation-matrix cache;
+#' otherwise it falls back to a per-marker R-level loop.
 #'
 #' All models must share the same pedigree topology if `poi` is supplied as
 #' a scalar; otherwise the POI is resolved independently for each model.
