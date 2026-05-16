@@ -164,6 +164,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_per_marker_lr_dist
+Rcpp::List cpp_per_marker_lr_dist(Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2, bool aggregate);
+RcppExport SEXP _mispitools_cpp_per_marker_lr_dist(SEXP p_h1SEXP, SEXP p_h2SEXP, SEXP aggregateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    Rcpp::traits::input_parameter< bool >::type aggregate(aggregateSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_per_marker_lr_dist(p_h1, p_h2, aggregate));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_per_marker_kl_batch
 Rcpp::List cpp_per_marker_kl_batch(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::List freqs_list, Rcpp::IntegerVector mutation_kind, Rcpp::NumericVector mutation_rate, Rcpp::NumericVector mutation_range, Rcpp::List numeric_labels_list);
 RcppExport SEXP _mispitools_cpp_per_marker_kl_batch(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqs_listSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labels_listSEXP) {
@@ -212,6 +225,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_linkage_placeholder", (DL_FUNC) &_mispitools_cpp_linkage_placeholder, 1},
     {"_mispitools_cpt_marker_joint_cpp", (DL_FUNC) &_mispitools_cpt_marker_joint_cpp, 10},
     {"_mispitools_cpp_per_marker_kl", (DL_FUNC) &_mispitools_cpp_per_marker_kl, 2},
+    {"_mispitools_cpp_per_marker_lr_dist", (DL_FUNC) &_mispitools_cpp_per_marker_lr_dist, 3},
     {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 8},
     {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 5},
     {NULL, NULL, 0}

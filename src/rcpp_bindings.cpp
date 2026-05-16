@@ -246,6 +246,46 @@ Rcpp::List cpp_per_marker_kl(
 }
 
 // ---------------------------------------------------------------------------
+// F4.1 — cpp_per_marker_lr_dist(): sparse per-marker LR distribution over a
+// pre-computed joint (P_H1, P_H2).
+//
+// Same input contract as cpp_per_marker_kl (the columns produced by
+// cpt_marker_joint_cpp / cpt_marker_joint_R). Returns the sparse-sorted
+// (log10_lr, p_h1, p_h2) atoms plus the ±Inf flags. `aggregate = TRUE`
+// (default) collapses equal-log10_lr atoms, bit-for-bit with the R
+// reference per_marker_lr_dist_R(). The model-aware R wrapper arrives in
+// F4.4 (lr_distribution()).
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_per_marker_lr_dist(
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2,
+        bool aggregate = true) {
+    if (p_h1.size() != p_h2.size()) {
+        Rcpp::stop("cpp_per_marker_lr_dist: p_h1 and p_h2 must have the same length.");
+    }
+
+    mc::JointTable jt;
+    jt.n_members = 0;
+    jt.n_genotypes = 0;
+    jt.p_h1.assign(p_h1.begin(), p_h1.end());
+    jt.p_h2.assign(p_h2.begin(), p_h2.end());
+
+    auto r = mc::per_marker_lr_dist(jt, aggregate);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LrDist& d = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["log10_lr"]    = Rcpp::NumericVector(d.log10_lr.begin(), d.log10_lr.end()),
+        Rcpp::_["p_h1"]        = Rcpp::NumericVector(d.p_h1.begin(), d.p_h1.end()),
+        Rcpp::_["p_h2"]        = Rcpp::NumericVector(d.p_h2.begin(), d.p_h2.end()),
+        Rcpp::_["has_pos_inf"] = d.has_pos_inf,
+        Rcpp::_["has_neg_inf"] = d.has_neg_inf
+    );
+}
+
+// ---------------------------------------------------------------------------
 // F3.4 — cpp_per_marker_kl_batch(): N-marker batch over one shared pedigree.
 //
 // All markers share the topology (`father`, `mother`, `poi`). For each

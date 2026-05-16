@@ -53,6 +53,10 @@ cpp_per_marker_kl <- function(p_h1, p_h2) {
     .Call(`_mispitools_cpp_per_marker_kl`, p_h1, p_h2)
 }
 
+cpp_per_marker_lr_dist <- function(p_h1, p_h2, aggregate = TRUE) {
+    .Call(`_mispitools_cpp_per_marker_lr_dist`, p_h1, p_h2, aggregate)
+}
+
 cpp_per_marker_kl_batch <- function(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list) {
     .Call(`_mispitools_cpp_per_marker_kl_batch`, father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list)
 }
