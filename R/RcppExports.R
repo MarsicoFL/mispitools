@@ -57,6 +57,10 @@ cpp_per_marker_lr_dist <- function(p_h1, p_h2, aggregate = TRUE) {
     .Call(`_mispitools_cpp_per_marker_lr_dist`, p_h1, p_h2, aggregate)
 }
 
+cpp_lr_dist_compose <- function(dists, method = "exact", merge_tol = 0.0, grid_points = 512L) {
+    .Call(`_mispitools_cpp_lr_dist_compose`, dists, method, merge_tol, grid_points)
+}
+
 cpp_per_marker_kl_batch <- function(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list) {
     .Call(`_mispitools_cpp_per_marker_kl_batch`, father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list)
 }

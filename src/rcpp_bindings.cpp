@@ -286,6 +286,61 @@ Rcpp::List cpp_per_marker_lr_dist(
 }
 
 // ---------------------------------------------------------------------------
+// F4.2 — cpp_lr_dist_compose(): convolution of independent per-feature LR
+// distributions.
+//
+// `dists` is a list of lists, each with numeric `log10_lr`, `p_h1`, `p_h2`
+// columns (the per-feature output of cpp_per_marker_lr_dist). `method` is
+// "exact" (default) or "grid". Returns the composed sparse-sorted
+// distribution + the ±Inf flags. The model-aware R wrapper that builds the
+// per-feature list from a model list arrives in F4.4 (lr_distribution()).
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lr_dist_compose(
+        Rcpp::List dists,
+        std::string method = "exact",
+        double merge_tol = 0.0,
+        int grid_points = 512) {
+    mc::LrDistComposeOptions opts;
+    if (method == "exact") {
+        opts.method = mc::ComposeMethod::Exact;
+    } else if (method == "grid") {
+        opts.method = mc::ComposeMethod::Grid;
+    } else {
+        Rcpp::stop("cpp_lr_dist_compose: method must be 'exact' or 'grid'.");
+    }
+    opts.merge_tol = merge_tol;
+    opts.grid_points = grid_points;
+
+    std::vector<mc::LrDist> per_feature;
+    per_feature.reserve(static_cast<std::size_t>(dists.size()));
+    for (R_xlen_t i = 0; i < dists.size(); ++i) {
+        Rcpp::List d = dists[i];
+        Rcpp::NumericVector lr  = d["log10_lr"];
+        Rcpp::NumericVector p1  = d["p_h1"];
+        Rcpp::NumericVector p2  = d["p_h2"];
+        mc::LrDist x;
+        x.log10_lr.assign(lr.begin(), lr.end());
+        x.p_h1.assign(p1.begin(), p1.end());
+        x.p_h2.assign(p2.begin(), p2.end());
+        per_feature.push_back(std::move(x));
+    }
+
+    auto r = mc::lr_dist_compose(per_feature, opts);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LrDist& d = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["log10_lr"]    = Rcpp::NumericVector(d.log10_lr.begin(), d.log10_lr.end()),
+        Rcpp::_["p_h1"]        = Rcpp::NumericVector(d.p_h1.begin(), d.p_h1.end()),
+        Rcpp::_["p_h2"]        = Rcpp::NumericVector(d.p_h2.begin(), d.p_h2.end()),
+        Rcpp::_["has_pos_inf"] = d.has_pos_inf,
+        Rcpp::_["has_neg_inf"] = d.has_neg_inf
+    );
+}
+
+// ---------------------------------------------------------------------------
 // F3.4 — cpp_per_marker_kl_batch(): N-marker batch over one shared pedigree.
 //
 // All markers share the topology (`father`, `mother`, `poi`). For each

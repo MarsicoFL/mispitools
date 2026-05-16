@@ -1,6 +1,7 @@
 #ifndef MISPITOOLS_CORE_LR_DIST_H
 #define MISPITOOLS_CORE_LR_DIST_H
 
+#include <cstdint>
 #include <vector>
 
 #include "cpt_engine.h"
@@ -50,6 +51,60 @@ struct LrDist {
 /// sort + linear collapse).
 Result<LrDist> per_marker_lr_dist(const JointTable& joint,
                                   bool aggregate = true);
+
+/// @brief Composition method for `lr_dist_compose` (F4.2).
+enum class ComposeMethod : std::uint8_t {
+    Exact = 0,   ///< exact sparse convolution (sum-of-keys)
+    Grid  = 1     ///< fixed log-LR lattice heuristic (controlled error)
+};
+
+/// @brief Options for `lr_dist_compose`.
+struct LrDistComposeOptions {
+    ComposeMethod method = ComposeMethod::Exact;
+    /// Exact mode: collapse finite keys whose ascending gap is `<= merge_tol`
+    /// (representative = the group's first key, matching R-ref `aggregate`).
+    /// Default 0.0 → exact-equality grouping, bit-for-bit with the R
+    /// reference. Set > 0 to bucket near-equal atoms (caps support growth).
+    double merge_tol = 0.0;
+    /// Grid mode: number of lattice points spanning the finite total range
+    /// `[Σ min, Σ max]`. Discretisation error is O(span / (grid_points-1)).
+    /// Ignored in exact mode. Must be >= 2.
+    int grid_points = 512;
+};
+
+/// @brief Compose independent per-feature LR distributions.
+///
+/// The total log10 LR under conditional independence is the sum of the
+/// per-feature log10 LRs (ROADMAP §Combinación, mode `independent`), so the
+/// composed distribution is the convolution of the per-feature ones.
+///
+/// `Exact`: sequential fold (`acc = δ₀; acc = conv(acc, dᵢ)`) over a
+/// sparse `{log10_lr, p_h1, p_h2}` support — `p_h1` and `p_h2` convolved on
+/// the *same* key grid in one pass. Both probabilities are multiplied; a
+/// combined atom with both probabilities zero is dropped (the `0 log 0 = 0`
+/// limit; this also disposes of the `+Inf` × `-Inf` cross term, whose mass
+/// is identically zero). ±Inf atoms (mutation=none) propagate via IEEE
+/// arithmetic and aggregate into single buckets, mirroring
+/// `per_marker_lr_dist`. Pattern reference: `DNAtools::convolve` (GPL-2+) —
+/// re-implemented, not lifted; the integer-offset `+1` shift of that code
+/// is structurally inexpressible here (keys are real-valued).
+///
+/// `Grid`: project every feature onto a common lattice of spacing
+/// `delta = span / (grid_points-1)` via mass- and mean-preserving linear
+/// splitting, then convolve on the integer lattice (exact index addition,
+/// no clamping). The composed mean is preserved exactly; the discretisation
+/// error on the shape is O(delta). Requires all-finite supports (±Inf atoms
+/// → error; use `Exact`).
+///
+/// Invariants (SCOUT_DNAtools F4.2): Σp = 1 after each fold;
+/// `compose([d]) == d` (idempotence); `compose([d1,d2]) == compose([d2,d1])`
+/// (commutativity). An empty input list composes to the identity δ₀
+/// (`{0, 1, 1}`).
+///
+/// @complexity Exact: O(K · |support|²) sparse folds. Grid:
+/// O(K · grid_points · |feature|).
+Result<LrDist> lr_dist_compose(const std::vector<LrDist>& per_feature,
+                               const LrDistComposeOptions& opts = {});
 
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int lr_dist_placeholder(int x);

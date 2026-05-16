@@ -68,6 +68,40 @@ per_marker_kl_R <- function(model, poi = NULL) {
   )
 }
 
+## R reference for the F4.2 composition step. Exact sequential
+## convolution of independent per-feature LR distributions: the total
+## log10 LR is the sum of the per-feature log10 LRs (conditional
+## independence), so the composed distribution is their convolution.
+## The C++ kernel `core::lr_dist_compose` (exact mode) reproduces this
+## bit-for-bit (1e-12 tol) — the cartesian product is iterated in the
+## same order (feature outermost, accumulator innermost) so the
+## post-sort summation in `aggregate_lr_dist` matches.
+
+#' @noRd
+lr_dist_compose_R <- function(dists) {
+  acc <- data.frame(log10_lr = 0, p_h1 = 1, p_h2 = 1)
+  for (d in dists) {
+    n_a <- nrow(acc)
+    n_d <- nrow(d)
+    ia <- rep(seq_len(n_a), times = n_d)
+    id <- rep(seq_len(n_d), each = n_a)
+    new_lr <- acc$log10_lr[ia] + d$log10_lr[id]
+    new_p1 <- acc$p_h1[ia] * d$p_h1[id]
+    new_p2 <- acc$p_h2[ia] * d$p_h2[id]
+    keep <- new_p1 > 0 | new_p2 > 0
+    nd <- data.frame(
+      log10_lr = new_lr[keep],
+      p_h1 = new_p1[keep],
+      p_h2 = new_p2[keep]
+    )
+    if (nrow(nd) == 0L) {
+      return(nd)
+    }
+    acc <- aggregate_lr_dist(nd)
+  }
+  acc
+}
+
 #' @noRd
 log10_lr_from_probs <- function(P1, P2) {
   out <- rep(NA_real_, length(P1))
