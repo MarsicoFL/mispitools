@@ -2,6 +2,7 @@
 #define MISPITOOLS_CORE_KL_ENGINE_H
 
 #include <cstdint>
+#include <vector>
 
 #include "cpt_engine.h"
 #include "result.h"
@@ -47,6 +48,25 @@ struct PerMarkerKL {
 ///         negative probability is found.
 /// @complexity O(n_rows). One linear pass over the sorted joint.
 Result<PerMarkerKL> per_marker_kl(const JointTable& joint);
+
+/// @brief Pure N-marker batch over already-built sparse joint tables.
+///
+/// F3.4a entrypoint. Loops over pre-computed `joints`, reusing
+/// `per_marker_kl(JointTable)` from F3.1 with a single sparse pass per
+/// marker. It performs no pedigree peeling and constructs no mutation
+/// matrices — the caller supplies the joints. Mutation-matrix caching
+/// across markers is layered on by the `(Pedigree, markers, mutations)`
+/// overload (F3.4b); this primitive is its lower layer and the unit the
+/// standalone CLI/WASM targets exercise without an R round-trip.
+///
+/// @param joints per-marker sparse joint tables (output of
+///        `cpt_marker_joint`), one per marker, in report order.
+/// @return Length-`joints.size()` vector of `PerMarkerKL`. The first
+///         failing marker short-circuits; its index is prefixed onto the
+///         propagated error message.
+/// @complexity Sum of the single-marker O(n_rows) passes.
+Result<std::vector<PerMarkerKL>> per_marker_kl_batch(
+    const std::vector<JointTable>& joints);
 
 /// @brief Per-marker bidirectional KL over a marker profile sharing one
 /// pedigree.

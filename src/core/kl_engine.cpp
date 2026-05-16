@@ -87,6 +87,28 @@ Result<PerMarkerKL> per_marker_kl(const JointTable& joint) {
     return ok_result(out);
 }
 
+Result<std::vector<PerMarkerKL>> per_marker_kl_batch(
+        const std::vector<JointTable>& joints) {
+    std::vector<PerMarkerKL> out;
+    out.reserve(joints.size());
+
+    // One sparse pass per marker, reusing the F3.1 scalar kernel. No
+    // pedigree peeling and no mutation-matrix construction happen here:
+    // the joints arrive fully built. The first failing marker short-
+    // circuits so the caller never sees a partially populated vector.
+    for (std::size_t i = 0; i < joints.size(); ++i) {
+        auto kl = per_marker_kl(joints[i]);
+        if (!kl.ok()) {
+            return err_result<std::vector<PerMarkerKL>>(
+                "per_marker_kl_batch: marker " + std::to_string(i)
+                + ": " + kl.error);
+        }
+        out.push_back(*kl);
+    }
+
+    return ok_result(std::move(out));
+}
+
 namespace {
 
 // Serialise the mutation matrix signature into a bit-exact byte string.
