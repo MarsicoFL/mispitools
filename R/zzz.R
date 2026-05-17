@@ -6,5 +6,8 @@ utils::globalVariables(c(
   "w",
   "Condition",
   "FPR",
-  "TPR"
+  "TPR",
+  "prob",
+  "Hypothesis",
+  "log10_lr"
 ))

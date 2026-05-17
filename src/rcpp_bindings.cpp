@@ -341,6 +341,121 @@ Rcpp::List cpp_lr_dist_compose(
 }
 
 // ---------------------------------------------------------------------------
+// F4.3 — decision-theoretic primitives over a sparse LR distribution.
+//
+// Inputs are the (log10_lr, p_h1, p_h2) columns of cpp_per_marker_lr_dist
+// / cpp_lr_dist_compose. The model-aware S3 layer (as_lr_dist + summary /
+// plot methods) lives in R/lr_dist_s3.R; F4.4 adds lr_distribution().
+// ---------------------------------------------------------------------------
+
+namespace {
+
+inline mc::LrDist lr_dist_from_cols(const Rcpp::NumericVector& lr,
+                                    const Rcpp::NumericVector& p1,
+                                    const Rcpp::NumericVector& p2) {
+    mc::LrDist d;
+    d.log10_lr.assign(lr.begin(), lr.end());
+    d.p_h1.assign(p1.begin(), p1.end());
+    d.p_h2.assign(p2.begin(), p2.end());
+    return d;
+}
+
+}  // namespace
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lr_dist_summary(
+        Rcpp::NumericVector log10_lr,
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2) {
+    auto r = mc::lr_dist_summary(lr_dist_from_cols(log10_lr, p_h1, p_h2));
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LrDistSummary& s = *r;
+    return Rcpp::List::create(
+        Rcpp::_["mean_h1"]     = s.mean_h1,
+        Rcpp::_["mean_h2"]     = s.mean_h2,
+        Rcpp::_["var_h1"]      = s.var_h1,
+        Rcpp::_["var_h2"]      = s.var_h2,
+        Rcpp::_["sd_h1"]       = s.sd_h1,
+        Rcpp::_["sd_h2"]       = s.sd_h2,
+        Rcpp::_["mass_h1"]     = s.mass_h1,
+        Rcpp::_["mass_h2"]     = s.mass_h2,
+        Rcpp::_["has_pos_inf"] = s.has_pos_inf,
+        Rcpp::_["has_neg_inf"] = s.has_neg_inf
+    );
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector cpp_lr_dist_quantile(
+        Rcpp::NumericVector log10_lr,
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2,
+        Rcpp::NumericVector probs,
+        bool under_h1 = true) {
+    std::vector<double> pv(probs.begin(), probs.end());
+    auto r = mc::lr_dist_quantile(
+        lr_dist_from_cols(log10_lr, p_h1, p_h2), pv, under_h1);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const std::vector<double>& q = *r;
+    return Rcpp::NumericVector(q.begin(), q.end());
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lr_dist_decision_rates(
+        Rcpp::NumericVector log10_lr,
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2,
+        double threshold) {
+    auto r = mc::decision_rates(
+        lr_dist_from_cols(log10_lr, p_h1, p_h2), threshold);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::DecisionRates& v = *r;
+    return Rcpp::List::create(
+        Rcpp::_["threshold"] = v.threshold,
+        Rcpp::_["fpr"]       = v.fpr,
+        Rcpp::_["fnr"]       = v.fnr,
+        Rcpp::_["tpr"]       = v.tpr,
+        Rcpp::_["tnr"]       = v.tnr,
+        Rcpp::_["mcc"]       = v.mcc
+    );
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lr_dist_roc(
+        Rcpp::NumericVector log10_lr,
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2) {
+    auto r = mc::roc_curve(lr_dist_from_cols(log10_lr, p_h1, p_h2));
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::RocCurve& c = *r;
+    return Rcpp::List::create(
+        Rcpp::_["threshold"] = Rcpp::NumericVector(c.threshold.begin(), c.threshold.end()),
+        Rcpp::_["fpr"]       = Rcpp::NumericVector(c.fpr.begin(), c.fpr.end()),
+        Rcpp::_["tpr"]       = Rcpp::NumericVector(c.tpr.begin(), c.tpr.end()),
+        Rcpp::_["fnr"]       = Rcpp::NumericVector(c.fnr.begin(), c.fnr.end()),
+        Rcpp::_["tnr"]       = Rcpp::NumericVector(c.tnr.begin(), c.tnr.end()),
+        Rcpp::_["auc"]       = c.auc
+    );
+}
+
+// [[Rcpp::export]]
+Rcpp::List cpp_lr_dist_choose_threshold(
+        Rcpp::NumericVector log10_lr,
+        Rcpp::NumericVector p_h1,
+        Rcpp::NumericVector p_h2,
+        double weight = 10.0) {
+    auto r = mc::choose_threshold_weighted(
+        lr_dist_from_cols(log10_lr, p_h1, p_h2), weight);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::ThresholdChoice& v = *r;
+    return Rcpp::List::create(
+        Rcpp::_["threshold"] = v.threshold,
+        Rcpp::_["fpr"]       = v.fpr,
+        Rcpp::_["fnr"]       = v.fnr,
+        Rcpp::_["distance"]  = v.distance
+    );
+}
+
+// ---------------------------------------------------------------------------
 // F3.4 — cpp_per_marker_kl_batch(): N-marker batch over one shared pedigree.
 //
 // All markers share the topology (`father`, `mother`, `poi`). For each

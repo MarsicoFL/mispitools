@@ -61,6 +61,26 @@ cpp_lr_dist_compose <- function(dists, method = "exact", merge_tol = 0.0, grid_p
     .Call(`_mispitools_cpp_lr_dist_compose`, dists, method, merge_tol, grid_points)
 }
 
+cpp_lr_dist_summary <- function(log10_lr, p_h1, p_h2) {
+    .Call(`_mispitools_cpp_lr_dist_summary`, log10_lr, p_h1, p_h2)
+}
+
+cpp_lr_dist_quantile <- function(log10_lr, p_h1, p_h2, probs, under_h1 = TRUE) {
+    .Call(`_mispitools_cpp_lr_dist_quantile`, log10_lr, p_h1, p_h2, probs, under_h1)
+}
+
+cpp_lr_dist_decision_rates <- function(log10_lr, p_h1, p_h2, threshold) {
+    .Call(`_mispitools_cpp_lr_dist_decision_rates`, log10_lr, p_h1, p_h2, threshold)
+}
+
+cpp_lr_dist_roc <- function(log10_lr, p_h1, p_h2) {
+    .Call(`_mispitools_cpp_lr_dist_roc`, log10_lr, p_h1, p_h2)
+}
+
+cpp_lr_dist_choose_threshold <- function(log10_lr, p_h1, p_h2, weight = 10.0) {
+    .Call(`_mispitools_cpp_lr_dist_choose_threshold`, log10_lr, p_h1, p_h2, weight)
+}
+
 cpp_per_marker_kl_batch <- function(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list) {
     .Call(`_mispitools_cpp_per_marker_kl_batch`, father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list)
 }

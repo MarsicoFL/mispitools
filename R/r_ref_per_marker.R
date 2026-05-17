@@ -122,6 +122,151 @@ weighted_log10_lr_sum <- function(weight, log10_lr) {
   sum(parts)
 }
 
+## R reference for the F4.3 decision-theoretic primitives. Every
+## quantity is derived from an (log10_lr, p_h1, p_h2) sparse LR
+## distribution `d` (the output of `per_marker_lr_dist_R` /
+## `lr_dist_compose_R`). The C++ kernel in `src/core/decision.cpp`
+## reproduces these to 1e-12: same active-weight filter, same
+## ascending summation order, same tie / ±Inf conventions.
+
+#' @noRd
+weighted_centered_sq <- function(weight, log10_lr, m) {
+  active <- weight > 0
+  if (!any(active)) return(0)
+  if (!is.finite(m)) return(Inf)
+  parts <- weight[active] * (log10_lr[active] - m)^2
+  sum(parts)
+}
+
+#' @noRd
+lr_dist_summary_R <- function(d) {
+  lr <- d$log10_lr
+  p1 <- d$p_h1
+  p2 <- d$p_h2
+  m1 <- weighted_log10_lr_sum(p1, lr)
+  m2 <- weighted_log10_lr_sum(p2, lr)
+  v1 <- weighted_centered_sq(p1, lr, m1)
+  v2 <- weighted_centered_sq(p2, lr, m2)
+  list(
+    mean_h1 = m1,
+    mean_h2 = m2,
+    var_h1 = v1,
+    var_h2 = v2,
+    sd_h1 = sqrt(v1),
+    sd_h2 = sqrt(v2),
+    mass_h1 = sum(p1),
+    mass_h2 = sum(p2),
+    has_pos_inf = any(is.infinite(lr) & lr > 0),
+    has_neg_inf = any(is.infinite(lr) & lr < 0)
+  )
+}
+
+## Discrete inverse-CDF, R `quantile` type 1: Q(p) = inf{x : F(x) >= p}
+## over the active (weight > 0) atoms, ascending, with a 1e-12
+## cumulative slack so a probability landing exactly on a breakpoint
+## resolves to that atom.
+#' @noRd
+lr_dist_quantile_R <- function(d, probs, under_h1 = TRUE) {
+  lr <- d$log10_lr
+  w <- if (under_h1) d$p_h1 else d$p_h2
+  keep <- w > 0
+  if (!any(keep)) {
+    stop("no active support under the requested hypothesis.", call. = FALSE)
+  }
+  lr <- lr[keep]
+  w <- w[keep]
+  ord <- order(lr)
+  lr <- lr[ord]
+  w <- w[ord]
+  cw <- cumsum(w) / sum(w)
+  slack <- 1e-12
+  vapply(probs, function(p) {
+    if (p <= 0) return(lr[1])
+    hit <- which(cw + slack >= p)
+    if (length(hit) == 0L) lr[length(lr)] else lr[hit[1]]
+  }, numeric(1))
+}
+
+## Error rates of the `log10 LR > threshold` classifier. Mass at
+## exactly == threshold is indeterminate (excluded from both tallies),
+## the analytic analogue of `threshold_rates()` over the exact
+## distribution.
+#' @noRd
+decision_rates_R <- function(d, threshold) {
+  lr <- d$log10_lr
+  p1 <- d$p_h1
+  p2 <- d$p_h2
+  below <- lr < threshold
+  above <- lr > threshold
+  fnr <- sum(p1[below])
+  tnr <- sum(p2[below])
+  tpr <- sum(p1[above])
+  fpr <- sum(p2[above])
+  TP <- tpr; TN <- tnr; FP <- fpr; FN <- fnr
+  denom <- sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+  mcc <- if (denom == 0) 0 else (TP * TN - FP * FN) / denom
+  list(
+    threshold = threshold,
+    fpr = fpr, fnr = fnr, tpr = tpr, tnr = tnr, mcc = mcc
+  )
+}
+
+#' @noRd
+roc_curve_R <- function(d) {
+  lr <- d$log10_lr
+  p1 <- d$p_h1
+  p2 <- d$p_h2
+  thr <- sort(unique(lr))
+  fpr <- numeric(length(thr))
+  tpr <- numeric(length(thr))
+  fnr <- numeric(length(thr))
+  tnr <- numeric(length(thr))
+  for (t in seq_along(thr)) {
+    below <- lr < thr[t]
+    above <- lr > thr[t]
+    fnr[t] <- sum(p1[below])
+    tnr[t] <- sum(p2[below])
+    tpr[t] <- sum(p1[above])
+    fpr[t] <- sum(p2[above])
+  }
+  ## Concordance AUC with the same i (outer) / j (inner) nesting as
+  ## the C++ kernel.
+  auc <- 0
+  n <- length(lr)
+  for (i in seq_len(n)) {
+    if (p1[i] <= 0) next
+    for (j in seq_len(n)) {
+      if (p2[j] <= 0) next
+      ind <- if (lr[i] > lr[j]) 1 else if (lr[i] == lr[j]) 0.5 else 0
+      auc <- auc + p1[i] * p2[j] * ind
+    }
+  }
+  list(threshold = thr, fpr = fpr, tpr = tpr, fnr = fnr, tnr = tnr,
+       auc = auc)
+}
+
+## Weighted-Euclidean optimal threshold over the distinct atom values:
+## minimise D = sqrt(fnr^2 + (weight*fpr)^2), first minimiser on a tie
+## (ascending scan). Analytic analogue of `decision_threshold()`.
+#' @noRd
+choose_threshold_weighted_R <- function(d, weight) {
+  if (!(weight > 0)) stop("weight must be positive.", call. = FALSE)
+  lr <- d$log10_lr
+  p1 <- d$p_h1
+  p2 <- d$p_h2
+  thr <- sort(unique(lr))
+  best <- NULL
+  for (t in thr) {
+    fnr <- sum(p1[lr < t])
+    fpr <- sum(p2[lr > t])
+    dist <- sqrt(fnr^2 + (weight * fpr)^2)
+    if (is.null(best) || dist < best$distance) {
+      best <- list(threshold = t, fpr = fpr, fnr = fnr, distance = dist)
+    }
+  }
+  best
+}
+
 #' @noRd
 aggregate_lr_dist <- function(d) {
   if (nrow(d) == 0L) return(d)

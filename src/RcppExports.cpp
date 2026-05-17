@@ -191,6 +191,75 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_lr_dist_summary
+Rcpp::List cpp_lr_dist_summary(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2);
+RcppExport SEXP _mispitools_cpp_lr_dist_summary(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type log10_lr(log10_lrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_summary(log10_lr, p_h1, p_h2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lr_dist_quantile
+Rcpp::NumericVector cpp_lr_dist_quantile(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2, Rcpp::NumericVector probs, bool under_h1);
+RcppExport SEXP _mispitools_cpp_lr_dist_quantile(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP, SEXP probsSEXP, SEXP under_h1SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type log10_lr(log10_lrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type probs(probsSEXP);
+    Rcpp::traits::input_parameter< bool >::type under_h1(under_h1SEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_quantile(log10_lr, p_h1, p_h2, probs, under_h1));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lr_dist_decision_rates
+Rcpp::List cpp_lr_dist_decision_rates(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2, double threshold);
+RcppExport SEXP _mispitools_cpp_lr_dist_decision_rates(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP, SEXP thresholdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type log10_lr(log10_lrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    Rcpp::traits::input_parameter< double >::type threshold(thresholdSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_decision_rates(log10_lr, p_h1, p_h2, threshold));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lr_dist_roc
+Rcpp::List cpp_lr_dist_roc(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2);
+RcppExport SEXP _mispitools_cpp_lr_dist_roc(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type log10_lr(log10_lrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_roc(log10_lr, p_h1, p_h2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_lr_dist_choose_threshold
+Rcpp::List cpp_lr_dist_choose_threshold(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2, double weight);
+RcppExport SEXP _mispitools_cpp_lr_dist_choose_threshold(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP, SEXP weightSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type log10_lr(log10_lrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h1(p_h1SEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type p_h2(p_h2SEXP);
+    Rcpp::traits::input_parameter< double >::type weight(weightSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_lr_dist_choose_threshold(log10_lr, p_h1, p_h2, weight));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_per_marker_kl_batch
 Rcpp::List cpp_per_marker_kl_batch(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::List freqs_list, Rcpp::IntegerVector mutation_kind, Rcpp::NumericVector mutation_rate, Rcpp::NumericVector mutation_range, Rcpp::List numeric_labels_list);
 RcppExport SEXP _mispitools_cpp_per_marker_kl_batch(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqs_listSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labels_listSEXP) {
@@ -241,6 +310,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_per_marker_kl", (DL_FUNC) &_mispitools_cpp_per_marker_kl, 2},
     {"_mispitools_cpp_per_marker_lr_dist", (DL_FUNC) &_mispitools_cpp_per_marker_lr_dist, 3},
     {"_mispitools_cpp_lr_dist_compose", (DL_FUNC) &_mispitools_cpp_lr_dist_compose, 4},
+    {"_mispitools_cpp_lr_dist_summary", (DL_FUNC) &_mispitools_cpp_lr_dist_summary, 3},
+    {"_mispitools_cpp_lr_dist_quantile", (DL_FUNC) &_mispitools_cpp_lr_dist_quantile, 5},
+    {"_mispitools_cpp_lr_dist_decision_rates", (DL_FUNC) &_mispitools_cpp_lr_dist_decision_rates, 4},
+    {"_mispitools_cpp_lr_dist_roc", (DL_FUNC) &_mispitools_cpp_lr_dist_roc, 3},
+    {"_mispitools_cpp_lr_dist_choose_threshold", (DL_FUNC) &_mispitools_cpp_lr_dist_choose_threshold, 4},
     {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 8},
     {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 5},
     {NULL, NULL, 0}
