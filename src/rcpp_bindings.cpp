@@ -730,3 +730,64 @@ Rcpp::List cpp_linked_pair_joint(
         Rcpp::_["n_genotypes_b"] = static_cast<int>(jt.n_genotypes_b)
     );
 }
+
+// ---------------------------------------------------------------------------
+// F6.3 — nongenetic_cpt_cpp(): per-feature CPT under H1 / H2 for a
+// categorical / continuous / date non-genetic feature.
+//
+// The R-side wrapper R/ng_cpt_cpp.R flattens a `nongenetic_feature`
+// object into the POD fields below and re-labels the returned states to
+// match the R reference ng_cpt_R(). Only the fields relevant to
+// `feature_class` (0 = categorical, 1 = continuous, 2 = date) are read by
+// the core; the rest are ignored. `grid` is returned for the continuous
+// numeric support and is empty otherwise.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List nongenetic_cpt_cpp(
+        int feature_class,
+        int n_categories,
+        bool error_is_matrix,
+        Rcpp::NumericVector error_matrix,
+        double error_scalar,
+        int observed_index,
+        bool reference_uniform,
+        Rcpp::NumericVector reference_freqs,
+        double range_lo,
+        double range_hi,
+        Rcpp::NumericVector sample,
+        double observed_value,
+        int n_bins,
+        Rcpp::NumericVector alpha,
+        bool search_open) {
+    if (feature_class < 0 || feature_class > 2) {
+        Rcpp::stop("nongenetic_cpt_cpp: feature_class out of range [0, 2].");
+    }
+
+    mc::NongeneticFeature f;
+    f.feature_class = static_cast<mc::NgFeatureClass>(feature_class);
+    f.n_categories = n_categories;
+    f.error_is_matrix = error_is_matrix;
+    f.error_matrix.assign(error_matrix.begin(), error_matrix.end());
+    f.error_scalar = error_scalar;
+    f.observed_index = observed_index;
+    f.reference_uniform = reference_uniform;
+    f.reference_freqs.assign(reference_freqs.begin(), reference_freqs.end());
+    f.range_lo = range_lo;
+    f.range_hi = range_hi;
+    f.sample.assign(sample.begin(), sample.end());
+    f.observed_value = observed_value;
+    f.n_bins = n_bins;
+    f.alpha.assign(alpha.begin(), alpha.end());
+    f.search_open = search_open;
+
+    auto r = mc::nongenetic_cpt(f);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::NongeneticCpt& c = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["p_h1"] = Rcpp::NumericVector(c.p_h1.begin(), c.p_h1.end()),
+        Rcpp::_["p_h2"] = Rcpp::NumericVector(c.p_h2.begin(), c.p_h2.end()),
+        Rcpp::_["grid"] = Rcpp::NumericVector(c.grid.begin(), c.grid.end())
+    );
+}

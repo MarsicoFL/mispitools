@@ -113,3 +113,7 @@ cpp_linked_pair_joint <- function(father, mother, poi, freqs_a, freqs_b, rho, mu
     .Call(`_mispitools_cpp_linked_pair_joint`, father, mother, poi, freqs_a, freqs_b, rho, mutation_kind_a, mutation_rate_a, mutation_range_a, numeric_labels_a, mutation_kind_b, mutation_rate_b, mutation_range_b, numeric_labels_b, relevant)
 }
 
+nongenetic_cpt_cpp <- function(feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open) {
+    .Call(`_mispitools_nongenetic_cpt_cpp`, feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open)
+}
+
