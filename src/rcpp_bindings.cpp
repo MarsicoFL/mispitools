@@ -136,7 +136,8 @@ Rcpp::List cpt_marker_joint_cpp(
         double mutation_range = 0.0,
         double mutation_rate2 = 0.0,
         double mutation_bias = 0.5,
-        Rcpp::NumericVector numeric_labels = Rcpp::NumericVector::create()) {
+        Rcpp::NumericVector numeric_labels = Rcpp::NumericVector::create(),
+        Rcpp::IntegerVector relevant = Rcpp::IntegerVector::create()) {
     if (father.size() != mother.size()) {
         Rcpp::stop("cpt_marker_joint_cpp: father and mother must be the same length.");
     }
@@ -167,7 +168,16 @@ Rcpp::List cpt_marker_joint_cpp(
     mut.rate2 = mutation_rate2;
     mut.bias = mutation_bias;
 
-    auto r = mc::cpt_marker_joint(ped, marker, mut);
+    // `relevant` arrives 1-based from R; empty -> whole-pedigree dense
+    // joint (F2 behaviour). A strict subset routes the F5.6 peeled path
+    // that marginalises every other member.
+    std::vector<mc::MemberIndex> rel;
+    rel.reserve(static_cast<std::size_t>(relevant.size()));
+    for (int k = 0; k < relevant.size(); ++k) {
+        rel.push_back(static_cast<mc::MemberIndex>(relevant[k] - 1));
+    }
+
+    auto r = mc::cpt_marker_joint(ped, marker, mut, rel);
     if (!r.ok()) Rcpp::stop(r.error);
     const mc::JointTable& jt = *r;
 

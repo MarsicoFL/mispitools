@@ -45,8 +45,8 @@ cpp_linkage_placeholder <- function(x) {
     .Call(`_mispitools_cpp_linkage_placeholder`, x)
 }
 
-cpt_marker_joint_cpp <- function(father, mother, poi, freqs, mutation_kind = 0L, mutation_rate = 0.0, mutation_range = 0.0, mutation_rate2 = 0.0, mutation_bias = 0.5, numeric_labels = as.numeric( c())) {
-    .Call(`_mispitools_cpt_marker_joint_cpp`, father, mother, poi, freqs, mutation_kind, mutation_rate, mutation_range, mutation_rate2, mutation_bias, numeric_labels)
+cpt_marker_joint_cpp <- function(father, mother, poi, freqs, mutation_kind = 0L, mutation_rate = 0.0, mutation_range = 0.0, mutation_rate2 = 0.0, mutation_bias = 0.5, numeric_labels = as.numeric( c()), relevant = as.integer( c())) {
+    .Call(`_mispitools_cpt_marker_joint_cpp`, father, mother, poi, freqs, mutation_kind, mutation_rate, mutation_range, mutation_rate2, mutation_bias, numeric_labels, relevant)
 }
 
 cpp_per_marker_kl <- function(p_h1, p_h2) {

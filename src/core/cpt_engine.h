@@ -41,13 +41,26 @@ struct JointTable {
 /// Mutation models other than `MutationKind::None` are returned as a
 /// `Result::error` in F2.2 and are wired in F2.4.
 ///
-/// @complexity O(G^F * G^N) worst case, where G = K*(K+1)/2, F = number
-/// of founders, N = number of non-founders. The row-set shrinks rapidly
-/// after each peeling step due to Mendelian sparsity.
+/// `relevant` (0-based member indices) selects the keep-set. An empty
+/// `relevant` (the default) builds the dense joint over every member,
+/// bit-for-bit identical to the F2 engine. A strict subset triggers the
+/// F5.6 peeled path: members outside `relevant` (and outside the POI,
+/// which is always forced in) are summed out by Elston-Stewart online
+/// variable elimination as soon as they are no longer needed as a
+/// parent, so a large MP pedigree never materialises the full dense
+/// joint. The returned `states_flat` carries a placeholder genotype 0
+/// for marginalised members; consumers only read kept members.
+///
+/// @complexity O(G^F * G^N) worst case for the dense path, where
+/// G = K*(K+1)/2, F = number of founders, N = number of non-founders.
+/// The row-set shrinks rapidly after each peeling step due to Mendelian
+/// sparsity. The peeled path is bounded by the keep-set frontier, not
+/// the whole pedigree.
 Result<JointTable> cpt_marker_joint(
     const Pedigree& ped,
     const Marker& marker,
-    const MutationModel& mut);
+    const MutationModel& mut,
+    const std::vector<MemberIndex>& relevant = {});
 
 /// @brief Joint CPT with a pre-built mutation matrix.
 ///
@@ -62,10 +75,15 @@ Result<JointTable> cpt_marker_joint(
 /// matrix — typically obtained via `build_mutation_matrix()`. The
 /// function validates the size and reports the same error as the
 /// `MutationModel`-driven overload otherwise.
+///
+/// `relevant` has the same meaning as in `cpt_marker_joint()` above:
+/// empty = dense joint over every member; a strict subset routes the
+/// F5.6 peeled engine.
 Result<JointTable> cpt_marker_joint_with_mm(
     const Pedigree& ped,
     const Marker& marker,
-    const std::vector<double>& mut_matrix);
+    const std::vector<double>& mut_matrix,
+    const std::vector<MemberIndex>& relevant = {});
 
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int cpt_engine_placeholder(int x);
