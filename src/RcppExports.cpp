@@ -192,6 +192,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_evidence_combine
+Rcpp::List cpp_evidence_combine(Rcpp::List dists, std::string mode, Rcpp::Nullable<Rcpp::List> transition);
+RcppExport SEXP _mispitools_cpp_evidence_combine(SEXP distsSEXP, SEXP modeSEXP, SEXP transitionSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type dists(distsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type mode(modeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::List> >::type transition(transitionSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_evidence_combine(dists, mode, transition));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_lr_dist_summary
 Rcpp::List cpp_lr_dist_summary(Rcpp::NumericVector log10_lr, Rcpp::NumericVector p_h1, Rcpp::NumericVector p_h2);
 RcppExport SEXP _mispitools_cpp_lr_dist_summary(SEXP log10_lrSEXP, SEXP p_h1SEXP, SEXP p_h2SEXP) {
@@ -469,6 +482,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_per_marker_kl", (DL_FUNC) &_mispitools_cpp_per_marker_kl, 2},
     {"_mispitools_cpp_per_marker_lr_dist", (DL_FUNC) &_mispitools_cpp_per_marker_lr_dist, 3},
     {"_mispitools_cpp_lr_dist_compose", (DL_FUNC) &_mispitools_cpp_lr_dist_compose, 4},
+    {"_mispitools_cpp_evidence_combine", (DL_FUNC) &_mispitools_cpp_evidence_combine, 3},
     {"_mispitools_cpp_lr_dist_summary", (DL_FUNC) &_mispitools_cpp_lr_dist_summary, 3},
     {"_mispitools_cpp_lr_dist_quantile", (DL_FUNC) &_mispitools_cpp_lr_dist_quantile, 5},
     {"_mispitools_cpp_lr_dist_decision_rates", (DL_FUNC) &_mispitools_cpp_lr_dist_decision_rates, 4},

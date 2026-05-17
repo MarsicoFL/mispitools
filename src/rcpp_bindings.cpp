@@ -351,6 +351,84 @@ Rcpp::List cpp_lr_dist_compose(
 }
 
 // ---------------------------------------------------------------------------
+// F6.5 — cpp_evidence_combine(): case-level combination of per-feature LR
+// distributions (genetic markers and/or non-genetic features).
+//
+// `dists` is a list of lists with numeric `log10_lr`, `p_h1`, `p_h2`
+// columns (the per-feature output of cpp_per_marker_lr_dist /
+// cpp_per_feature_lr_dist). `mode` is "independent" (exact convolution,
+// = cpp_lr_dist_compose) or "markov_se" (Egeland-Marsico 2026 chain).
+// `transition` is the list of K-1 row-stochastic matrices for the
+// markov_se H2 channel (ignored when mode == "independent"); each element
+// is a numeric matrix with nrow = #atoms of feature s, ncol = #atoms of
+// feature s+1. Returns the combined sparse-sorted distribution + the
+// ±Inf flags. The model-aware R wrapper (evaluate_evidence) arrives in
+// F7.2.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_evidence_combine(
+        Rcpp::List dists,
+        std::string mode = "independent",
+        Rcpp::Nullable<Rcpp::List> transition = R_NilValue) {
+    mc::CombineMode cmode;
+    if (mode == "independent") {
+        cmode = mc::CombineMode::Independent;
+    } else if (mode == "markov_se") {
+        cmode = mc::CombineMode::MarkovSE;
+    } else {
+        Rcpp::stop("cpp_evidence_combine: mode must be 'independent' or "
+                   "'markov_se'.");
+    }
+
+    std::vector<mc::LrDist> per_feature;
+    per_feature.reserve(static_cast<std::size_t>(dists.size()));
+    for (R_xlen_t i = 0; i < dists.size(); ++i) {
+        Rcpp::List d = dists[i];
+        Rcpp::NumericVector lr = d["log10_lr"];
+        Rcpp::NumericVector p1 = d["p_h1"];
+        Rcpp::NumericVector p2 = d["p_h2"];
+        mc::LrDist x;
+        x.log10_lr.assign(lr.begin(), lr.end());
+        x.p_h1.assign(p1.begin(), p1.end());
+        x.p_h2.assign(p2.begin(), p2.end());
+        per_feature.push_back(std::move(x));
+    }
+
+    mc::MarkovSEParams params;
+    if (cmode == mc::CombineMode::MarkovSE && transition.isNotNull()) {
+        Rcpp::List tl(transition.get());
+        params.transition.reserve(static_cast<std::size_t>(tl.size()));
+        for (R_xlen_t s = 0; s < tl.size(); ++s) {
+            // R matrices are column-major; flatten to row-major so
+            // T[i * ncol + j] = M[i, j], matching MarkovSEParams.
+            Rcpp::NumericMatrix m = tl[s];
+            const std::size_t nr = static_cast<std::size_t>(m.nrow());
+            const std::size_t nc = static_cast<std::size_t>(m.ncol());
+            std::vector<double> flat(nr * nc);
+            for (std::size_t r = 0; r < nr; ++r) {
+                for (std::size_t c = 0; c < nc; ++c) {
+                    flat[r * nc + c] = m(r, c);
+                }
+            }
+            params.transition.push_back(std::move(flat));
+        }
+    }
+
+    auto r = mc::evidence_combine(per_feature, cmode, params);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LrDist& d = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["log10_lr"]    = Rcpp::NumericVector(d.log10_lr.begin(), d.log10_lr.end()),
+        Rcpp::_["p_h1"]        = Rcpp::NumericVector(d.p_h1.begin(), d.p_h1.end()),
+        Rcpp::_["p_h2"]        = Rcpp::NumericVector(d.p_h2.begin(), d.p_h2.end()),
+        Rcpp::_["has_pos_inf"] = d.has_pos_inf,
+        Rcpp::_["has_neg_inf"] = d.has_neg_inf
+    );
+}
+
+// ---------------------------------------------------------------------------
 // F4.3 — decision-theoretic primitives over a sparse LR distribution.
 //
 // Inputs are the (log10_lr, p_h1, p_h2) columns of cpp_per_marker_lr_dist

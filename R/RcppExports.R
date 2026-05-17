@@ -61,6 +61,10 @@ cpp_lr_dist_compose <- function(dists, method = "exact", merge_tol = 0.0, grid_p
     .Call(`_mispitools_cpp_lr_dist_compose`, dists, method, merge_tol, grid_points)
 }
 
+cpp_evidence_combine <- function(dists, mode = "independent", transition = NULL) {
+    .Call(`_mispitools_cpp_evidence_combine`, dists, mode, transition)
+}
+
 cpp_lr_dist_summary <- function(log10_lr, p_h1, p_h2) {
     .Call(`_mispitools_cpp_lr_dist_summary`, log10_lr, p_h1, p_h2)
 }
