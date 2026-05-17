@@ -93,3 +93,23 @@ dawid_max_rate_cpp <- function(afreq, range) {
     .Call(`_mispitools_dawid_max_rate_cpp`, afreq, range)
 }
 
+haldane_cm_to_rho_wrap <- function(cM) {
+    .Call(`_mispitools_haldane_cm_to_rho_wrap`, cM)
+}
+
+haldane_rho_to_cm_wrap <- function(rho) {
+    .Call(`_mispitools_haldane_rho_to_cm_wrap`, rho)
+}
+
+kosambi_cm_to_rho_wrap <- function(cM) {
+    .Call(`_mispitools_kosambi_cm_to_rho_wrap`, cM)
+}
+
+kosambi_rho_to_cm_wrap <- function(rho) {
+    .Call(`_mispitools_kosambi_rho_to_cm_wrap`, rho)
+}
+
+cpp_linked_pair_joint <- function(father, mother, poi, freqs_a, freqs_b, rho, mutation_kind_a = 0L, mutation_rate_a = 0.0, mutation_range_a = 0.0, numeric_labels_a = as.numeric( c()), mutation_kind_b = 0L, mutation_rate_b = 0.0, mutation_range_b = 0.0, numeric_labels_b = as.numeric( c())) {
+    .Call(`_mispitools_cpp_linked_pair_joint`, father, mother, poi, freqs_a, freqs_b, rho, mutation_kind_a, mutation_rate_a, mutation_range_a, numeric_labels_a, mutation_kind_b, mutation_rate_b, mutation_range_b, numeric_labels_b)
+}
+

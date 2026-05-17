@@ -605,3 +605,108 @@ double dawid_max_rate_cpp(Rcpp::NumericVector afreq, double range) {
     if (!r.ok()) Rcpp::stop(r.error);
     return *r;
 }
+
+// ---------------------------------------------------------------------------
+// F5.2 — map-function lifts (pedprobr R/haldane.R, GPL >= 2; COPYRIGHTS).
+// Convert genetic distance (cM) to / from the recombination fraction.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+double haldane_cm_to_rho_wrap(double cM) { return mc::haldane_cM_to_rho(cM); }
+
+// [[Rcpp::export]]
+double haldane_rho_to_cm_wrap(double rho) { return mc::haldane_rho_to_cM(rho); }
+
+// [[Rcpp::export]]
+double kosambi_cm_to_rho_wrap(double cM) { return mc::kosambi_cM_to_rho(cM); }
+
+// [[Rcpp::export]]
+double kosambi_rho_to_cm_wrap(double rho) { return mc::kosambi_rho_to_cM(rho); }
+
+// ---------------------------------------------------------------------------
+// F5.2 — cpp_linked_pair_joint(): joint genotype CPT for a pair of linked
+// markers under H1 / H2 at recombination fraction `rho`.
+//
+// Same flatten-on-the-R-side contract as cpt_marker_joint_cpp, doubled for
+// the second marker. `states_a` / `states_b` are n_rows x n_members
+// integer matrices (1-based genotype indices, column-major-lex per
+// marker). KL / LR distribution consume P_H1 / P_H2 unchanged.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List cpp_linked_pair_joint(
+        Rcpp::IntegerVector father,
+        Rcpp::IntegerVector mother,
+        int poi,
+        Rcpp::NumericVector freqs_a,
+        Rcpp::NumericVector freqs_b,
+        double rho,
+        int mutation_kind_a = 0,
+        double mutation_rate_a = 0.0,
+        double mutation_range_a = 0.0,
+        Rcpp::NumericVector numeric_labels_a = Rcpp::NumericVector::create(),
+        int mutation_kind_b = 0,
+        double mutation_rate_b = 0.0,
+        double mutation_range_b = 0.0,
+        Rcpp::NumericVector numeric_labels_b = Rcpp::NumericVector::create()) {
+    if (father.size() != mother.size()) {
+        Rcpp::stop("cpp_linked_pair_joint: father and mother must be the "
+                   "same length.");
+    }
+    if (mutation_kind_a < 0 || mutation_kind_a > 4
+            || mutation_kind_b < 0 || mutation_kind_b > 4) {
+        Rcpp::stop("cpp_linked_pair_joint: mutation_kind out of range "
+                   "[0, 4].");
+    }
+
+    mc::Pedigree ped;
+    ped.n_members = static_cast<mc::MemberIndex>(father.size());
+    ped.father.assign(static_cast<std::size_t>(ped.n_members), mc::kNoParent);
+    ped.mother.assign(static_cast<std::size_t>(ped.n_members), mc::kNoParent);
+    for (int i = 0; i < ped.n_members; ++i) {
+        ped.father[static_cast<std::size_t>(i)] = father[i];
+        ped.mother[static_cast<std::size_t>(i)] = mother[i];
+    }
+    ped.poi = poi;
+
+    mc::Marker mA;
+    mA.n_alleles = static_cast<mc::AlleleIndex>(freqs_a.size());
+    mA.freqs.assign(freqs_a.begin(), freqs_a.end());
+    mA.numeric_labels.assign(numeric_labels_a.begin(), numeric_labels_a.end());
+
+    mc::Marker mB;
+    mB.n_alleles = static_cast<mc::AlleleIndex>(freqs_b.size());
+    mB.freqs.assign(freqs_b.begin(), freqs_b.end());
+    mB.numeric_labels.assign(numeric_labels_b.begin(), numeric_labels_b.end());
+
+    mc::MutationModel muA;
+    muA.kind  = static_cast<mc::MutationKind>(mutation_kind_a);
+    muA.rate  = mutation_rate_a;
+    muA.range = mutation_range_a;
+
+    mc::MutationModel muB;
+    muB.kind  = static_cast<mc::MutationKind>(mutation_kind_b);
+    muB.rate  = mutation_rate_b;
+    muB.range = mutation_range_b;
+
+    auto r = mc::linked_pair_joint(ped, mA, mB, muA, muB, rho);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LinkedJointTable& jt = *r;
+
+    const arma::uword n_rows = jt.p_h1.size();
+    const arma::uword n_mem = static_cast<arma::uword>(ped.n_members);
+
+    arma::imat states_a = states_flat_to_arma(jt.states_a, n_rows, n_mem);
+    arma::imat states_b = states_flat_to_arma(jt.states_b, n_rows, n_mem);
+    Rcpp::NumericVector p_h1(jt.p_h1.begin(), jt.p_h1.end());
+    Rcpp::NumericVector p_h2(jt.p_h2.begin(), jt.p_h2.end());
+
+    return Rcpp::List::create(
+        Rcpp::_["states_a"] = states_a,
+        Rcpp::_["states_b"] = states_b,
+        Rcpp::_["P_H1"]     = p_h1,
+        Rcpp::_["P_H2"]     = p_h2,
+        Rcpp::_["n_genotypes_a"] = static_cast<int>(jt.n_genotypes_a),
+        Rcpp::_["n_genotypes_b"] = static_cast<int>(jt.n_genotypes_b)
+    );
+}

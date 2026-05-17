@@ -306,6 +306,74 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// haldane_cm_to_rho_wrap
+double haldane_cm_to_rho_wrap(double cM);
+RcppExport SEXP _mispitools_haldane_cm_to_rho_wrap(SEXP cMSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type cM(cMSEXP);
+    rcpp_result_gen = Rcpp::wrap(haldane_cm_to_rho_wrap(cM));
+    return rcpp_result_gen;
+END_RCPP
+}
+// haldane_rho_to_cm_wrap
+double haldane_rho_to_cm_wrap(double rho);
+RcppExport SEXP _mispitools_haldane_rho_to_cm_wrap(SEXP rhoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    rcpp_result_gen = Rcpp::wrap(haldane_rho_to_cm_wrap(rho));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kosambi_cm_to_rho_wrap
+double kosambi_cm_to_rho_wrap(double cM);
+RcppExport SEXP _mispitools_kosambi_cm_to_rho_wrap(SEXP cMSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type cM(cMSEXP);
+    rcpp_result_gen = Rcpp::wrap(kosambi_cm_to_rho_wrap(cM));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kosambi_rho_to_cm_wrap
+double kosambi_rho_to_cm_wrap(double rho);
+RcppExport SEXP _mispitools_kosambi_rho_to_cm_wrap(SEXP rhoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    rcpp_result_gen = Rcpp::wrap(kosambi_rho_to_cm_wrap(rho));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_linked_pair_joint
+Rcpp::List cpp_linked_pair_joint(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::NumericVector freqs_a, Rcpp::NumericVector freqs_b, double rho, int mutation_kind_a, double mutation_rate_a, double mutation_range_a, Rcpp::NumericVector numeric_labels_a, int mutation_kind_b, double mutation_rate_b, double mutation_range_b, Rcpp::NumericVector numeric_labels_b);
+RcppExport SEXP _mispitools_cpp_linked_pair_joint(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqs_aSEXP, SEXP freqs_bSEXP, SEXP rhoSEXP, SEXP mutation_kind_aSEXP, SEXP mutation_rate_aSEXP, SEXP mutation_range_aSEXP, SEXP numeric_labels_aSEXP, SEXP mutation_kind_bSEXP, SEXP mutation_rate_bSEXP, SEXP mutation_range_bSEXP, SEXP numeric_labels_bSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type father(fatherSEXP);
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type mother(motherSEXP);
+    Rcpp::traits::input_parameter< int >::type poi(poiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type freqs_a(freqs_aSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type freqs_b(freqs_bSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< int >::type mutation_kind_a(mutation_kind_aSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_rate_a(mutation_rate_aSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_range_a(mutation_range_aSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type numeric_labels_a(numeric_labels_aSEXP);
+    Rcpp::traits::input_parameter< int >::type mutation_kind_b(mutation_kind_bSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_rate_b(mutation_rate_bSEXP);
+    Rcpp::traits::input_parameter< double >::type mutation_range_b(mutation_range_bSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type numeric_labels_b(numeric_labels_bSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_linked_pair_joint(father, mother, poi, freqs_a, freqs_b, rho, mutation_kind_a, mutation_rate_a, mutation_range_a, numeric_labels_a, mutation_kind_b, mutation_rate_b, mutation_range_b, numeric_labels_b));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
@@ -331,6 +399,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 8},
     {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 6},
     {"_mispitools_dawid_max_rate_cpp", (DL_FUNC) &_mispitools_dawid_max_rate_cpp, 2},
+    {"_mispitools_haldane_cm_to_rho_wrap", (DL_FUNC) &_mispitools_haldane_cm_to_rho_wrap, 1},
+    {"_mispitools_haldane_rho_to_cm_wrap", (DL_FUNC) &_mispitools_haldane_rho_to_cm_wrap, 1},
+    {"_mispitools_kosambi_cm_to_rho_wrap", (DL_FUNC) &_mispitools_kosambi_cm_to_rho_wrap, 1},
+    {"_mispitools_kosambi_rho_to_cm_wrap", (DL_FUNC) &_mispitools_kosambi_rho_to_cm_wrap, 1},
+    {"_mispitools_cpp_linked_pair_joint", (DL_FUNC) &_mispitools_cpp_linked_pair_joint, 14},
     {NULL, NULL, 0}
 };
 
