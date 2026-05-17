@@ -117,3 +117,11 @@ nongenetic_cpt_cpp <- function(feature_class, n_categories, error_is_matrix, err
     .Call(`_mispitools_nongenetic_cpt_cpp`, feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open)
 }
 
+nongenetic_per_feature_kl_cpp <- function(feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open) {
+    .Call(`_mispitools_nongenetic_per_feature_kl_cpp`, feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open)
+}
+
+nongenetic_per_feature_lr_dist_cpp <- function(feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open, aggregate = TRUE) {
+    .Call(`_mispitools_nongenetic_per_feature_lr_dist_cpp`, feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open, aggregate)
+}
+

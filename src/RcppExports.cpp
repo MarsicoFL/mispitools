@@ -401,6 +401,57 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// nongenetic_per_feature_kl_cpp
+Rcpp::List nongenetic_per_feature_kl_cpp(int feature_class, int n_categories, bool error_is_matrix, Rcpp::NumericVector error_matrix, double error_scalar, int observed_index, bool reference_uniform, Rcpp::NumericVector reference_freqs, double range_lo, double range_hi, Rcpp::NumericVector sample, double observed_value, int n_bins, Rcpp::NumericVector alpha, bool search_open);
+RcppExport SEXP _mispitools_nongenetic_per_feature_kl_cpp(SEXP feature_classSEXP, SEXP n_categoriesSEXP, SEXP error_is_matrixSEXP, SEXP error_matrixSEXP, SEXP error_scalarSEXP, SEXP observed_indexSEXP, SEXP reference_uniformSEXP, SEXP reference_freqsSEXP, SEXP range_loSEXP, SEXP range_hiSEXP, SEXP sampleSEXP, SEXP observed_valueSEXP, SEXP n_binsSEXP, SEXP alphaSEXP, SEXP search_openSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type feature_class(feature_classSEXP);
+    Rcpp::traits::input_parameter< int >::type n_categories(n_categoriesSEXP);
+    Rcpp::traits::input_parameter< bool >::type error_is_matrix(error_is_matrixSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type error_matrix(error_matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type error_scalar(error_scalarSEXP);
+    Rcpp::traits::input_parameter< int >::type observed_index(observed_indexSEXP);
+    Rcpp::traits::input_parameter< bool >::type reference_uniform(reference_uniformSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type reference_freqs(reference_freqsSEXP);
+    Rcpp::traits::input_parameter< double >::type range_lo(range_loSEXP);
+    Rcpp::traits::input_parameter< double >::type range_hi(range_hiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type sample(sampleSEXP);
+    Rcpp::traits::input_parameter< double >::type observed_value(observed_valueSEXP);
+    Rcpp::traits::input_parameter< int >::type n_bins(n_binsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< bool >::type search_open(search_openSEXP);
+    rcpp_result_gen = Rcpp::wrap(nongenetic_per_feature_kl_cpp(feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nongenetic_per_feature_lr_dist_cpp
+Rcpp::List nongenetic_per_feature_lr_dist_cpp(int feature_class, int n_categories, bool error_is_matrix, Rcpp::NumericVector error_matrix, double error_scalar, int observed_index, bool reference_uniform, Rcpp::NumericVector reference_freqs, double range_lo, double range_hi, Rcpp::NumericVector sample, double observed_value, int n_bins, Rcpp::NumericVector alpha, bool search_open, bool aggregate);
+RcppExport SEXP _mispitools_nongenetic_per_feature_lr_dist_cpp(SEXP feature_classSEXP, SEXP n_categoriesSEXP, SEXP error_is_matrixSEXP, SEXP error_matrixSEXP, SEXP error_scalarSEXP, SEXP observed_indexSEXP, SEXP reference_uniformSEXP, SEXP reference_freqsSEXP, SEXP range_loSEXP, SEXP range_hiSEXP, SEXP sampleSEXP, SEXP observed_valueSEXP, SEXP n_binsSEXP, SEXP alphaSEXP, SEXP search_openSEXP, SEXP aggregateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type feature_class(feature_classSEXP);
+    Rcpp::traits::input_parameter< int >::type n_categories(n_categoriesSEXP);
+    Rcpp::traits::input_parameter< bool >::type error_is_matrix(error_is_matrixSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type error_matrix(error_matrixSEXP);
+    Rcpp::traits::input_parameter< double >::type error_scalar(error_scalarSEXP);
+    Rcpp::traits::input_parameter< int >::type observed_index(observed_indexSEXP);
+    Rcpp::traits::input_parameter< bool >::type reference_uniform(reference_uniformSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type reference_freqs(reference_freqsSEXP);
+    Rcpp::traits::input_parameter< double >::type range_lo(range_loSEXP);
+    Rcpp::traits::input_parameter< double >::type range_hi(range_hiSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type sample(sampleSEXP);
+    Rcpp::traits::input_parameter< double >::type observed_value(observed_valueSEXP);
+    Rcpp::traits::input_parameter< int >::type n_bins(n_binsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< bool >::type search_open(search_openSEXP);
+    Rcpp::traits::input_parameter< bool >::type aggregate(aggregateSEXP);
+    rcpp_result_gen = Rcpp::wrap(nongenetic_per_feature_lr_dist_cpp(feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open, aggregate));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
@@ -432,6 +483,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_kosambi_rho_to_cm_wrap", (DL_FUNC) &_mispitools_kosambi_rho_to_cm_wrap, 1},
     {"_mispitools_cpp_linked_pair_joint", (DL_FUNC) &_mispitools_cpp_linked_pair_joint, 15},
     {"_mispitools_nongenetic_cpt_cpp", (DL_FUNC) &_mispitools_nongenetic_cpt_cpp, 15},
+    {"_mispitools_nongenetic_per_feature_kl_cpp", (DL_FUNC) &_mispitools_nongenetic_per_feature_kl_cpp, 15},
+    {"_mispitools_nongenetic_per_feature_lr_dist_cpp", (DL_FUNC) &_mispitools_nongenetic_per_feature_lr_dist_cpp, 16},
     {NULL, NULL, 0}
 };
 

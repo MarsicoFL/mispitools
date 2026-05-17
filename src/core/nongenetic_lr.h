@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "kl_engine.h"
+#include "lr_dist.h"
 #include "result.h"
 
 namespace mispitools {
@@ -90,6 +92,41 @@ struct NongeneticCpt {
 /// @complexity O(card(feature)) plus O(n log n) for the empirical-sample
 /// sort in the continuous path.
 Result<NongeneticCpt> nongenetic_cpt(const NongeneticFeature& feature);
+
+/// @brief Per-feature bidirectional KL + expected log10 LR (non-genetic).
+///
+/// Non-genetic counterpart of `per_marker_kl` (F3.1), mirroring
+/// `R/r_ref_nongenetic.R::per_feature_kl_R`. The feature CPT
+/// (`nongenetic_cpt`) is a one-dimensional `(p_h1, p_h2)` discrete
+/// distribution, so it is wrapped into a single-member `JointTable`
+/// (`n_members = 1`, one state per category / grid cell / discrepancy
+/// bin) and the genetic KL kernel is reused verbatim. This keeps the
+/// per-feature schema bit-identical to per-marker and the boundary
+/// convention shared (states with `p_h1 > 0, p_h2 = 0` → log10 LR = +Inf;
+/// `0 * log(0 / x) = 0` in the sums). Valid non-genetic CPTs never
+/// produce a `p_h1 = 0, p_h2 = 0` cell (the H2 reference is uniform or a
+/// positive marginal), so the genetic kernel's `0/0` skip is a no-op
+/// here, exactly matching the R reference (which keeps no such row).
+///
+/// @return `PerMarkerKL` (reused struct); the CPT construction error of
+///         `nongenetic_cpt` is propagated unchanged.
+/// @complexity O(card(feature)) plus the `nongenetic_cpt` cost.
+Result<PerMarkerKL> per_feature_kl_nongenetic(
+    const NongeneticFeature& feature);
+
+/// @brief Sparse per-feature LR distribution (non-genetic).
+///
+/// Non-genetic counterpart of `per_marker_lr_dist` (F4.1), mirroring
+/// `R/r_ref_nongenetic.R::per_feature_lr_dist_R`. Same single-member
+/// `JointTable` adaptation as `per_feature_kl_nongenetic`; `aggregate`
+/// has the genetic semantics (sort ascending by `log10_lr`, collapse
+/// equal atoms summing probabilities, bit-for-bit with the R reference).
+///
+/// @param aggregate when true (default) collapse equal-`log10_lr` atoms.
+/// @return `LrDist` (reused struct); `nongenetic_cpt` errors propagate.
+/// @complexity O(card(feature)) raw; O(n log n) aggregated.
+Result<LrDist> per_feature_lr_dist_nongenetic(
+    const NongeneticFeature& feature, bool aggregate = true);
 
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int nongenetic_lr_placeholder(int x);

@@ -177,6 +177,25 @@ Result<NongeneticCpt> cpt_date(const NongeneticFeature& f) {
     return ok_result(std::move(out));
 }
 
+// Adapt a one-dimensional non-genetic CPT into the single-member
+// JointTable the genetic per-marker kernels consume. One row per
+// category / grid cell / discrepancy bin; `states_flat` carries the
+// 0-based state index (a single member, so it is the row index). The
+// kernels read only `p_h1` / `p_h2`, but the indices keep the layout
+// honest and symmetric with the genetic path.
+JointTable ng_cpt_to_joint(const NongeneticCpt& c) {
+    JointTable jt;
+    jt.n_members = 1;
+    jt.n_genotypes = static_cast<GenotypeIndex>(c.p_h1.size());
+    jt.p_h1 = c.p_h1;
+    jt.p_h2 = c.p_h2;
+    jt.states_flat.resize(c.p_h1.size());
+    for (std::size_t i = 0; i < c.p_h1.size(); ++i) {
+        jt.states_flat[i] = static_cast<GenotypeIndex>(i);
+    }
+    return jt;
+}
+
 }  // namespace
 
 Result<NongeneticCpt> nongenetic_cpt(const NongeneticFeature& feature) {
@@ -189,6 +208,24 @@ Result<NongeneticCpt> nongenetic_cpt(const NongeneticFeature& feature) {
             return cpt_date(feature);
     }
     return err_result<NongeneticCpt>("unknown non-genetic feature class.");
+}
+
+Result<PerMarkerKL> per_feature_kl_nongenetic(
+        const NongeneticFeature& feature) {
+    auto cpt = nongenetic_cpt(feature);
+    if (!cpt.ok()) {
+        return err_result<PerMarkerKL>(cpt.error);
+    }
+    return per_marker_kl(ng_cpt_to_joint(*cpt));
+}
+
+Result<LrDist> per_feature_lr_dist_nongenetic(
+        const NongeneticFeature& feature, bool aggregate) {
+    auto cpt = nongenetic_cpt(feature);
+    if (!cpt.ok()) {
+        return err_result<LrDist>(cpt.error);
+    }
+    return per_marker_lr_dist(ng_cpt_to_joint(*cpt), aggregate);
 }
 
 int nongenetic_lr_placeholder(int x) {

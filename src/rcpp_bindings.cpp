@@ -743,6 +743,46 @@ Rcpp::List cpp_linked_pair_joint(
 // numeric support and is empty otherwise.
 // ---------------------------------------------------------------------------
 
+// Shared flattener: the three non-genetic entry points
+// (nongenetic_cpt_cpp / nongenetic_per_feature_kl_cpp /
+// nongenetic_per_feature_lr_dist_cpp) take the identical POD argument
+// list produced R-side by ng_feature_to_pod(); this builds the kernel
+// struct once. `feature_class` range is validated by the callers.
+static mc::NongeneticFeature ng_feature_from_args(
+        int feature_class,
+        int n_categories,
+        bool error_is_matrix,
+        const Rcpp::NumericVector& error_matrix,
+        double error_scalar,
+        int observed_index,
+        bool reference_uniform,
+        const Rcpp::NumericVector& reference_freqs,
+        double range_lo,
+        double range_hi,
+        const Rcpp::NumericVector& sample,
+        double observed_value,
+        int n_bins,
+        const Rcpp::NumericVector& alpha,
+        bool search_open) {
+    mc::NongeneticFeature f;
+    f.feature_class = static_cast<mc::NgFeatureClass>(feature_class);
+    f.n_categories = n_categories;
+    f.error_is_matrix = error_is_matrix;
+    f.error_matrix.assign(error_matrix.begin(), error_matrix.end());
+    f.error_scalar = error_scalar;
+    f.observed_index = observed_index;
+    f.reference_uniform = reference_uniform;
+    f.reference_freqs.assign(reference_freqs.begin(), reference_freqs.end());
+    f.range_lo = range_lo;
+    f.range_hi = range_hi;
+    f.sample.assign(sample.begin(), sample.end());
+    f.observed_value = observed_value;
+    f.n_bins = n_bins;
+    f.alpha.assign(alpha.begin(), alpha.end());
+    f.search_open = search_open;
+    return f;
+}
+
 // [[Rcpp::export]]
 Rcpp::List nongenetic_cpt_cpp(
         int feature_class,
@@ -764,22 +804,11 @@ Rcpp::List nongenetic_cpt_cpp(
         Rcpp::stop("nongenetic_cpt_cpp: feature_class out of range [0, 2].");
     }
 
-    mc::NongeneticFeature f;
-    f.feature_class = static_cast<mc::NgFeatureClass>(feature_class);
-    f.n_categories = n_categories;
-    f.error_is_matrix = error_is_matrix;
-    f.error_matrix.assign(error_matrix.begin(), error_matrix.end());
-    f.error_scalar = error_scalar;
-    f.observed_index = observed_index;
-    f.reference_uniform = reference_uniform;
-    f.reference_freqs.assign(reference_freqs.begin(), reference_freqs.end());
-    f.range_lo = range_lo;
-    f.range_hi = range_hi;
-    f.sample.assign(sample.begin(), sample.end());
-    f.observed_value = observed_value;
-    f.n_bins = n_bins;
-    f.alpha.assign(alpha.begin(), alpha.end());
-    f.search_open = search_open;
+    mc::NongeneticFeature f = ng_feature_from_args(
+        feature_class, n_categories, error_is_matrix, error_matrix,
+        error_scalar, observed_index, reference_uniform, reference_freqs,
+        range_lo, range_hi, sample, observed_value, n_bins, alpha,
+        search_open);
 
     auto r = mc::nongenetic_cpt(f);
     if (!r.ok()) Rcpp::stop(r.error);
@@ -789,5 +818,108 @@ Rcpp::List nongenetic_cpt_cpp(
         Rcpp::_["p_h1"] = Rcpp::NumericVector(c.p_h1.begin(), c.p_h1.end()),
         Rcpp::_["p_h2"] = Rcpp::NumericVector(c.p_h2.begin(), c.p_h2.end()),
         Rcpp::_["grid"] = Rcpp::NumericVector(c.grid.begin(), c.grid.end())
+    );
+}
+
+// ---------------------------------------------------------------------------
+// F6.4 — nongenetic_per_feature_kl_cpp(): bidirectional KL + expected
+// log10 LR for one non-genetic feature. Same flattened POD inputs as
+// nongenetic_cpt_cpp (R-side wrapper R/ng_cpt_cpp.R::per_feature_kl_cpp_wrap).
+// Returns the same shape as cpp_per_marker_kl so the per-feature schema
+// stays symmetric with per-marker; the R wrapper keeps the four columns
+// per_feature_kl_R() exposes.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List nongenetic_per_feature_kl_cpp(
+        int feature_class,
+        int n_categories,
+        bool error_is_matrix,
+        Rcpp::NumericVector error_matrix,
+        double error_scalar,
+        int observed_index,
+        bool reference_uniform,
+        Rcpp::NumericVector reference_freqs,
+        double range_lo,
+        double range_hi,
+        Rcpp::NumericVector sample,
+        double observed_value,
+        int n_bins,
+        Rcpp::NumericVector alpha,
+        bool search_open) {
+    if (feature_class < 0 || feature_class > 2) {
+        Rcpp::stop(
+            "nongenetic_per_feature_kl_cpp: feature_class out of range "
+            "[0, 2].");
+    }
+
+    mc::NongeneticFeature f = ng_feature_from_args(
+        feature_class, n_categories, error_is_matrix, error_matrix,
+        error_scalar, observed_index, reference_uniform, reference_freqs,
+        range_lo, range_hi, sample, observed_value, n_bins, alpha,
+        search_open);
+
+    auto r = mc::per_feature_kl_nongenetic(f);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::PerMarkerKL& v = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["e_log10_lr_h1"]          = v.e_log10_lr_h1,
+        Rcpp::_["e_log10_lr_h2"]          = v.e_log10_lr_h2,
+        Rcpp::_["kl_h1_to_h2"]            = v.kl_h1_to_h2,
+        Rcpp::_["kl_h2_to_h1"]            = v.kl_h2_to_h1,
+        Rcpp::_["abs_cont_violations_h2"] = static_cast<int>(v.abs_cont_violations_h2),
+        Rcpp::_["abs_cont_violations_h1"] = static_cast<int>(v.abs_cont_violations_h1),
+        Rcpp::_["mass_violations_h2"]     = v.mass_violations_h2,
+        Rcpp::_["mass_violations_h1"]     = v.mass_violations_h1
+    );
+}
+
+// ---------------------------------------------------------------------------
+// F6.4 — nongenetic_per_feature_lr_dist_cpp(): sparse per-feature LR
+// distribution. Same flattened POD inputs as nongenetic_cpt_cpp plus the
+// `aggregate` flag; same return shape as cpp_per_marker_lr_dist.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+Rcpp::List nongenetic_per_feature_lr_dist_cpp(
+        int feature_class,
+        int n_categories,
+        bool error_is_matrix,
+        Rcpp::NumericVector error_matrix,
+        double error_scalar,
+        int observed_index,
+        bool reference_uniform,
+        Rcpp::NumericVector reference_freqs,
+        double range_lo,
+        double range_hi,
+        Rcpp::NumericVector sample,
+        double observed_value,
+        int n_bins,
+        Rcpp::NumericVector alpha,
+        bool search_open,
+        bool aggregate = true) {
+    if (feature_class < 0 || feature_class > 2) {
+        Rcpp::stop(
+            "nongenetic_per_feature_lr_dist_cpp: feature_class out of "
+            "range [0, 2].");
+    }
+
+    mc::NongeneticFeature f = ng_feature_from_args(
+        feature_class, n_categories, error_is_matrix, error_matrix,
+        error_scalar, observed_index, reference_uniform, reference_freqs,
+        range_lo, range_hi, sample, observed_value, n_bins, alpha,
+        search_open);
+
+    auto r = mc::per_feature_lr_dist_nongenetic(f, aggregate);
+    if (!r.ok()) Rcpp::stop(r.error);
+    const mc::LrDist& d = *r;
+
+    return Rcpp::List::create(
+        Rcpp::_["log10_lr"]    = Rcpp::NumericVector(d.log10_lr.begin(), d.log10_lr.end()),
+        Rcpp::_["p_h1"]        = Rcpp::NumericVector(d.p_h1.begin(), d.p_h1.end()),
+        Rcpp::_["p_h2"]        = Rcpp::NumericVector(d.p_h2.begin(), d.p_h2.end()),
+        Rcpp::_["has_pos_inf"] = d.has_pos_inf,
+        Rcpp::_["has_neg_inf"] = d.has_neg_inf
     );
 }
