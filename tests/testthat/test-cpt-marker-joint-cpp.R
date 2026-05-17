@@ -103,32 +103,32 @@ test_that("AAxAB Mendelian no-mutation: child is AA or AB with prob 0.5", {
   expect_gt(rBB$P_H2, 0)
 })
 
-test_that("cpt_marker_joint_cpp_wrap() rejects asymmetric mutation (F2.4)", {
+test_that("cpt_marker_joint_cpp_wrap() does not yet route asymmetric (F5.1)", {
   skip_if_no_pedtools()
   mm <- marker_model(pedtools::nuclearPed(1), "M1",
                      c("12" = 0.5, "13" = 0.5),
                      mutation = list(model = "asymmetric", rate = 0.005,
                                      ratio = 0.1, bias = 0.5))
   expect_error(mispitools:::cpt_marker_joint_cpp_wrap(mm),
-               "asymmetric|F5\\.1")
+               "asymmetric|not yet routed")
 })
 
-test_that("cpt_marker_joint_cpp() raw binding rejects Asymmetric kind (F2.4)", {
+test_that("cpt_marker_joint_cpp() raw binding accepts Asymmetric/Dawid (F5.1)", {
   skip_if_no_pedtools()
-  expect_error(
-    cpt_marker_joint_cpp(
-      father = c(-1L, -1L, 0L),
-      mother = c(-1L, -1L, 1L),
-      poi = 2L,
-      freqs = c(0.5, 0.5),
-      mutation_kind = 4L,
-      mutation_rate = 0.005,
-      mutation_range = 0.1,
-      mutation_bias = 0.5,
-      numeric_labels = c(12, 13)
-    ),
-    "Asymmetric|F5\\.1"
+  res <- cpt_marker_joint_cpp(
+    father = c(-1L, -1L, 0L),
+    mother = c(-1L, -1L, 1L),
+    poi = 2L,
+    freqs = c(0.4, 0.6),
+    mutation_kind = 4L,
+    mutation_rate = 0.005,
+    mutation_range = 0.1
   )
+  expect_true(is.list(res))
+  expect_true(all(c("P_H1", "P_H2") %in% names(res)))
+  expect_equal(sum(res$P_H1), 1, tolerance = 1e-12)
+  expect_equal(sum(res$P_H2), 1, tolerance = 1e-12)
+  expect_true(all(res$P_H1 >= 0) && all(res$P_H2 >= 0))
 })
 
 test_that("cpt_marker_joint_cpp() raw binding rejects Proportional kind", {

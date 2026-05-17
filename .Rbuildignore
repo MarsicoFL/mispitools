@@ -25,3 +25,4 @@
 ^src/.*\.o$
 ^src/.*\.so$
 ^src/core/DESIGN\.md$
+^COPYRIGHTS$

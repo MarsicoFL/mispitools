@@ -120,9 +120,9 @@ int cpp_linkage_placeholder(int x)          { return mc::linkage_placeholder(x);
 // vectors on the R side (see R/cpt_marker_joint_cpp.R) and the core
 // computes the sparse joint table. The R-side wrapper rebuilds the
 // data.frame view with labelled genotype strings to match the R-reference
-// engine cpt_marker_joint_R(). F2.4 wires kinds 0 (None), 1 (Equal),
-// 2 (Stepwise); kinds 3 (Proportional) and 4 (Asymmetric) error out at
-// build_mutation_matrix() until F5.1.
+// engine cpt_marker_joint_R(). Wires kinds 0 (None), 1 (Equal),
+// 2 (Stepwise), 4 (Asymmetric/Dawid, F5.1 — uses marker.freqs as afreq);
+// kind 3 (Proportional) still errors out at build_mutation_matrix().
 // ---------------------------------------------------------------------------
 
 // [[Rcpp::export]]
@@ -565,7 +565,8 @@ arma::mat mutation_matrix_cpp(
         int mutation_kind = 0,
         double mutation_rate = 0.0,
         double mutation_range = 0.0,
-        Rcpp::NumericVector numeric_labels = Rcpp::NumericVector::create()) {
+        Rcpp::NumericVector numeric_labels = Rcpp::NumericVector::create(),
+        Rcpp::NumericVector afreq = Rcpp::NumericVector::create()) {
     if (K <= 0) {
         Rcpp::stop("mutation_matrix_cpp: K must be positive.");
     }
@@ -579,12 +580,28 @@ arma::mat mutation_matrix_cpp(
     mut.range = mutation_range;
 
     std::vector<double> labels(numeric_labels.begin(), numeric_labels.end());
+    std::vector<double> p(afreq.begin(), afreq.end());
     auto r = mc::build_mutation_matrix(
-        mut, static_cast<mc::AlleleIndex>(K), labels);
+        mut, static_cast<mc::AlleleIndex>(K), labels, p);
     if (!r.ok()) Rcpp::stop(r.error);
 
     // F2.5 — row-major (core) → column-major (R) via Armadillo's
     // vectorised transpose. Replaces the previous O(K^2) element-wise
     // assignment loop into Rcpp::NumericMatrix.
     return row_major_to_arma(*r, static_cast<arma::uword>(K));
+}
+
+// ---------------------------------------------------------------------------
+// F5.1 — dawid_max_rate_cpp(): largest well-defined `rate` for the
+// asymmetric (Dawid 2002) model given allele frequencies and range.
+// Mirrors pedmut::maxRate() (UW bound). Used by the verifier to confirm
+// the undefined-model cap matches the oracle within tolerance.
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+double dawid_max_rate_cpp(Rcpp::NumericVector afreq, double range) {
+    std::vector<double> p(afreq.begin(), afreq.end());
+    auto r = mc::dawid_max_rate(p, range);
+    if (!r.ok()) Rcpp::stop(r.error);
+    return *r;
 }

@@ -13,8 +13,9 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
   }
   if (!model$mutation$model %in% c("none", "equal", "stepwise")) {
     stop("`cpt_marker_joint_cpp_wrap()` supports mutation models ",
-         "\"none\", \"equal\", \"stepwise\" (F2.4). The asymmetric model ",
-         "arrives in F5.1.", call. = FALSE)
+         "\"none\", \"equal\", \"stepwise\". The asymmetric (Dawid) ",
+         "matrix builder exists in the core (F5.1) but is not yet ",
+         "routed through this high-level wrapper.", call. = FALSE)
   }
   if (!is.null(model$linkage)) {
     stop("`cpt_marker_joint_cpp_wrap()` does not handle linked markers; ",

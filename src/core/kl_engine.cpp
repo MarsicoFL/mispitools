@@ -115,16 +115,22 @@ namespace {
 // Two markers hit the same cache slot iff the produced K x K matrix is
 // identical: (kind, K, rate, range) always participate; numeric_labels
 // participate only for Stepwise (where build_mutation_matrix() reads
-// them) so an Equal-rate profile with stale label arrays still hits.
+// them) so an Equal-rate profile with stale label arrays still hits;
+// afreq participates only for Asymmetric (Dawid is afreq-dependent).
 std::string make_mutation_matrix_key(
         const MutationModel& mut,
         AlleleIndex K,
-        const std::vector<double>& labels) {
+        const std::vector<double>& labels,
+        const std::vector<double>& afreq) {
     std::string s;
     const std::size_t label_bytes =
         (mut.kind == MutationKind::Stepwise)
             ? labels.size() * sizeof(double) : 0;
-    s.reserve(1 + sizeof(std::int32_t) + 2 * sizeof(double) + label_bytes);
+    const std::size_t afreq_bytes =
+        (mut.kind == MutationKind::Asymmetric)
+            ? afreq.size() * sizeof(double) : 0;
+    s.reserve(1 + sizeof(std::int32_t) + 2 * sizeof(double)
+              + label_bytes + afreq_bytes);
 
     const std::uint8_t kind_byte = static_cast<std::uint8_t>(mut.kind);
     s.append(reinterpret_cast<const char*>(&kind_byte), 1);
@@ -139,6 +145,9 @@ std::string make_mutation_matrix_key(
 
     if (label_bytes > 0) {
         s.append(reinterpret_cast<const char*>(labels.data()), label_bytes);
+    }
+    if (afreq_bytes > 0) {
+        s.append(reinterpret_cast<const char*>(afreq.data()), afreq_bytes);
     }
     return s;
 }
@@ -175,14 +184,16 @@ Result<PerMarkerKLBatch> per_marker_kl_batch(
         const MutationModel& mut = mutations[i];
 
         std::string key = make_mutation_matrix_key(mut, m.n_alleles,
-                                                   m.numeric_labels);
+                                                   m.numeric_labels,
+                                                   m.freqs);
         auto it = mm_cache.find(key);
         const std::vector<double>* mm_ptr = nullptr;
         if (it != mm_cache.end()) {
             mm_ptr = &it->second;
             out.mutation_matrix_cache_hits += 1;
         } else {
-            auto mm = build_mutation_matrix(mut, m.n_alleles, m.numeric_labels);
+            auto mm = build_mutation_matrix(mut, m.n_alleles,
+                                            m.numeric_labels, m.freqs);
             if (!mm.ok()) {
                 return err_result<PerMarkerKLBatch>(
                     "per_marker_kl_batch: marker " + std::to_string(i)

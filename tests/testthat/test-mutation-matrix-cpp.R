@@ -5,13 +5,14 @@
 ## closed-form analytic targets.
 
 mat_cpp <- function(K, kind, rate = 0.0, range = 0.0,
-                    numeric_labels = numeric(0)) {
+                    numeric_labels = numeric(0), afreq = numeric(0)) {
   mispitools:::mutation_matrix_cpp(
     K = as.integer(K),
     mutation_kind = as.integer(kind),
     mutation_rate = as.double(rate),
     mutation_range = as.double(range),
-    numeric_labels = as.numeric(numeric_labels)
+    numeric_labels = as.numeric(numeric_labels),
+    afreq = as.numeric(afreq)
   )
 }
 
@@ -217,14 +218,17 @@ test_that("Stepwise: validates K, rate, range, labels", {
 # Dispatcher edges
 # ---------------------------------------------------------------------------
 
-test_that("Dispatcher: Proportional and Asymmetric return informative errors", {
+test_that("Dispatcher: Proportional still returns an informative error", {
   expect_error(
     mat_cpp(K = 3L, kind = 3L, rate = 0.005),
     "Proportional model is not implemented"
   )
+})
+
+test_that("Dispatcher: Asymmetric without afreq is rejected", {
   expect_error(
-    mat_cpp(K = 3L, kind = 4L, rate = 0.005),
-    "Asymmetric model arrives in F5.1"
+    mat_cpp(K = 3L, kind = 4L, rate = 0.005, range = 0.1),
+    "Asymmetric \\(Dawid\\) model requires allele frequencies"
   )
 })
 

@@ -286,7 +286,8 @@ Result<JointTable> cpt_marker_joint(
     // mutation matrix without rebuilding it per marker. This wrapper
     // keeps the historical single-shot entry point: build the K x K
     // matrix from the MutationModel parameters, then delegate.
-    auto mm = build_mutation_matrix(mut, marker.n_alleles, marker.numeric_labels);
+    auto mm = build_mutation_matrix(mut, marker.n_alleles,
+                                    marker.numeric_labels, marker.freqs);
     if (!mm.ok()) {
         return err_result<JointTable>(
             std::string("cpt_marker_joint: ") + mm.error);

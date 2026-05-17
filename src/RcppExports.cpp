@@ -279,8 +279,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // mutation_matrix_cpp
-arma::mat mutation_matrix_cpp(int K, int mutation_kind, double mutation_rate, double mutation_range, Rcpp::NumericVector numeric_labels);
-RcppExport SEXP _mispitools_mutation_matrix_cpp(SEXP KSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labelsSEXP) {
+arma::mat mutation_matrix_cpp(int K, int mutation_kind, double mutation_rate, double mutation_range, Rcpp::NumericVector numeric_labels, Rcpp::NumericVector afreq);
+RcppExport SEXP _mispitools_mutation_matrix_cpp(SEXP KSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labelsSEXP, SEXP afreqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -289,7 +289,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type mutation_rate(mutation_rateSEXP);
     Rcpp::traits::input_parameter< double >::type mutation_range(mutation_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type numeric_labels(numeric_labelsSEXP);
-    rcpp_result_gen = Rcpp::wrap(mutation_matrix_cpp(K, mutation_kind, mutation_rate, mutation_range, numeric_labels));
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type afreq(afreqSEXP);
+    rcpp_result_gen = Rcpp::wrap(mutation_matrix_cpp(K, mutation_kind, mutation_rate, mutation_range, numeric_labels, afreq));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dawid_max_rate_cpp
+double dawid_max_rate_cpp(Rcpp::NumericVector afreq, double range);
+RcppExport SEXP _mispitools_dawid_max_rate_cpp(SEXP afreqSEXP, SEXP rangeSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type afreq(afreqSEXP);
+    Rcpp::traits::input_parameter< double >::type range(rangeSEXP);
+    rcpp_result_gen = Rcpp::wrap(dawid_max_rate_cpp(afreq, range));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -316,7 +329,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_lr_dist_roc", (DL_FUNC) &_mispitools_cpp_lr_dist_roc, 3},
     {"_mispitools_cpp_lr_dist_choose_threshold", (DL_FUNC) &_mispitools_cpp_lr_dist_choose_threshold, 4},
     {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 8},
-    {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 5},
+    {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 6},
+    {"_mispitools_dawid_max_rate_cpp", (DL_FUNC) &_mispitools_dawid_max_rate_cpp, 2},
     {NULL, NULL, 0}
 };
 
