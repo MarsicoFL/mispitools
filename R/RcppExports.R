@@ -129,3 +129,7 @@ nongenetic_per_feature_lr_dist_cpp <- function(feature_class, n_categories, erro
     .Call(`_mispitools_nongenetic_per_feature_lr_dist_cpp`, feature_class, n_categories, error_is_matrix, error_matrix, error_scalar, observed_index, reference_uniform, reference_freqs, range_lo, range_hi, sample, observed_value, n_bins, alpha, search_open, aggregate)
 }
 
+cpp_openmp_info <- function(n_threads = 0L) {
+    .Call(`_mispitools_cpp_openmp_info`, n_threads)
+}
+

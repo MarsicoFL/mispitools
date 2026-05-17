@@ -34,6 +34,14 @@
 #include "core/decision.h"
 #include "core/linkage.h"
 
+// F7.1 — OpenMP runtime header, only when the toolchain provides it.
+// Every use of an omp_* call below is additionally guarded by the same
+// macro, so the binding compiles and links unchanged when OpenMP is
+// absent (see src/Makevars rationale).
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace mc = mispitools::core;
 
 namespace {
@@ -1000,4 +1008,42 @@ Rcpp::List nongenetic_per_feature_lr_dist_cpp(
         Rcpp::_["has_pos_inf"] = d.has_pos_inf,
         Rcpp::_["has_neg_inf"] = d.has_neg_inf
     );
+}
+
+// F7.1 — OpenMP linkage probe. Reports whether the package was built
+// with a working OpenMP runtime and, when it was, exercises a real
+// parallel region so the test confirms the runtime is *linked* (not
+// merely that the _OPENMP macro is defined). `n_threads <= 0` leaves the
+// runtime default untouched; a positive value caps the region via the
+// num_threads clause, which is how the R layer enforces the CRAN
+// 2-thread limit. The core/ engine stays OpenMP-free for now; only this
+// binding-level probe touches the runtime in F7.1.
+//
+// [[Rcpp::export]]
+Rcpp::List cpp_openmp_info(int n_threads = 0) {
+#ifdef _OPENMP
+    const int max_threads = omp_get_max_threads();
+    int observed = 1;
+    if (n_threads > 0) {
+        #pragma omp parallel num_threads(n_threads) reduction(max : observed)
+        {
+            observed = omp_get_num_threads();
+        }
+    } else {
+        #pragma omp parallel reduction(max : observed)
+        {
+            observed = omp_get_num_threads();
+        }
+    }
+    return Rcpp::List::create(
+        Rcpp::_["available"]        = true,
+        Rcpp::_["max_threads"]      = max_threads,
+        Rcpp::_["observed_threads"] = observed);
+#else
+    (void) n_threads;
+    return Rcpp::List::create(
+        Rcpp::_["available"]        = false,
+        Rcpp::_["max_threads"]      = 1,
+        Rcpp::_["observed_threads"] = 1);
+#endif
 }

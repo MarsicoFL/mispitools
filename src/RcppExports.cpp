@@ -465,6 +465,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_openmp_info
+Rcpp::List cpp_openmp_info(int n_threads);
+RcppExport SEXP _mispitools_cpp_openmp_info(SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_openmp_info(n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_pedigree_placeholder", (DL_FUNC) &_mispitools_cpp_pedigree_placeholder, 1},
@@ -499,6 +510,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_nongenetic_cpt_cpp", (DL_FUNC) &_mispitools_nongenetic_cpt_cpp, 15},
     {"_mispitools_nongenetic_per_feature_kl_cpp", (DL_FUNC) &_mispitools_nongenetic_per_feature_kl_cpp, 15},
     {"_mispitools_nongenetic_per_feature_lr_dist_cpp", (DL_FUNC) &_mispitools_nongenetic_per_feature_lr_dist_cpp, 16},
+    {"_mispitools_cpp_openmp_info", (DL_FUNC) &_mispitools_cpp_openmp_info, 1},
     {NULL, NULL, 0}
 };
 
