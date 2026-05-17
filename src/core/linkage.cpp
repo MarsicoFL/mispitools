@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <map>
-#include <set>
 #include <utility>
 #include <vector>
 
@@ -120,107 +119,309 @@ inline double child_cond(const PairTables& t,
     return from_fa * from_mo;
 }
 
-// Intermediate diplotype joint. state[row * n_members + i] = diplotype
-// index of member i, or -1 if i is unassigned/excluded.
-struct PartialJoint {
-    std::vector<std::int32_t> states_flat;
+// ---------------------------------------------------------------------------
+// Elston-Stewart online variable elimination (F5.5).
+//
+// The F5.2 engine materialised the dense phase-conscious joint over *all*
+// members; an 8-member first-cousin pedigree blows up to ~(G_A*G_B)^8 rows
+// (ESCALATION_20260516_200001.md). Here the joint is instead carried only
+// over an active frontier: members are introduced ancestor-first and any
+// member that is not in the caller-requested keep-set is summed out the
+// moment every one of its informative children has been introduced. This
+// is exact variable elimination (correct for any acyclic pedigree; loops
+// are broken at the R boundary, SCOUT_pedprobr_linkage.md), so the result
+// is bit-for-bit the dense joint when the keep-set is the whole pedigree
+// (relevant == {} default), and a proper marginal otherwise.
+// ---------------------------------------------------------------------------
+
+// Per-build role of each member. H1: every member plays its pedigree role.
+// H2: the POI is detached (an independent HWE founder, prior_d) and is
+// excluded as a transmitting parent so its children draw the imputed
+// gamete -- exactly the F5.2 dense-merge H2 semantics, expressed locally.
+struct PeelSpec {
+    std::vector<char> founder_like;  // size n_members
+    std::vector<char> excluded;      // size n_members (excluded transmitter)
+};
+
+// Sparse joint over a dynamic subset of members. `members[c]` is the
+// member id held in column `c`; `state[row * width + c]` is its ordered
+// diplotype index. `col_of[m]` is the column of member m, or -1.
+struct PeelTable {
+    std::vector<MemberIndex> members;
+    std::vector<int> col_of;
+    std::vector<std::int32_t> state;
     std::vector<double> prob;
-    MemberIndex n_members = 0;
+    std::size_t width() const noexcept { return members.size(); }
     std::size_t n_rows() const noexcept { return prob.size(); }
 };
 
-PartialJoint build_joint(const Pedigree& p,
-                         const PairTables& t,
-                         const std::vector<MemberIndex>& founders_use,
-                         const std::vector<MemberIndex>& nf_order,
-                         const std::vector<std::uint8_t>& excluded_mask) {
-    PartialJoint pj;
-    pj.n_members = p.n_members;
+// Add member `m` as a fresh column, expanding the table by its D ordered
+// diplotypes and multiplying in its founder / transmission factor. Rows
+// with zero probability are compacted away immediately.
+void introduce_member(PeelTable& tb, const PairTables& t, const Pedigree& p,
+                      const PeelSpec& sp, MemberIndex m) {
     const int D = t.D;
-    const std::size_t n_mem = static_cast<std::size_t>(p.n_members);
+    const std::size_t mi = static_cast<std::size_t>(m);
+    const bool fl = sp.founder_like[mi] != 0;
+    const MemberIndex fa = fl ? kNoParent : p.father[mi];
+    const MemberIndex mo = fl ? kNoParent : p.mother[mi];
 
-    if (founders_use.empty()) {
-        pj.states_flat.clear();
-        pj.prob.clear();
-    } else {
-        std::size_t total = 1;
-        for (std::size_t k = 0; k < founders_use.size(); ++k) {
-            total *= static_cast<std::size_t>(D);
+    if (tb.members.empty()) {
+        // First member: must be founder-like (recursion introduces
+        // ancestors first), so the factor is the diplotype prior.
+        tb.members.push_back(m);
+        tb.col_of[mi] = 0;
+        tb.state.assign(static_cast<std::size_t>(D), 0);
+        tb.prob.assign(static_cast<std::size_t>(D), 0.0);
+        for (int d = 0; d < D; ++d) {
+            tb.state[static_cast<std::size_t>(d)] = d;
+            tb.prob[static_cast<std::size_t>(d)] =
+                t.prior_d[static_cast<std::size_t>(d)];
         }
-        pj.states_flat.assign(total * n_mem, std::int32_t(-1));
-        pj.prob.assign(total, 1.0);
+        return;
+    }
 
-        std::size_t period = 1;
-        for (std::size_t k = 0; k < founders_use.size(); ++k) {
-            const MemberIndex fid = founders_use[k];
-            for (std::size_t r = 0; r < total; ++r) {
-                const int d = static_cast<int>(
-                    (r / period) % static_cast<std::size_t>(D));
-                pj.states_flat[r * n_mem + static_cast<std::size_t>(fid)] = d;
-                pj.prob[r] *= t.prior_d[static_cast<std::size_t>(d)];
+    const std::size_t old_w = tb.width();
+    const std::size_t new_w = old_w + 1;
+    const int new_col = static_cast<int>(old_w);
+    tb.members.push_back(m);
+    tb.col_of[mi] = new_col;
+
+    const std::size_t cur_rows = tb.n_rows();
+    const std::size_t cap_rows = cur_rows * static_cast<std::size_t>(D);
+    std::vector<std::int32_t> ns(cap_rows * new_w);
+    std::vector<double> np(cap_rows);
+
+    const bool fa_known = (!fl) && (fa != kNoParent)
+        && (sp.excluded[static_cast<std::size_t>(fa)] == 0);
+    const bool mo_known = (!fl) && (mo != kNoParent)
+        && (sp.excluded[static_cast<std::size_t>(mo)] == 0);
+    const int col_fa = fa_known ? tb.col_of[static_cast<std::size_t>(fa)] : -1;
+    const int col_mo = mo_known ? tb.col_of[static_cast<std::size_t>(mo)] : -1;
+    // A non-founder both of whose parents are excluded contributes no
+    // pedigree information and is set to zero, matching the F5.2 dense
+    // engine's `both_excluded` branch (never reached with only the POI
+    // excluded, retained for parity).
+    const bool both_excluded = (!fl) && !fa_known && !mo_known;
+
+    std::size_t keep = 0;
+    for (std::size_t r = 0; r < cur_rows; ++r) {
+        const double base = tb.prob[r];
+        const int d_fa = (col_fa >= 0)
+            ? tb.state[r * old_w + static_cast<std::size_t>(col_fa)] : -1;
+        const int d_mo = (col_mo >= 0)
+            ? tb.state[r * old_w + static_cast<std::size_t>(col_mo)] : -1;
+        for (int dc = 0; dc < D; ++dc) {
+            double factor;
+            if (fl) {
+                factor = t.prior_d[static_cast<std::size_t>(dc)];
+            } else if (both_excluded) {
+                factor = 0.0;
+            } else {
+                factor = child_cond(t, d_fa, d_mo, dc);
             }
-            period *= static_cast<std::size_t>(D);
+            const double pr = base * factor;
+            if (pr <= 0.0) continue;
+            std::copy(tb.state.begin() + r * old_w,
+                      tb.state.begin() + (r + 1) * old_w,
+                      ns.begin() + keep * new_w);
+            ns[keep * new_w + old_w] = dc;
+            np[keep] = pr;
+            ++keep;
+        }
+    }
+    ns.resize(keep * new_w);
+    np.resize(keep);
+    tb.state = std::move(ns);
+    tb.prob = std::move(np);
+}
+
+// Sum member `m` out of the table: drop its column and aggregate rows
+// that become identical on the remaining members.
+void eliminate_member(PeelTable& tb, MemberIndex m) {
+    const std::size_t mi = static_cast<std::size_t>(m);
+    const int col = tb.col_of[mi];
+    if (col < 0) return;
+    const std::size_t w = tb.width();
+    const std::size_t nw = w - 1;
+    const std::size_t rows = tb.n_rows();
+
+    std::map<std::vector<std::int32_t>, double> agg;
+    std::vector<std::int32_t> key(nw);
+    for (std::size_t r = 0; r < rows; ++r) {
+        std::size_t k = 0;
+        for (std::size_t c = 0; c < w; ++c) {
+            if (c == static_cast<std::size_t>(col)) continue;
+            key[k++] = tb.state[r * w + c];
+        }
+        agg[key] += tb.prob[r];
+    }
+
+    tb.members.erase(tb.members.begin() + col);
+    tb.col_of[mi] = -1;
+    for (MemberIndex mm : tb.members) {
+        if (tb.col_of[static_cast<std::size_t>(mm)] > col) {
+            --tb.col_of[static_cast<std::size_t>(mm)];
         }
     }
 
-    for (MemberIndex nf : nf_order) {
-        if (pj.n_rows() == 0) break;
-        const MemberIndex fa = p.father[static_cast<std::size_t>(nf)];
-        const MemberIndex mo = p.mother[static_cast<std::size_t>(nf)];
-        const bool fa_known = (fa != kNoParent)
-            && (excluded_mask[static_cast<std::size_t>(fa)] == 0);
-        const bool mo_known = (mo != kNoParent)
-            && (excluded_mask[static_cast<std::size_t>(mo)] == 0);
+    tb.state.assign(agg.size() * nw, 0);
+    tb.prob.assign(agg.size(), 0.0);
+    std::size_t r = 0;
+    for (const auto& kv : agg) {
+        std::copy(kv.first.begin(), kv.first.end(),
+                  tb.state.begin() + r * nw);
+        tb.prob[r] = kv.second;
+        ++r;
+    }
+}
 
-        const std::size_t cur_rows = pj.n_rows();
-        const std::size_t new_rows = cur_rows * static_cast<std::size_t>(D);
-        std::vector<std::int32_t> new_states(new_rows * n_mem);
-        std::vector<double> new_prob(new_rows);
+// Build the joint over `keep` members under `sp`, marginalising every
+// other member as soon as it is no longer needed as a parent.
+PeelTable build_peeled(const Pedigree& p, const PairTables& t,
+                       const PeelSpec& sp,
+                       const std::vector<char>& keep) {
+    const std::size_t n = static_cast<std::size_t>(p.n_members);
 
-        for (std::size_t r = 0; r < cur_rows; ++r) {
-            const double base_prob = pj.prob[r];
-            const int d_fa = fa_known
-                ? pj.states_flat[r * n_mem + static_cast<std::size_t>(fa)]
-                : -1;
-            const int d_mo = mo_known
-                ? pj.states_flat[r * n_mem + static_cast<std::size_t>(mo)]
-                : -1;
-            const bool both_excluded = !fa_known && !mo_known;
+    // children[x] = members whose father or mother is x.
+    std::vector<std::vector<MemberIndex>> children(n);
+    for (MemberIndex c = 0; c < p.n_members; ++c) {
+        const MemberIndex f = p.father[static_cast<std::size_t>(c)];
+        const MemberIndex m = p.mother[static_cast<std::size_t>(c)];
+        if (f != kNoParent) children[static_cast<std::size_t>(f)].push_back(c);
+        if (m != kNoParent) children[static_cast<std::size_t>(m)].push_back(c);
+    }
 
-            for (int dc = 0; dc < D; ++dc) {
-                const std::size_t nr =
-                    r * static_cast<std::size_t>(D) + static_cast<std::size_t>(dc);
-                std::copy(
-                    pj.states_flat.begin() + r * n_mem,
-                    pj.states_flat.begin() + (r + 1) * n_mem,
-                    new_states.begin() + nr * n_mem);
-                new_states[nr * n_mem + static_cast<std::size_t>(nf)] = dc;
-                const double cond = both_excluded
-                    ? 0.0 : child_cond(t, d_fa, d_mo, dc);
-                new_prob[nr] = base_prob * cond;
+    // added_set = keep U ancestors(keep): exactly the members the
+    // ancestor-first recursion will introduce. Children outside it are
+    // uninformative subtrees (integrate to 1) and never pin a parent.
+    std::vector<char> in_added(n, 0);
+    {
+        std::vector<MemberIndex> stack;
+        for (MemberIndex m = 0; m < p.n_members; ++m) {
+            if (keep[static_cast<std::size_t>(m)]) {
+                in_added[static_cast<std::size_t>(m)] = 1;
+                stack.push_back(m);
             }
         }
-
-        std::size_t keep = 0;
-        for (std::size_t r = 0; r < new_rows; ++r) {
-            if (new_prob[r] > 0.0) {
-                if (keep != r) {
-                    std::copy(
-                        new_states.begin() + r * n_mem,
-                        new_states.begin() + (r + 1) * n_mem,
-                        new_states.begin() + keep * n_mem);
-                    new_prob[keep] = new_prob[r];
+        while (!stack.empty()) {
+            const MemberIndex x = stack.back();
+            stack.pop_back();
+            if (sp.founder_like[static_cast<std::size_t>(x)]) continue;
+            const MemberIndex par[2] = {
+                p.father[static_cast<std::size_t>(x)],
+                p.mother[static_cast<std::size_t>(x)]
+            };
+            for (MemberIndex pp : par) {
+                if (pp == kNoParent) continue;
+                if (sp.excluded[static_cast<std::size_t>(pp)]) continue;
+                if (!in_added[static_cast<std::size_t>(pp)]) {
+                    in_added[static_cast<std::size_t>(pp)] = 1;
+                    stack.push_back(pp);
                 }
-                ++keep;
             }
         }
-        new_states.resize(keep * n_mem);
-        new_prob.resize(keep);
-        pj.states_flat = std::move(new_states);
-        pj.prob = std::move(new_prob);
     }
 
-    return pj;
+    PeelTable tb;
+    tb.col_of.assign(n, -1);
+    std::vector<char> introduced(n, 0);
+
+    auto all_informative_children_in =
+        [&](MemberIndex x) -> bool {
+        for (MemberIndex c : children[static_cast<std::size_t>(x)]) {
+            if (!in_added[static_cast<std::size_t>(c)]) continue;
+            if (!introduced[static_cast<std::size_t>(c)]) return false;
+        }
+        return true;
+    };
+
+    auto eliminate_fixpoint = [&]() {
+        bool changed = true;
+        while (changed) {
+            changed = false;
+            for (std::size_t i = 0; i < tb.members.size(); ++i) {
+                const MemberIndex x = tb.members[i];
+                if (keep[static_cast<std::size_t>(x)]) continue;
+                if (!all_informative_children_in(x)) continue;
+                eliminate_member(tb, x);
+                changed = true;
+                break;
+            }
+        }
+    };
+
+    // Iterative ancestor-first introduction (explicit stack: the
+    // recursion depth is the pedigree generation count, but a stack
+    // keeps the kernel free of deep native recursion).
+    std::vector<MemberIndex> work;
+    for (MemberIndex m = 0; m < p.n_members; ++m) {
+        if (keep[static_cast<std::size_t>(m)]) work.push_back(m);
+    }
+    std::vector<MemberIndex> stack;
+    for (auto it = work.rbegin(); it != work.rend(); ++it) {
+        stack.push_back(*it);
+    }
+    while (!stack.empty()) {
+        const MemberIndex m = stack.back();
+        const std::size_t mi = static_cast<std::size_t>(m);
+        if (introduced[mi]) { stack.pop_back(); continue; }
+        const bool fl = sp.founder_like[mi] != 0;
+        bool deferred = false;
+        if (!fl) {
+            const MemberIndex par[2] = {
+                p.father[mi], p.mother[mi]
+            };
+            for (MemberIndex pp : par) {
+                if (pp == kNoParent) continue;
+                if (sp.excluded[static_cast<std::size_t>(pp)]) continue;
+                if (!introduced[static_cast<std::size_t>(pp)]) {
+                    stack.push_back(pp);
+                    deferred = true;
+                }
+            }
+        }
+        if (deferred) continue;  // parents pushed; revisit m later
+        stack.pop_back();
+        introduced[mi] = 1;
+        introduce_member(tb, t, p, sp, m);
+        eliminate_fixpoint();
+    }
+    eliminate_fixpoint();
+    return tb;
+}
+
+// Permute columns into ascending member-id order so two tables built
+// under different specs (H1 vs H2) align by a plain row-key lookup.
+void canonicalize(PeelTable& tb) {
+    const std::size_t w = tb.width();
+    if (w <= 1) return;
+    std::vector<std::size_t> perm(w);
+    for (std::size_t i = 0; i < w; ++i) perm[i] = i;
+    std::sort(perm.begin(), perm.end(),
+              [&](std::size_t a, std::size_t b) {
+                  return tb.members[a] < tb.members[b];
+              });
+    bool sorted = true;
+    for (std::size_t i = 0; i < w; ++i) {
+        if (perm[i] != i) { sorted = false; break; }
+    }
+    if (sorted) return;
+    const std::size_t rows = tb.n_rows();
+    std::vector<std::int32_t> ns(rows * w);
+    for (std::size_t r = 0; r < rows; ++r) {
+        for (std::size_t c = 0; c < w; ++c) {
+            ns[r * w + c] = tb.state[r * w + perm[c]];
+        }
+    }
+    std::vector<MemberIndex> nm(w);
+    for (std::size_t c = 0; c < w; ++c) nm[c] = tb.members[perm[c]];
+    tb.state = std::move(ns);
+    tb.members = std::move(nm);
+    for (std::size_t c = 0; c < w; ++c) {
+        tb.col_of[static_cast<std::size_t>(tb.members[c])] =
+            static_cast<int>(c);
+    }
 }
 
 }  // namespace
@@ -231,7 +432,8 @@ Result<LinkedJointTable> linked_pair_joint(
         const Marker& m_B,
         const MutationModel& mu_A,
         const MutationModel& mu_B,
-        double rho) {
+        double rho,
+        const std::vector<MemberIndex>& relevant) {
     if (!(rho >= 0.0 && rho <= 0.5)) {
         return err_result<LinkedJointTable>(
             "linked_pair_joint: rho must be in [0, 0.5].");
@@ -259,6 +461,12 @@ Result<LinkedJointTable> linked_pair_joint(
         return err_result<LinkedJointTable>(
             "linked_pair_joint: poi index out of range.");
     }
+    for (MemberIndex r : relevant) {
+        if (r < 0 || r >= p.n_members) {
+            return err_result<LinkedJointTable>(
+                "linked_pair_joint: relevant member index out of range.");
+        }
+    }
 
     auto mmA = build_mutation_matrix(mu_A, m_A.n_alleles,
                                      m_A.numeric_labels, m_A.freqs);
@@ -280,113 +488,107 @@ Result<LinkedJointTable> linked_pair_joint(
     }
     const PairTables& t = *pt;
 
-    const std::vector<MemberIndex> all_founders = founders_of(p);
-    const std::vector<MemberIndex> all_nonfounders = nonfounders_of(p);
     const MemberIndex poi = p.poi;
     const bool has_poi = (poi != kNoParent);
     const std::size_t n_mem = static_cast<std::size_t>(p.n_members);
 
-    std::vector<std::uint8_t> empty_mask(n_mem, 0);
-    std::vector<MemberIndex> nf_order_h1 =
-        ancestral_order(p, all_nonfounders, std::vector<MemberIndex>{});
-    PartialJoint h1 = build_joint(p, t, all_founders, nf_order_h1, empty_mask);
-
-    PartialJoint h2;
-    if (has_poi) {
-        std::vector<MemberIndex> founders_h2 = all_founders;
-        founders_h2.erase(
-            std::remove(founders_h2.begin(), founders_h2.end(), poi),
-            founders_h2.end());
-        std::vector<std::uint8_t> h2_mask(n_mem, 0);
-        h2_mask[static_cast<std::size_t>(poi)] = 1;
-        std::vector<MemberIndex> nf_h2_subset;
-        nf_h2_subset.reserve(all_nonfounders.size());
-        for (MemberIndex nf : all_nonfounders) {
-            if (nf != poi) nf_h2_subset.push_back(nf);
-        }
-        std::vector<MemberIndex> nf_order_h2 =
-            ancestral_order(p, nf_h2_subset, std::vector<MemberIndex>{poi});
-        h2 = build_joint(p, t, founders_h2, nf_order_h2, h2_mask);
+    // keep-set: an empty `relevant` means "the whole pedigree" -- this
+    // reproduces the F5.2 dense joint exactly (nothing is eliminated).
+    // Otherwise only the requested members survive; the POI is forced in
+    // so H1 and H2 stay alignable.
+    std::vector<char> keep(n_mem, 0);
+    if (relevant.empty()) {
+        std::fill(keep.begin(), keep.end(), char(1));
+    } else {
+        for (MemberIndex r : relevant) keep[static_cast<std::size_t>(r)] = 1;
+        if (has_poi) keep[static_cast<std::size_t>(poi)] = 1;
     }
 
-    // Diplotype-level combined table (states over diplotype indices),
-    // built exactly as cpt_marker_joint does over genotype indices.
-    std::vector<std::int32_t> dip_states;  // n_rows * n_members
-    std::vector<double> dip_p_h1;
-    std::vector<double> dip_p_h2;
+    PeelSpec sp_h1;
+    sp_h1.founder_like.assign(n_mem, 0);
+    sp_h1.excluded.assign(n_mem, 0);
+    for (MemberIndex m = 0; m < p.n_members; ++m) {
+        sp_h1.founder_like[static_cast<std::size_t>(m)] =
+            is_founder(p, m) ? 1 : 0;
+    }
+
+    PeelTable h1 = build_peeled(p, t, sp_h1, keep);
+    canonicalize(h1);
+
+    PeelTable h2;
+    if (has_poi) {
+        PeelSpec sp_h2 = sp_h1;
+        sp_h2.founder_like[static_cast<std::size_t>(poi)] = 1;
+        sp_h2.excluded[static_cast<std::size_t>(poi)] = 1;
+        h2 = build_peeled(p, t, sp_h2, keep);
+        canonicalize(h2);
+    }
+
+    // Outer join of H1 / H2 on the (canonical) keep-member configuration.
+    // h1 carries the pedigree joint; h2 carries the same support with the
+    // POI replaced by an independent HWE founder -- exactly the F5.2
+    // dense-merge semantics, now over the marginalised member set.
+    const std::size_t w = h1.width();
+    std::vector<std::int32_t> combo_state;  // n_rows * w
+    std::vector<double> combo_h1;
+    std::vector<double> combo_h2;
 
     if (!has_poi) {
-        dip_states = h1.states_flat;
-        dip_p_h1 = h1.prob;
-        dip_p_h2 = h1.prob;
+        combo_state = h1.state;
+        combo_h1 = h1.prob;
+        combo_h2 = h1.prob;
     } else {
-        std::map<std::vector<std::int32_t>, double> h2_lookup;
+        std::map<std::vector<std::int32_t>, double> h2map;
         for (std::size_t r = 0; r < h2.n_rows(); ++r) {
-            std::vector<std::int32_t> k;
-            k.reserve(n_mem > 0 ? n_mem - 1 : 0);
-            for (MemberIndex i = 0; i < p.n_members; ++i) {
-                if (i == poi) continue;
-                k.push_back(h2.states_flat[r * n_mem + static_cast<std::size_t>(i)]);
-            }
-            h2_lookup[std::move(k)] = h2.prob[r];
+            h2map[std::vector<std::int32_t>(
+                h2.state.begin() + r * w,
+                h2.state.begin() + (r + 1) * w)] = h2.prob[r];
         }
-
-        const std::size_t n_h1 = h1.n_rows();
-        std::vector<double> p_h2_for_h1(n_h1, 0.0);
-        for (std::size_t r = 0; r < n_h1; ++r) {
-            std::vector<std::int32_t> k;
-            k.reserve(n_mem > 0 ? n_mem - 1 : 0);
-            for (MemberIndex i = 0; i < p.n_members; ++i) {
-                if (i == poi) continue;
-                k.push_back(h1.states_flat[r * n_mem + static_cast<std::size_t>(i)]);
-            }
-            auto it = h2_lookup.find(k);
-            const double lookup = (it != h2_lookup.end()) ? it->second : 0.0;
-            const int d_poi =
-                h1.states_flat[r * n_mem + static_cast<std::size_t>(poi)];
-            p_h2_for_h1[r] = t.prior_d[static_cast<std::size_t>(d_poi)] * lookup;
+        combo_state = h1.state;
+        combo_h1 = h1.prob;
+        combo_h2.assign(h1.n_rows(), 0.0);
+        std::vector<std::int32_t> rkey(w);
+        for (std::size_t r = 0; r < h1.n_rows(); ++r) {
+            std::copy(h1.state.begin() + r * w,
+                      h1.state.begin() + (r + 1) * w, rkey.begin());
+            auto it = h2map.find(rkey);
+            combo_h2[r] = (it != h2map.end()) ? it->second : 0.0;
         }
-
-        std::set<std::vector<std::int32_t>> h1_full;
-        for (std::size_t r = 0; r < n_h1; ++r) {
-            h1_full.insert(std::vector<std::int32_t>(
-                h1.states_flat.begin() + r * n_mem,
-                h1.states_flat.begin() + (r + 1) * n_mem));
+        // H2-only configurations (compatible under H2, impossible under
+        // the pedigree): p_h1 = 0, kept so KL / the LR distribution see
+        // the full support.
+        std::map<std::vector<std::int32_t>, std::size_t> h1pos;
+        for (std::size_t r = 0; r < h1.n_rows(); ++r) {
+            h1pos[std::vector<std::int32_t>(
+                h1.state.begin() + r * w,
+                h1.state.begin() + (r + 1) * w)] = r;
         }
-
-        dip_states = h1.states_flat;
-        dip_p_h1 = h1.prob;
-        dip_p_h2 = std::move(p_h2_for_h1);
-
-        const int D = t.D;
         for (std::size_t r = 0; r < h2.n_rows(); ++r) {
-            for (int d_poi = 0; d_poi < D; ++d_poi) {
-                std::vector<std::int32_t> row(n_mem);
-                std::copy(
-                    h2.states_flat.begin() + r * n_mem,
-                    h2.states_flat.begin() + (r + 1) * n_mem,
-                    row.begin());
-                row[static_cast<std::size_t>(poi)] = d_poi;
-                if (h1_full.find(row) != h1_full.end()) continue;
-                const double p2 =
-                    t.prior_d[static_cast<std::size_t>(d_poi)] * h2.prob[r];
-                if (p2 <= 0.0) continue;
-                dip_states.insert(dip_states.end(), row.begin(), row.end());
-                dip_p_h1.push_back(0.0);
-                dip_p_h2.push_back(p2);
-            }
+            std::vector<std::int32_t> k(
+                h2.state.begin() + r * w,
+                h2.state.begin() + (r + 1) * w);
+            if (h1pos.find(k) != h1pos.end()) continue;
+            if (h2.prob[r] <= 0.0) continue;
+            combo_state.insert(combo_state.end(), k.begin(), k.end());
+            combo_h1.push_back(0.0);
+            combo_h2.push_back(h2.prob[r]);
         }
     }
 
-    // Collapse latent phase: each member's diplotype -> unordered
-    // genotype index at A and at B; aggregate identical observable
-    // configurations (key = interleaved A0,B0,A1,B1,...).
+    // Collapse the latent phase: each surviving member's ordered
+    // diplotype -> unordered genotype index at A and at B. Members that
+    // were marginalised out hold a constant placeholder (genotype 0) in
+    // both markers -- consumers only ever read kept members. Aggregate
+    // identical observable configurations; std::map yields the documented
+    // (A0,B0,A1,B1,...) lex row order.
+    const std::vector<MemberIndex>& cols = h1.members;
     std::map<std::vector<GenotypeIndex>, std::pair<double, double>> agg;
-    const std::size_t n_rows = dip_p_h1.size();
+    const std::size_t n_rows = combo_h1.size();
     for (std::size_t r = 0; r < n_rows; ++r) {
-        std::vector<GenotypeIndex> key(2 * n_mem);
-        for (MemberIndex i = 0; i < p.n_members; ++i) {
-            const int d = dip_states[r * n_mem + static_cast<std::size_t>(i)];
+        std::vector<GenotypeIndex> key(2 * n_mem, 0);
+        for (std::size_t c = 0; c < w; ++c) {
+            const MemberIndex i = cols[c];
+            const int d = combo_state[r * w + c];
             const int hp = t.pat_hap(d);
             const int hm = t.mat_hap(d);
             AlleleIndex aA1 = t.hap_a(hp), aA2 = t.hap_a(hm);
@@ -399,17 +601,14 @@ Result<LinkedJointTable> linked_pair_joint(
                 pair_to_genotype_index(aB1, aB2);
         }
         auto& cell = agg[key];
-        cell.first += dip_p_h1[r];
-        cell.second += dip_p_h2[r];
+        cell.first += combo_h1[r];
+        cell.second += combo_h2[r];
     }
 
     LinkedJointTable out;
     out.n_members = p.n_members;
     out.n_genotypes_a = t.G_A;
     out.n_genotypes_b = t.G_B;
-
-    // std::map iterates in lex order of the interleaved key, which is
-    // exactly the requested (A0,B0,A1,B1,...) row ordering.
     for (const auto& kv : agg) {
         const double ph1 = kv.second.first;
         const double ph2 = kv.second.second;

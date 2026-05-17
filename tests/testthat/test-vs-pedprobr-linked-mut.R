@@ -63,7 +63,11 @@
 
 # Likelihood of the observed two-marker configuration under H1
 # (pedigree topology + recombination `rho`), obtained by marginalising
-# the dense linked-pair joint over the untyped members.
+# the linked-pair joint over the untyped members. `relevant` is set to
+# exactly the typed members so the F5.5 peeled engine sums every other
+# member out instead of densifying the full joint (when every member is
+# typed -- e.g. the nuclearPed cases -- this is the whole pedigree and
+# the dense F5.2 path is recovered unchanged).
 .f53_linked_lik <- function(father, mother, freqs_a, freqs_b, rho, obs,
                             mut_a, mut_b) {
   res <- cpp_linked_pair_joint(
@@ -76,7 +80,8 @@
     numeric_labels_a = mut_a$labels,
     mutation_kind_b = mut_b$kind, mutation_rate_b = mut_b$rate,
     mutation_range_b = mut_b$range,
-    numeric_labels_b = mut_b$labels)
+    numeric_labels_b = mut_b$labels,
+    relevant = as.integer(names(obs)))
   keep <- rep(TRUE, length(res$P_H1))
   for (nm in names(obs)) {
     mi <- as.integer(nm)
@@ -211,15 +216,16 @@ test_that("linked joint with mutation is a proper distribution (sums to 1)", {
   expect_equal(sum(res$P_H2), 1, tolerance = 1e-9)
 })
 
-test_that("first-cousin x 2 linked markers (named F5.3 scope) -- engine OOM", {
-  # core::linked_pair_joint() returns the DENSE joint over all members.
-  # An 8-member first-cousin pedigree yields ~ (genotypes_A *
-  # genotypes_B) ^ 8 rows; even at K = 2 per marker the call aborts with
-  # std::bad_alloc (verified during F5.3). Closing this needs a peeled /
-  # typed-set marginalising linked engine -- tracked as a new cpp_engine
-  # microtask in STATE.md (F5.5) plus an ESCALATION note. The body is
-  # kept ready so this activates verbatim once the engine marginalises.
-  skip("blocked by F5.5: linked_pair_joint densifies the full joint over all members; first-cousin (8 members) -> std::bad_alloc. See mispitools_2_loop/ESCALATION_*.md")
+test_that("first-cousin x 2 linked markers (named F5.3 scope)", {
+  # F5.5 closed the engine-scalability gap: core::linked_pair_joint()
+  # now marginalises non-relevant members via Elston-Stewart online
+  # variable elimination instead of materialising the dense joint over
+  # all members. The 8-member first-cousin pedigree -- which aborted
+  # with std::bad_alloc during F5.3 -- is verified here against the
+  # canonical oracle pedprobr::likelihood2(), reactivating F5.3.
+  skip_if_not_installed("pedtools")
+  skip_if_not_installed("pedprobr")
+  skip_if_not_installed("pedmut")
 
   # 8-member first cousins: GF(1) GM(2) SpouseA(3) SpouseB(4) Sib1(5)
   # Sib2(6) Cousin1(7) Cousin2(8). 0-based, founders = -1.

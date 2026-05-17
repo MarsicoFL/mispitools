@@ -648,7 +648,8 @@ Rcpp::List cpp_linked_pair_joint(
         int mutation_kind_b = 0,
         double mutation_rate_b = 0.0,
         double mutation_range_b = 0.0,
-        Rcpp::NumericVector numeric_labels_b = Rcpp::NumericVector::create()) {
+        Rcpp::NumericVector numeric_labels_b = Rcpp::NumericVector::create(),
+        Rcpp::IntegerVector relevant = Rcpp::IntegerVector::create()) {
     if (father.size() != mother.size()) {
         Rcpp::stop("cpp_linked_pair_joint: father and mother must be the "
                    "same length.");
@@ -689,7 +690,16 @@ Rcpp::List cpp_linked_pair_joint(
     muB.rate  = mutation_rate_b;
     muB.range = mutation_range_b;
 
-    auto r = mc::linked_pair_joint(ped, mA, mB, muA, muB, rho);
+    // `relevant` arrives 1-based from R; empty -> whole-pedigree joint
+    // (F5.2 dense behaviour). A strict subset triggers the F5.5 peeled
+    // path that marginalises every other member.
+    std::vector<mc::MemberIndex> rel;
+    rel.reserve(static_cast<std::size_t>(relevant.size()));
+    for (int k = 0; k < relevant.size(); ++k) {
+        rel.push_back(static_cast<mc::MemberIndex>(relevant[k] - 1));
+    }
+
+    auto r = mc::linked_pair_joint(ped, mA, mB, muA, muB, rho, rel);
     if (!r.ok()) Rcpp::stop(r.error);
     const mc::LinkedJointTable& jt = *r;
 

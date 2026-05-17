@@ -71,18 +71,28 @@ struct LinkedJointTable {
 /// @param mu_A Mutation model for marker A.
 /// @param mu_B Mutation model for marker B.
 /// @param rho Recombination fraction in [0, 0.5].
+/// @param relevant 0-based member indices whose genotypes the caller will
+///   read. Empty (default) means "the whole pedigree": every member is
+///   kept and the result is bit-for-bit the F5.2 dense joint. When a
+///   strict subset is given, every other member is summed out by
+///   Elston-Stewart online variable elimination (F5.5) and only the
+///   requested members (plus the POI, forced in to keep H1/H2 alignable)
+///   carry a meaningful genotype in the returned table; marginalised
+///   members hold genotype index 1 (0-based 0) and must not be read.
 /// @return The linked-pair joint table, or a Result::error.
-/// @complexity O(D^F * D^N) worst case with D = (K_A*K_B)^2 ordered
-///   diplotypes, F founders, N non-founders; Mendelian sparsity prunes
-///   the row-set aggressively after each peeling step. Tractable for
-///   MP-typical pedigrees with allele counts trimmed (F5.2 scope).
+/// @complexity Dense path O(D^F * D^N) worst case (D = (K_A*K_B)^2
+///   ordered diplotypes). With a strict keep-set the active frontier is
+///   the Elston-Stewart treewidth of the relevant sub-pedigree, so
+///   MP-typical pedigrees (first-cousin and larger, <=20 founders,
+///   <=3 generations) stay tractable (F5.5).
 Result<LinkedJointTable> linked_pair_joint(
     const Pedigree& p,
     const Marker& m_A,
     const Marker& m_B,
     const MutationModel& mu_A,
     const MutationModel& mu_B,
-    double rho);
+    double rho,
+    const std::vector<MemberIndex>& relevant = {});
 
 /// @brief Two-locus phased transmission kernel.
 ///
