@@ -82,6 +82,16 @@ cases about the distribution of birth date discrepancies.
 \item Type 2: LR = P(category | H1) / P(category in database)
 }
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. Generalised by
+\code{\link{nongenetic_feature}} (a date feature); the deterministic
+reference is the Dirichlet mean \code{alpha / sum(alpha)} over the
+discrepancy bins, which the legacy stochastic method-of-moments
+estimator converges to. The legacy function still works for the 2.0
+release-candidate cycle and will be removed afterwards.
+}
+
 \examples{
 # Type 1: Open search - close match (45 days difference)
 lr1 <- lr_birthdate(
@@ -118,6 +128,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{sim_lr_prelim}} for simulating LR distributions,
 \code{\link{sim_poi_prelim}} for generating preliminary databases.
 }

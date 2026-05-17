@@ -67,6 +67,15 @@ Sex is sampled from the population proportions Ps.
 For a matching observation: \code{LR = (1 - eps) / Ps_MP}
 For a non-matching observation: \code{LR = eps / Ps_other}
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. This feature is generalised by
+\code{\link{nongenetic_feature}} (a categorical feature); the
+deterministic LR it produces is reproduced exactly by the unified
+per-feature engine. The legacy function still works for the 2.0
+release-candidate cycle and will be removed afterwards.
+}
+
 \examples{
 # Simulate under H1 (related)
 sim_h1 <- lr_sex(MPs = "F", H = 1, numsims = 100)
@@ -91,6 +100,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{sim_lr_prelim}} for unified preliminary LR simulations,
 \code{\link{lr_age}}, \code{\link{lr_hair_color}} for other variables.
 }

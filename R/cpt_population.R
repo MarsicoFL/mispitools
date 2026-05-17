@@ -44,7 +44,16 @@
 #' The joint probability for each cell is:
 #' \deqn{P(Sex, Age, Color) = P(Sex) \times P(AgeGroup) \times P(Color)}
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. The per-feature H2 marginal it
+#' builds as an outer product is generalised by
+#' \code{\link{nongenetic_feature}} plus the unified per-feature engine
+#' (one feature per trait, combined downstream). The legacy function
+#' still works for the 2.0 release-candidate cycle and will be removed
+#' afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{cpt_missing_person}} for the H1 conditional probability table,
 #' \code{\link{plot_cpt}} for visualization of CPTs.
 #'
@@ -74,6 +83,9 @@ cpt_population <- function(propS = c(0.5, 0.5),
                            MPa = 40,
                            MPr = 6,
                            propC = c(0.3, 0.2, 0.25, 0.15, 0.1)) {
+
+  ng_soft_deprecate("cpt_population",
+    "Use nongenetic_feature() per feature with the per-feature engine.")
 
   # Input validation
   if (!is.numeric(propS) || length(propS) != 2) {

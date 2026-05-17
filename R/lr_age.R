@@ -61,7 +61,15 @@
 #'   \item LR(T0) = epa / P(T0), where P(T0) = 1 - P(T1)
 #' }
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. This feature is generalised by
+#' \code{\link{nongenetic_feature}} (a continuous feature); collapsing
+#' the population grid to two cells (within tolerance vs outside)
+#' reproduces the T1 / T0 LR exactly. The legacy function still works
+#' for the 2.0 release-candidate cycle and will be removed afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{sim_lr_prelim}} for unified preliminary LR simulations,
 #' \code{\link{lr_sex}}, \code{\link{lr_hair_color}} for other variables.
 #'
@@ -97,6 +105,9 @@ lr_age <- function(MPa = 40,
                    LR = FALSE,
                    seed = 1234,
                    nsims = NULL) {
+
+  ng_soft_deprecate("lr_age",
+    "Use nongenetic_feature(type = \"age\", ...) with the per-feature engine.")
 
   # Handle deprecated nsims parameter
   if (!is.null(nsims)) {

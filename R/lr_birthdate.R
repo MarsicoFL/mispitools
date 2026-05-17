@@ -58,7 +58,16 @@
 #'   \item Type 2: LR = P(category | H1) / P(category in database)
 #' }
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. Generalised by
+#' \code{\link{nongenetic_feature}} (a date feature); the deterministic
+#' reference is the Dirichlet mean \code{alpha / sum(alpha)} over the
+#' discrepancy bins, which the legacy stochastic method-of-moments
+#' estimator converges to. The legacy function still works for the 2.0
+#' release-candidate cycle and will be removed afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{sim_lr_prelim}} for simulating LR distributions,
 #' \code{\link{sim_poi_prelim}} for generating preliminary databases.
 #'
@@ -107,6 +116,9 @@ lr_birthdate <- function(ABD = "1976-05-31",
                          PrelimData = NULL,
                          draw = 500,
                          seed = 123) {
+
+  ng_soft_deprecate("lr_birthdate",
+    "Use nongenetic_feature(type = \"birthdate\", ...) with the per-feature engine.")
 
   if (!requireNamespace("DirichletReg", quietly = TRUE))
     stop("The 'DirichletReg' package is required for lr_birthdate(). ",

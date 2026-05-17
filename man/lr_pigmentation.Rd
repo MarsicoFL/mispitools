@@ -39,6 +39,15 @@ The function samples LR values with probabilities proportional to:
 This simulates the expected distribution of LRs when comparing the MP's
 traits against either random individuals (H2) or the true match (H1).
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. Combined pigmentation is
+generalised by \code{\link{nongenetic_feature}} (a categorical
+feature over the joint pigmentation classes). The legacy function
+still works for the 2.0 release-candidate cycle and will be removed
+afterwards.
+}
+
 \examples{
 # Full workflow for pigmentation LRs
 pop_data <- sim_reference_pop(n = 500, seed = 123)
@@ -59,6 +68,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{sim_reference_pop}} for generating population data,
 \code{\link{lr_compute_pigmentation}} for computing input LRs,
 \code{\link{plot_lr_distribution}} for visualization.

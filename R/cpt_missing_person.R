@@ -46,7 +46,15 @@
 #' The hair color probabilities come from the error matrix row corresponding
 #' to the MP's true hair color.
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. The per-feature H1 CPT it builds
+#' as an outer product is generalised by \code{\link{nongenetic_feature}}
+#' plus the unified per-feature engine (one feature per trait, combined
+#' downstream). The legacy function still works for the 2.0
+#' release-candidate cycle and will be removed afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{cpt_population}} for the H2 conditional probability table,
 #' \code{\link{error_matrix_hair}} for creating the color error matrix,
 #' \code{\link{plot_cpt}} for visualization of CPTs.
@@ -80,6 +88,9 @@ cpt_missing_person <- function(MPs = "F",
                                 eps = 0.05,
                                 epa = 0.05,
                                 epc = error_matrix_hair()) {
+
+  ng_soft_deprecate("cpt_missing_person",
+    "Use nongenetic_feature() per feature with the per-feature engine.")
 
   # Handle numeric input for sex (1=Female, 2=Male)
   if (is.numeric(MPs)) {

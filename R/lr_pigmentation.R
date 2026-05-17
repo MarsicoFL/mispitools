@@ -29,7 +29,15 @@
 #' This simulates the expected distribution of LRs when comparing the MP's
 #' traits against either random individuals (H2) or the true match (H1).
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. Combined pigmentation is
+#' generalised by \code{\link{nongenetic_feature}} (a categorical
+#' feature over the joint pigmentation classes). The legacy function
+#' still works for the 2.0 release-candidate cycle and will be removed
+#' afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{sim_reference_pop}} for generating population data,
 #' \code{\link{lr_compute_pigmentation}} for computing input LRs,
 #' \code{\link{plot_lr_distribution}} for visualization.
@@ -55,6 +63,9 @@
 #' plot_lr_distribution(lr_dist)
 
 lr_pigmentation <- function(df, seed = 1234, nsim = 500) {
+
+  ng_soft_deprecate("lr_pigmentation",
+    "Use nongenetic_feature(type = \"pigmentation\", ...) with the per-feature engine.")
 
   # Input validation
   if (!is.data.frame(df)) {
