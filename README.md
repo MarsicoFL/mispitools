@@ -166,6 +166,142 @@ fr$statement   # natural-language sentence for the case file
 
 The framework — axiomatic characterization of $C_W^+$, the leave-one-out identity, and complementarity with population-level mis-specification bounds — is developed in Marsico & Egeland (in preparation).
 
+## Extension in 2.0: Exact Evaluation
+
+Steps 1 to 6 estimate the LR distributions by simulation: `sim_lr_genetic()`
+draws profiles and the distribution emerges from the sample. Version 2.0 adds
+a second route to the same quantities. Given the pedigree and the allele
+frequencies, the distribution of the LR is determined, so it can be computed
+rather than sampled. There is no simulation error to report and no `numsims`
+to choose; the cost moves elsewhere, to the size of the pedigree, as described
+at the end of this section.
+
+The engine is written in C++ and is reached through four entry points.
+
+### Marker models
+
+A marker model bundles a pedigree, a marker, its allele frequencies and a
+mutation or linkage specification. It validates on construction, so a bad
+frequency vector fails immediately rather than halfway through a computation.
+
+```r
+library(mispitools)
+library(pedtools)
+
+freqs <- get_allele_freqs(Argentina)
+drop0 <- function(f) { f <- f[f > 0]; f / sum(f) }   # keep alleles present in the marker
+
+ped <- nuclearPed(1)
+mk  <- c("THO1", "D3S1358", "VWA")
+models <- lapply(mk, function(m)
+  marker_model(ped, marker_id = m, freqs = drop0(freqs[[m]]),
+               mutation = list(model = "equal", rate = 1e-3)))
+names(models) <- mk
+
+models$THO1
+#> <marker_model>
+#>   marker_id : THO1
+#>   alleles   : 10 (4, 5, 6, 7, 8, 9, ...)
+#>   mutation  : equal (rate=0.001)
+#>   linkage   : none
+#>   pedigree  : 3 individuals
+```
+
+Mutation may be `"none"`, `"equal"`, `"stepwise"`, or the asymmetric model of
+Dawid (2002). Linked pairs of markers are handled by Elston-Stewart peeling,
+with the recombination fraction stated rather than assumed to be 0.5.
+
+### What each marker contributes, before any profile is observed
+
+The Kullback-Leibler divergence between the two hypotheses measures the
+discriminating power of a marker. It depends only on the pedigree and the
+frequencies, so it can be read before the case has any data, which is useful
+when deciding which markers to type.
+
+```r
+per_marker_kl_profile(models, poi = "3")
+#>    marker e_log10_lr_h1 e_log10_lr_h2 kl_h1_to_h2 kl_h2_to_h1
+#> 1    THO1     0.6672821     -2.599175    1.536474    5.984822
+#> 2 D3S1358     0.6730551     -2.582336    1.549767    5.946048
+#> 3     VWA     0.7670269     -2.807222    1.766145    6.463868
+```
+
+`e_log10_lr_h1` is the expected weight of evidence when the POI is the missing
+person. The two KL columns are asymmetric on purpose: a marker can be much
+better at excluding than at including, and the difference is what those two
+numbers show.
+
+### The distribution of the profile LR
+
+`lr_distribution()` returns the whole distribution under both hypotheses, not
+a point estimate.
+
+```r
+d <- lr_distribution(models, poi = "3", method = "grid", grid_points = 512L)
+
+summary(d)
+#> Likelihood-ratio distribution summary
+#>                   H1        H2
+#> E[log10 LR] 2.107364 -7.988733
+#> Var         0.514923 15.675662
+#> SD          0.717582  3.959250
+#> mass        1.000000  1.000000
+#>
+#> AUC: 0.99621
+#> Quantiles of log10 LR | H1:
+#>   2.5%    25%    50%    75%  97.5%
+#> 1.0076 1.6488 2.0152 2.4732 3.8472
+#> Quantiles of log10 LR | H2:
+#>     2.5%      25%      50%      75%    97.5%
+#> -16.2133  -9.9845  -8.6104  -5.4044  -1.1908
+
+quantile(d, c(0.05, 0.5, 0.95))
+#>       5%      50%      95%
+#> 1.190806 2.015211 3.389218
+```
+
+The AUC and the quantiles come from the distribution itself, so they carry no
+Monte Carlo error. A statement such as "under H1, five per cent of cases fall
+below a `log10` LR of 1.19" is exact for this pedigree and this frequency
+database.
+
+`method = "exact"` performs a sparse convolution and reproduces the
+convolution atom by atom; `method = "grid"` projects onto a lattice, which
+preserves the total mass and the mean exactly and discretises only the shape.
+The choice matters in practice: composing two markers of 10 and 12 alleles
+exactly already yields around 2.2 million support points, and that number
+multiplies with each marker added. For anything beyond two markers, use the
+grid.
+
+### Non-genetic evidence in the same units
+
+Non-genetic features enter through the same machinery, each with its
+population distribution and its error rate, so they end up on the same
+`log10` LR scale as the markers instead of being described in words alongside
+the genetic result.
+
+```r
+nongenetic_feature(type = "sex", observed = "F",
+                   db_or_freqs = c(F = 0.5, M = 0.5), error = 0.05)
+#> <nongenetic_feature>
+#>   type          : sex (categorical)
+#>   observed      : F
+#>   categories    : 2 (F, M)
+#>   reference     : marginal
+#>   error         : eps=0.05
+```
+
+### Scope of the exact engine
+
+The engine enumerates joint genotype states, so its cost is driven by the
+number of individuals in the pedigree and by the number of alleles per marker.
+On a trio, a marker with 10 to 12 alleles takes about a second. On a
+five-individual pedigree such as `linearPed(2)`, the same computation exceeded
+6 GB of memory in our tests. The exact route is therefore the right tool for
+trios and small pedigrees; for larger pedigrees and full profiles, the
+simulation workflow of Steps 1 to 6 remains the practical one, and the two
+give answers on the same scale.
+
 ## Interactive Application
 
 For users who prefer a graphical interface, **mispitools** includes an interactive Shiny application:
@@ -194,6 +330,17 @@ It provides tools for calculating LRs from non-genetic evidence, visualizing pro
 | `calibrate_concentration_cutoff()` | Pedigree-specific $C_W^+$ cutoff under $H_p$ |
 | `fragility_report()` | Per-case reportable fragility statement |
 | `mispitools_app()` | Interactive Shiny application |
+
+Exact engine added in 2.0:
+
+| Function | Purpose |
+|----------|---------|
+| `marker_model()` | Marker model: pedigree, frequencies, mutation, linkage |
+| `per_marker_kl()` | Discriminating power of one marker (KL divergence) |
+| `per_marker_kl_profile()` | The same across a profile |
+| `lr_distribution()` | Exact distribution of the profile LR, both hypotheses |
+| `nongenetic_feature()` | Non-genetic evidence on the same `log10` LR scale |
+| `get_allele_freqs()` | Population database in the format the engine expects |
 
 ## Citations
 
