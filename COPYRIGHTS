@@ -1,0 +1,40 @@
+Third-party algorithms adapted in mispitools
+============================================
+
+The mispitools C++ kernel (src/core/) reimplements, in portable C++17,
+several mutation-model algorithms whose mathematical form is taken from
+the packages listed below. No source code was copied verbatim; the
+algorithms were reimplemented from the published formulas and the
+referenced R sources. All listed packages are GPL-compatible with
+mispitools' own license.
+
+
+pedmut
+------
+
+  Source:   pedmut, https://cran.r-project.org/package=pedmut
+  Author:   Magnus Dehli Vigeland (NMBU)
+  License:  GPL-3
+  Used in:  src/core/mutation_models.cpp
+
+  - mutation_matrix_asymmetric() (Dawid 2002 unified asymmetric /
+    reversible model): formula adapted from pedmut v0.9.0,
+    R/mutationMatrix.R, function .dawid().
+  - dawid_max_rate(): undefined-model rate cap adapted from pedmut
+    v0.9.0, function maxRate() (the UW bound used by
+    stepwiseReversible()).
+
+  Reference: Dawid A.P. (2002), "Properties of diagnostic data
+  distributions", Biometrics 58.
+
+
+Familias
+--------
+
+  Source:   Familias, https://cran.r-project.org/package=Familias
+  License:  GPL-3
+
+  Used as a cross-check oracle (Suggests) only; no algorithm is
+  adapted from Familias at this time. The stepwise and proportional
+  models referenced in src/core/DESIGN.md will be attributed here if
+  and when they are lifted.

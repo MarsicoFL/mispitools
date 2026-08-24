@@ -53,11 +53,9 @@
 #' \emph{Forensic Science International: Genetics}, 52, 102519.
 #' \doi{10.1016/j.fsigen.2021.102519}
 #'
-#' @import shiny
-#' @import shinythemes
+#' @importFrom shiny img HTML
 #' @import ggplot2
 #' @import patchwork
-#' @import pROC
 #' @import reshape2
 #' @import dplyr
 #' @export
@@ -343,7 +341,8 @@ mispitools_app <- function() {
   # ============================================================================
 
   ui <- shiny::fluidPage(
-    theme = shinythemes::shinytheme("flatly"),
+    theme = if (requireNamespace("shinythemes", quietly = TRUE))
+              shinythemes::shinytheme("flatly") else NULL,
 
     # Custom CSS for professional appearance
     shiny::tags$head(
@@ -583,6 +582,13 @@ mispitools_app <- function() {
             ),
 
             shiny::hr(),
+            shiny::div(style = "text-align: center; padding: 20px;",
+              shiny::actionButton("go_tutorial",
+                                  "New here? Start the Tutorial",
+                                  icon = shiny::icon("graduation-cap"),
+                                  class = "btn-primary btn-lg",
+                                  style = "margin-bottom: 20px;")
+            ),
             shiny::div(style = "text-align: center; color: #718096; padding: 20px;",
               shiny::p(shiny::strong("References")),
               shiny::p("Marsico et al. (2023). FSI:Genetics 66:102891 |
@@ -774,6 +780,12 @@ mispitools_app <- function() {
               shiny::verbatimTextOutput("dist_stats_h2")
             )
           )
+        ),
+        shiny::fluidRow(
+          shiny::column(12, style = "text-align: center; padding: 15px;",
+            shiny::downloadButton("dl_dist_plot", "Download LR Distribution (PDF)",
+                                  class = "btn-primary")
+          )
         )
       ),
 
@@ -890,6 +902,12 @@ mispitools_app <- function() {
           shiny::column(8,
             shiny::plotOutput("dec_roc_plot", height = "400px")
           )
+        ),
+        shiny::fluidRow(
+          shiny::column(12, style = "text-align: center; padding: 15px;",
+            shiny::downloadButton("dl_dec_plot", "Download Decision Plot (PDF)",
+                                  class = "btn-primary")
+          )
         )
       ),
 
@@ -1003,10 +1021,35 @@ mispitools_app <- function() {
   server <- function(input, output, session) {
 
     # --------------------------------------------------------------------------
+    # OVERVIEW: Tutorial navigation button
+    # --------------------------------------------------------------------------
+    shiny::observeEvent(input$go_tutorial, {
+      shiny::updateTabsetPanel(session, "main_tabs", selected = "Tutorial")
+    })
+
+    # --------------------------------------------------------------------------
     # INDIVIDUAL EVIDENCE TAB
     # --------------------------------------------------------------------------
 
     indiv_lr <- shiny::reactive({
+      if (input$indiv_type == "age") {
+        shiny::validate(
+          shiny::need(is.numeric(input$indiv_MPa) && input$indiv_MPa > 0 && input$indiv_MPa <= 120,
+                      "MP age must be between 1 and 120"),
+          shiny::need(is.numeric(input$indiv_MPr) && input$indiv_MPr > 0,
+                      "Age range must be positive"),
+          shiny::need(is.numeric(input$indiv_epa) && input$indiv_epa > 0 && input$indiv_epa < 1,
+                      "Error rate must be between 0 and 1")
+        )
+      }
+      if (input$indiv_type == "sex") {
+        shiny::validate(
+          shiny::need(is.numeric(input$indiv_eps_sex) && input$indiv_eps_sex >= 0 && input$indiv_eps_sex < 1,
+                      "Sex error rate must be between 0 and 1"),
+          shiny::need(is.numeric(input$indiv_propF) && input$indiv_propF > 0 && input$indiv_propF < 1,
+                      "Female proportion must be between 0 and 1")
+        )
+      }
       if (input$indiv_type == "sex") {
         calc_lr_sex(input$indiv_MPs, input$indiv_obsSex,
                     input$indiv_eps_sex, input$indiv_propF)
@@ -1277,6 +1320,48 @@ mispitools_app <- function() {
           panel.grid.minor = ggplot2::element_blank()
         )
     }, res = 100)
+
+    # ------------------------------------------------------------------
+    # DOWNLOAD HANDLERS
+    # ------------------------------------------------------------------
+
+    output$dl_dist_plot <- shiny::downloadHandler(
+      filename = function() paste0("lr_distribution_", Sys.Date(), ".pdf"),
+      content = function(file) {
+        dists <- lr_dists()
+        if (is.null(dists)) return()
+        grDevices::pdf(file, width = 7, height = 5)
+        h1_log <- log10(dists$H1[dists$H1 > 0])
+        h2_log <- log10(dists$H2[dists$H2 > 0])
+        all_vals <- c(h1_log, h2_log)
+        lims <- range(all_vals, na.rm = TRUE)
+        graphics::hist(h1_log, breaks = 30, col = grDevices::rgb(0.2, 0.4, 0.8, 0.5),
+             main = "LR Distribution under H1 and H2",
+             xlab = expression(log[10](LR)), xlim = lims, freq = FALSE)
+        graphics::hist(h2_log, breaks = 30, col = grDevices::rgb(0.8, 0.2, 0.2, 0.5),
+             add = TRUE, freq = FALSE)
+        graphics::legend("topright", c("H1 (Related)", "H2 (Unrelated)"),
+               fill = c(grDevices::rgb(0.2, 0.4, 0.8, 0.5),
+                        grDevices::rgb(0.8, 0.2, 0.2, 0.5)))
+        grDevices::dev.off()
+      }
+    )
+
+    output$dl_dec_plot <- shiny::downloadHandler(
+      filename = function() paste0("decision_analysis_", Sys.Date(), ".pdf"),
+      content = function(file) {
+        dists <- lr_dists()
+        if (is.null(dists)) return()
+        roc_obj <- build_roc(dists$H1, dists$H2)
+        df_roc <- roc_obj$data
+        p <- ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
+          ggplot2::geom_line(color = "#2C5282", linewidth = 1) +
+          ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey") +
+          ggplot2::labs(title = "ROC Curve", x = "False Positive Rate", y = "True Positive Rate") +
+          ggplot2::theme_minimal()
+        ggplot2::ggsave(file, plot = p, width = 7, height = 5, device = "pdf")
+      }
+    )
   }
 
   # Add resource path for logo

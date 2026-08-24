@@ -72,6 +72,15 @@ Color is sampled from the population proportions Pc.
 LR = P(observed color | true color is MPc) / P(observed color in population)
 \code{LR = epc(MPc, observed) / Pc(observed)}
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. This feature is generalised by
+\code{\link{nongenetic_feature}} (a categorical feature with a full
+confusion matrix); the unified per-feature engine reproduces
+\code{epc[MPc, o] / Pc[o]} exactly. The legacy function still works
+for the 2.0 release-candidate cycle and will be removed afterwards.
+}
+
 \examples{
 # Simulate under H1 (related) with black hair MP
 sim_h1 <- lr_hair_color(MPc = 1, H = 1, numsims = 100)
@@ -96,6 +105,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{error_matrix_hair}} for creating the error matrix,
 \code{\link{lr_pigmentation}} for combined pigmentation traits,
 \code{\link{sim_lr_prelim}} for unified preliminary LR simulations.

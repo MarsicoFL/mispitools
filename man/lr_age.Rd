@@ -93,6 +93,15 @@ Age is sampled uniformly from 1-80, then categorized.
 \item LR(T0) = epa / P(T0), where P(T0) = 1 - P(T1)
 }
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. This feature is generalised by
+\code{\link{nongenetic_feature}} (a continuous feature); collapsing
+the population grid to two cells (within tolerance vs outside)
+reproduces the T1 / T0 LR exactly. The legacy function still works
+for the 2.0 release-candidate cycle and will be removed afterwards.
+}
+
 \examples{
 # Simulate under H1 (related)
 sim_h1 <- lr_age(MPa = 40, MPr = 6, H = 1, numsims = 100)
@@ -112,6 +121,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{sim_lr_prelim}} for unified preliminary LR simulations,
 \code{\link{lr_sex}}, \code{\link{lr_hair_color}} for other variables.
 }

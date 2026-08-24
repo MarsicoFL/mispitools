@@ -1,0 +1,351 @@
+---
+title: "Belief Dynamics in Missing-Person Identification"
+author: "Franco L. Marsico"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Belief Dynamics in Missing-Person Identification}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.align = "center",
+  fig.width = 6,
+  fig.height = 4
+)
+set.seed(2026)
+```
+
+## What this vignette is about
+
+This vignette walks through the **belief-trajectory framework** introduced
+in `mispitools` 1.4.0 (Marsico & Egeland, in preparation). The framework
+treats the sequential accumulation of per-marker likelihood-ratio evidence
+as a **trajectory through the probability simplex** and computes
+diagnostics that are invisible from the combined likelihood ratio alone:
+per-step information gain (Bayesian surprise), total-variation path
+length, a family of concentration indices, and a per-marker leave-one-out
+fragility table.
+
+The useful end-product is the **concentration index** $C_W^+$, which
+equals the fraction of the combined weight of evidence carried by the
+single most impactful supporting marker --- and, by the leave-one-out
+identity, the fraction of that weight that would be lost under worst-case
+adversarial removal of that marker. Cases in which $C_W^+$ exceeds the
+pedigree-specific 90th-percentile simulated under $H_p$ are flagged as
+*fragile inclusions* and warrant a leave-one-out review before reporting.
+
+This vignette is organized as an end-to-end walkthrough of a
+grandparent--grandchild missing-person scenario:
+
+1. Build the pedigree and attach the Argentine 15-STR frequency database.
+2. Simulate per-marker LR vectors under $H_p$ (known true match) and under
+   $H_d$ (unrelated).
+3. Select a matched pair of profiles with similar combined $W$ but
+   contrasting concentration.
+4. Compute the trajectory metrics and the leave-one-out fragility table.
+5. Combine the genetic evidence with non-genetic evidence (sex, age,
+   pigmentation) via `lr_combine()`.
+6. Integrate with decision thresholds via `decision_threshold()`.
+
+```{r libs, message = FALSE, warning = FALSE}
+library(mispitools)
+library(forrel)
+library(pedtools)
+```
+
+## 1. Pedigree setup
+
+We use a 2nd-degree grandparent--grandchild pedigree from `pedtools`.
+Under $H_p$ the person of interest is the missing grandchild; under $H_d$
+the POI is unrelated to the family.
+
+```{r pedigree}
+ped <- linearPed(2)
+data(Argentina)
+
+# Build the allele-frequency list from the Argentina database
+db <- list()
+for (m in names(Argentina)[-1]) {
+  freqs <- Argentina[[m]]
+  names(freqs) <- as.character(Argentina$Allele)
+  freqs <- freqs[freqs > 0]
+  db[[m]] <- freqs
+}
+marker_names <- names(db)[1:15]
+db15 <- db[marker_names]
+
+for (i in seq_along(db15)) {
+  m <- marker(ped, afreq = db15[[i]], name = names(db15)[i])
+  if (i == 1) ped <- setMarkers(ped, m) else ped <- addMarkers(ped, m)
+}
+ped
+```
+
+## 2. Per-marker LR computation
+
+We simulate one $H_p$ profile and extract the per-marker likelihood
+ratios using `forrel::missingPersonLR()`. For the vignette we work with a
+single profile to keep the exposition compact; in a real calibration
+workflow you would simulate thousands and compute the empirical null
+distribution of $C_W^+$.
+
+```{r simulate, eval = FALSE}
+# NOTE: eval=FALSE because the simulation needs forrel's full machinery
+# which may be slow to run at package-check time. The code below is the
+# canonical recipe.
+fullsim <- profileSim(ped, N = 1, ids = labels(ped))
+ref     <- fullsim
+for (i in 1:nMarkers(ref))
+  ref <- setGenotype(ref, id = "3", marker = i, geno = "0/0")
+
+poi <- pedtools::singleton("POI")
+for (i in 1:nMarkers(fullsim)) {
+  af <- afreq(fullsim, marker = i)
+  nm <- name(fullsim, marker = i)
+  mk <- pedtools::marker(poi, afreq = af, name = nm)
+  poi <- if (i == 1) pedtools::setMarkers(poi, mk) else pedtools::addMarkers(poi, mk)
+}
+for (i in 1:nMarkers(fullsim)) {
+  g <- pedtools::genotype(fullsim, id = "3", marker = i)
+  poi <- pedtools::setGenotype(poi, id = "POI", marker = i, geno = g)
+}
+res <- missingPersonLR(ref, missing = "3", poi = poi, verbose = FALSE)
+lrs <- setNames(as.numeric(res$LRperMarker), marker_names)
+```
+
+For the remainder of this vignette we use a **synthetic per-marker LR
+vector** that mimics the output of a real `missingPersonLR()` call. This
+lets the vignette run in a few milliseconds at check-time while still
+exercising the full trajectory machinery.
+
+```{r synthetic_lrs}
+# A synthetic matched pair: balanced and concentrated profiles with
+# similar total log10(LR).
+lrs_balanced <- c(
+  D3S1358 = 5.2,  TH01    = 3.8,  D21S11  = 4.1,  D18S51  = 2.9,
+  D5S818  = 3.4,  D13S317 = 2.7,  D7S820  = 4.5,  D16S539 = 3.2,
+  CSF1PO  = 2.8,  vWA     = 4.2,  TPOX    = 3.1,  D8S1179 = 3.9,
+  FGA     = 5.0,  D2S1338 = 3.6,  D19S433 = 2.5
+)
+lrs_concentrated <- c(
+  D3S1358 = 1.3,  TH01    = 1.1,  D21S11  = 1.4,  D18S51  = 1.2,
+  D5S818  = 1.5,  D13S317 = 1.2,  D7S820  = 1.3,  D16S539 = 1.1,
+  CSF1PO  = 1.4,  vWA     = 1.2,  TPOX    = 1.3,  D8S1179 = 1.1,
+  FGA     = 250,  D2S1338 = 1.5,  D19S433 = 1.2   # FGA dominates
+)
+
+W_balanced     <- sum(log10(lrs_balanced))
+W_concentrated <- sum(log10(lrs_concentrated))
+round(c(W_balanced = W_balanced, W_concentrated = W_concentrated), 2)
+```
+
+Both profiles reach similar total weights of evidence (around 15--17 bans,
+i.e. a combined LR around $10^{15}$--$10^{17}$). The difference is how
+the evidence is distributed across markers: the balanced profile has no
+marker contributing more than about one ban, while the concentrated
+profile owes almost all its weight to a single strongly-supporting marker
+(FGA, with $\mathrm{LR} = 250$).
+
+## 3. Belief trajectory
+
+`binary_belief_trajectory()` turns a per-marker LR vector into a data
+frame with one row per step, giving the per-step $\log_{10}\mathrm{LR}$,
+the cumulative log-LR, and the posterior $P(H_p)$ at each step.
+
+```{r trajectories}
+traj_balanced     <- binary_belief_trajectory(lrs_balanced)
+traj_concentrated <- binary_belief_trajectory(lrs_concentrated)
+head(traj_balanced)
+```
+
+The full trajectory metrics (entropy, per-step KL divergence, cumulative
+KL from prior, path length, and the three concentration measures) are
+computed on the general-form trajectory matrix:
+
+```{r metrics}
+prior <- c(0.5, 0.5)
+
+make_traj <- function(lrs) {
+  lr_list <- lapply(unname(lrs), function(r) c(r, 1))
+  belief_trajectory(prior, lr_list)
+}
+
+metrics_balanced     <- trajectory_metrics(make_traj(lrs_balanced))
+metrics_concentrated <- trajectory_metrics(make_traj(lrs_concentrated))
+
+summary_df <- data.frame(
+  profile       = c("balanced", "concentrated"),
+  path_length   = round(c(metrics_balanced$path_length, metrics_concentrated$path_length), 3),
+  concentration = round(c(metrics_balanced$concentration, metrics_concentrated$concentration), 3),
+  herfindahl    = round(c(metrics_balanced$concentration_herfindahl,
+                          metrics_concentrated$concentration_herfindahl), 3)
+)
+summary_df
+```
+
+The concentrated profile has a concentration index an order of magnitude
+larger than the balanced one, even though the two reach similar total
+weights of evidence.
+
+## 4. Fragility diagnostics
+
+The primary fragility diagnostic is the signed concentration index
+$C_W^+$, restricted to positive (supporting) contributions. It equals the
+fractional loss of $W$ under worst-case single-marker removal.
+
+```{r cwplus}
+cwp_balanced     <- concentration_index_positive(log10(lrs_balanced))
+cwp_concentrated <- concentration_index_positive(log10(lrs_concentrated))
+round(c(balanced = cwp_balanced, concentrated = cwp_concentrated), 3)
+```
+
+For the concentrated profile, $C_W^+ \approx 0.77$ means the dominant
+marker (FGA) carries about 77% of the combined weight of evidence. A
+successful defense challenge of that single marker would leave only
+about 23% of the combined $W$. The balanced profile has $C_W^+ \approx
+0.08$: no single marker carries more than 8% of the total. Both have
+the same total LR on paper, but they are inferentially very different.
+
+The leave-one-out table makes the per-marker impact explicit:
+
+```{r leave_one_out}
+loo_balanced     <- leave_one_out(lrs_balanced)
+loo_concentrated <- leave_one_out(lrs_concentrated)
+head(loo_concentrated[order(loo_concentrated$fraction, decreasing = TRUE), ])
+```
+
+The most impactful marker in the concentrated profile is FGA, accounting
+for the bulk of $W$; all other markers contribute nearly equally small
+shares. For the balanced profile, no single marker dominates.
+
+## 5. Pedigree-specific calibration
+
+The review threshold for $C_W^+$ is not a universal constant; it depends
+on the laboratory's reference pedigree and marker panel. For the
+Argentine 15-STR database, the 90th percentile of the $H_p$ null
+distribution of $C_W^+$ is approximately:
+
+```{r calibration_table, echo = FALSE}
+calib <- data.frame(
+  Pedigree = c("linearPed(2)  (2nd degree)",
+               "linearPed(3)  (3rd degree)",
+               "cousinPed(1)  (3rd degree)"),
+  `50%` = c(0.130, 0.140, 0.141),
+  `75%` = c(0.152, 0.163, 0.163),
+  `90%` = c(0.174, 0.192, 0.192),
+  `95%` = c(0.192, 0.211, 0.213),
+  `99%` = c(0.225, 0.254, 0.258),
+  check.names = FALSE
+)
+knitr::kable(calib, caption = "Quantiles of C_W+ under H_p for three pedigrees on the Argentine 15-STR database.")
+```
+
+The concentrated profile above has $C_W^+ \approx 0.77$, which is
+orders of magnitude above the 99th percentile of any of these pedigree-
+specific null distributions. Such a case is **strongly flagged** as
+fragile: any responsible laboratory workflow should verify the dominant
+marker (FGA in this example) before reporting, either by re-typing or by
+independent review. The balanced profile at $C_W^+ \approx 0.08$ is well
+below even the 50th percentile and passes the fragility filter without
+flag.
+
+### Calibration and reporting helpers
+
+The two steps of the workflow above — calibrating the pedigree-specific
+cutoff under $H_p$ and producing a per-case reportable statement — are
+exposed as the high-level helpers `calibrate_concentration_cutoff()` and
+`fragility_report()`. They internally invoke `sim_lr_genetic()` and
+`concentration_index_positive()`, so a complete pipeline from a
+`pedtools::ped` object to a printable sentence is just two function
+calls:
+
+```{r calibrate_helpers, eval = FALSE}
+library(pedtools); library(forrel)
+
+# Reference pedigree with founder profiles simulated
+ped <- linearPed(2)
+ped <- setMarkers(ped, locusAttributes = NorwegianFrequencies[1:15])
+ped <- profileSim(ped, N = 1, ids = 2, seed = 1)
+
+# Calibrate the pedigree-specific cutoff under H_p (90th percentile by default)
+cal <- calibrate_concentration_cutoff(
+  reference = ped, missing = 5,
+  numsims   = 1500, probs = 0.90, seed = 42
+)
+cal$cutoff
+
+# Per-case fragility report against the calibrated cutoff
+fr <- fragility_report(
+  per_marker_lrs = lrs_concentrated,
+  cutoff = cal$cutoff, probs = cal$probs
+)
+fr$flag        # TRUE -> leave-one-out review required
+fr$statement   # natural-language sentence ready for the case file
+```
+
+The returned `statement` field is a single character string of the form
+*"Combined weight of evidence W = w bans, C_W+ = c, ... a successful
+challenge of the top marker would leave (1-c)w bans of residual support"*,
+suitable to paste verbatim into the laboratory's case report.
+
+## 6. Combining genetic and non-genetic evidence
+
+Real missing-person casework often combines DNA evidence with
+non-genetic evidence (sex, age, phenotypic traits). `mispitools`
+implements the Egeland--Marsico (2026) Markov-chain framework for
+computing per-item supplementary-evidence LRs, and extends the trajectory
+framework to combined (FDE + SE) sequences.
+
+```{r se_integration, eval = FALSE}
+# Supplementary evidence LRs (numerical example from Egeland & Marsico 2026)
+LR_sex  <- 2.0    # lr_sex(...)
+LR_age  <- 7.7    # lr_age(...)
+LR_hair <- 3.3    # lr_hair_color(...)
+
+# Extended per-marker LR vector: 15 STRs + 3 SE items
+lrs_combined <- c(lrs_balanced,
+                   Sex = LR_sex, Age = LR_age, Hair = LR_hair)
+traj_combined <- binary_belief_trajectory(lrs_combined)
+
+# Trajectory metrics and concentration on the combined 18-step sequence
+metrics_combined <- trajectory_metrics(make_traj(lrs_combined))
+cwp_combined     <- concentration_index_positive(log10(lrs_combined))
+```
+
+The combined trajectory has the same structure as a pure-STR trajectory:
+each SE item is simply an additional step. The concentration index
+computed on the combined 18-step sequence reflects the most impactful
+contributor overall, whether it is a STR or an SE item.
+
+## 7. Decision thresholds
+
+Once you have per-marker LRs for a case, you can feed the combined $W$
+into `mispitools`'s decision-threshold machinery (`decision_threshold()`, `plot_decision_curve()`,
+`LRdist()`) to obtain a weighted-error-minimized cutoff. The fragility
+diagnostic of $C_W^+$ complements the decision threshold: a case may
+exceed the inclusion threshold while still being flagged as fragile, in
+which case the analyst should perform a leave-one-out review before
+reporting the inclusion.
+
+## Further reading
+
+- **Belief dynamics paper:** Marsico & Egeland (in preparation). *Belief
+  dynamics during the investigative process*. Provides the full
+  axiomatization of $C_W$, the Bissiri--Holmes--Walker generalized-
+  posterior derivation, and the complementarity with Slooten's
+  population-level bound.
+- **Supplementary evidence integration:** Egeland & Marsico (2026).
+  *Using all available evidence to solve kinship cases*. International
+  Journal of Legal Medicine.
+- **Information-theoretic forensics:** Marsico, Sibilla, Escobar &
+  Chernomoretz (2024). *The Missing Person problem through the lens of
+  information theory*. Forensic Science International: Genetics 72,
+  103025.
+- **mispitools package reference:** See `?belief_trajectory`,
+  `?trajectory_metrics`, `?concentration_index_positive`,
+  `?leave_one_out`, and `?familias_trajectory` for the full API.

@@ -22,9 +22,7 @@ Functions for simulating LR distributions under different hypotheses:
 \itemize{
 \item \code{\link{sim_lr_genetic}}: Simulate LRs from genetic (DNA) data
 \item \code{\link{sim_lr_prelim}}: Simulate LRs from preliminary investigation data
-\item \code{\link{sim_posterior}}: Simulate posterior odds combining evidence
 \item \code{\link{sim_reference_pop}}: Simulate a reference population with traits
-\item \code{\link{sim_poi_genetic}}: Generate genetic profiles for persons of interest
 \item \code{\link{sim_poi_prelim}}: Generate preliminary data for persons of interest
 \item \code{\link{sim_mp_prelim}}: Generate preliminary data for missing persons
 }
@@ -78,8 +76,6 @@ Functions for determining optimal thresholds and error rates:
 Functions for working with allele frequency databases:
 \itemize{
 \item \code{\link{get_allele_freqs}}: Retrieve allele frequencies for a population
-\item \code{\link{kl_bidirectional}}: Compute KL divergence between populations
-\item \code{\link{kl_multi}}: Compare multiple populations
 }
 }
 
@@ -127,6 +123,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Franco Marsico \email{franco.lmarsico@gmail.com} (\href{https://orcid.org/0000-0002-0740-5516}{ORCID})
+
+Authors:
+\itemize{
+  \item Suisei Nakagawa \email{suisei.nakagawa@uni.minerva.edu}
+}
 
 }
 \keyword{package}

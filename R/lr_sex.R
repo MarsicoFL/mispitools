@@ -41,7 +41,15 @@
 #' For a matching observation: \code{LR = (1 - eps) / Ps_MP}
 #' For a non-matching observation: \code{LR = eps / Ps_other}
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. This feature is generalised by
+#' \code{\link{nongenetic_feature}} (a categorical feature); the
+#' deterministic LR it produces is reproduced exactly by the unified
+#' per-feature engine. The legacy function still works for the 2.0
+#' release-candidate cycle and will be removed afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{sim_lr_prelim}} for unified preliminary LR simulations,
 #' \code{\link{lr_age}}, \code{\link{lr_hair_color}} for other variables.
 #'
@@ -78,6 +86,9 @@ lr_sex <- function(MPs = "F",
                    LR = FALSE,
                    seed = 1234,
                    nsims = NULL) {
+
+  ng_soft_deprecate("lr_sex",
+    "Use nongenetic_feature(type = \"sex\", ...) with the per-feature engine.")
 
   # Handle deprecated nsims parameter
   if (!is.null(nsims)) {

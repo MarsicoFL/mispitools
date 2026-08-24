@@ -43,6 +43,4 @@
 #' # View structure
 #' head(BosniaHerz)
 #'
-#' # Calculate KL divergence with Austria
-#' # kl_bidirectional(BosniaHerz, Austria)
 "BosniaHerz"

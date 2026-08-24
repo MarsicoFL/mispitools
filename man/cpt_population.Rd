@@ -60,6 +60,16 @@ distribution over ages 1-80:
 The joint probability for each cell is:
 \deqn{P(Sex, Age, Color) = P(Sex) \times P(AgeGroup) \times P(Color)}
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. The per-feature H2 marginal it
+builds as an outer product is generalised by
+\code{\link{nongenetic_feature}} plus the unified per-feature engine
+(one feature per trait, combined downstream). The legacy function
+still works for the 2.0 release-candidate cycle and will be removed
+afterwards.
+}
+
 \examples{
 # Default parameters: equal sex proportions, MP age 40 +/- 6 years
 cpt_h2 <- cpt_population()
@@ -82,6 +92,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{cpt_missing_person}} for the H1 conditional probability table,
 \code{\link{plot_cpt}} for visualization of CPTs.
 }

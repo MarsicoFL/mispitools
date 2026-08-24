@@ -141,6 +141,31 @@ threshold_rates(lr_total, threshold)
 
 The `weight` parameter reflects the relative cost of false positives versus false negatives. In forensic contexts, falsely identifying someone (false positive) is typically considered more serious than failing to identify (false negative).
 
+### Step 6: Fragility Diagnostics
+
+Two cases with the same combined LR can have very different inferential stability. One may distribute the support evenly across markers; another may owe most of its weight to a single marker — and would collapse if that marker were challenged. **mispitools** quantifies this with the inclusion concentration index $C_W^+$ and the leave-one-out diagnostic, and provides a per-case reportable statement:
+
+```r
+# Per-marker LRs from forrel::missingPersonLR() or sim_lr_genetic()
+lrs_per_marker <- c(D3S1358 = 5.2, TH01 = 12.0, D21S11 = 3.1, FGA = 8.4)
+
+# Calibrate the pedigree-specific cutoff under H_p
+cal <- calibrate_concentration_cutoff(
+  reference = ped, missing = 5,
+  numsims = 1500, probs = 0.90
+)
+
+# Per-case fragility report against the calibrated cutoff
+fr <- fragility_report(
+  per_marker_lrs = lrs_per_marker,
+  cutoff = cal$cutoff, probs = cal$probs
+)
+fr$flag        # TRUE if leave-one-out review is required
+fr$statement   # natural-language sentence for the case file
+```
+
+The framework — axiomatic characterization of $C_W^+$, the leave-one-out identity, and complementarity with population-level mis-specification bounds — is developed in Marsico & Egeland (in preparation).
+
 ## Interactive Application
 
 For users who prefer a graphical interface, **mispitools** includes an interactive Shiny application:
@@ -164,6 +189,10 @@ It provides tools for calculating LRs from non-genetic evidence, visualizing pro
 | `decision_threshold()` | Find optimal classification threshold |
 | `threshold_rates()` | Compute error rates at a given threshold |
 | `plot_lr_distribution()` | Visualize LR distributions |
+| `concentration_index_positive()` | Inclusion concentration index $C_W^+$ |
+| `leave_one_out()` | Leave-one-out fragility table |
+| `calibrate_concentration_cutoff()` | Pedigree-specific $C_W^+$ cutoff under $H_p$ |
+| `fragility_report()` | Per-case reportable fragility statement |
 | `mispitools_app()` | Interactive Shiny application |
 
 ## Citations

@@ -1,9 +1,12 @@
 Package: mispitools
 Title: Missing Person Identification Tools
-Version: 1.4.0
-Authors@R: person(given = "Franco", family = "Marsico", role = c("aut", "cre"), email = "franco.lmarsico@gmail.com", comment = c(ORCID = "0000-0002-0740-5516"))
-Author: Franco Marsico [aut, cre] (<https://orcid.org/0000-0002-0740-5516>)
-Maintainer: Franco Marsico <franco.lmarsico@gmail.com>
+Version: 2.0.0.9000
+Authors@R: c(
+    person(given = "Franco", family = "Marsico", role = c("aut", "cre"),
+           email = "franco.lmarsico@gmail.com",
+           comment = c(ORCID = "0000-0002-0740-5516")),
+    person(given = "Suisei", family = "Nakagawa", role = "aut",
+           email = "suisei.nakagawa@uni.minerva.edu"))
 Description: A comprehensive toolkit for missing person identification combining
     genetic and non-genetic evidence within a Bayesian framework. Computes
     likelihood ratios (LRs) for DNA profiles, biological sex, age, hair color,
@@ -18,7 +21,6 @@ LazyData: true
 Depends:
     R (>= 3.5.0)
 Imports:
-    forrel,
     pedtools,
     dplyr,
     tidyr,
@@ -27,14 +29,24 @@ Imports:
     patchwork,
     graphics,
     ggplot2,
-    DirichletReg,
-    pROC,
     shiny,
-    shinythemes
+    Rcpp,
+    RcppArmadillo
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
 Suggests:
+    forrel,
+    Familias,
+    pedprobr,
+    pedmut,
+    fbnet,
+    DirichletReg,
+    shinythemes,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
+SystemRequirements: GNU make, C++17
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

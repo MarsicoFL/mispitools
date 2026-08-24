@@ -56,14 +56,6 @@ simRef <- function(...) {
 
 #' @rdname mispitools-deprecated
 #' @export
-makePOIgen <- function(...) {
-  .Deprecated("sim_poi_genetic", package = "mispitools",
-              msg = "makePOIgen() is deprecated. Use sim_poi_genetic() instead.")
-  sim_poi_genetic(...)
-}
-
-#' @rdname mispitools-deprecated
-#' @export
 makePOIprelim <- function(...) {
   .Deprecated("sim_poi_prelim", package = "mispitools",
               msg = "makePOIprelim() is deprecated. Use sim_poi_prelim() instead.")
@@ -76,14 +68,6 @@ makeMPprelim <- function(...) {
   .Deprecated("sim_mp_prelim", package = "mispitools",
               msg = "makeMPprelim() is deprecated. Use sim_mp_prelim() instead.")
   sim_mp_prelim(...)
-}
-
-#' @rdname mispitools-deprecated
-#' @export
-postSim <- function(...) {
-  .Deprecated("sim_posterior", package = "mispitools",
-              msg = "postSim() is deprecated. Use sim_posterior() instead.")
-  sim_posterior(...)
 }
 
 # ==============================================================================
@@ -248,34 +232,6 @@ refProp <- function(...) {
   .Deprecated("compute_reference_prop", package = "mispitools",
               msg = "refProp() is deprecated. Use compute_reference_prop() instead.")
   compute_reference_prop(...)
-}
-
-# ==============================================================================
-# KL divergence functions
-# ==============================================================================
-
-#' @rdname mispitools-deprecated
-#' @export
-bidirectionalKL <- function(...) {
-  .Deprecated("kl_bidirectional", package = "mispitools",
-              msg = "bidirectionalKL() is deprecated. Use kl_bidirectional() instead.")
-  kl_bidirectional(...)
-}
-
-#' @rdname mispitools-deprecated
-#' @export
-klPIE <- function(...) {
-  .Deprecated("kl_pie", package = "mispitools",
-              msg = "klPIE() is deprecated. Use kl_pie() instead.")
-  kl_pie(...)
-}
-
-#' @rdname mispitools-deprecated
-#' @export
-multi_kl_divergence <- function(...) {
-  .Deprecated("kl_multi", package = "mispitools",
-              msg = "multi_kl_divergence() is deprecated. Use kl_multi() instead.")
-  kl_multi(...)
 }
 
 # ==============================================================================

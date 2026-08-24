@@ -64,6 +64,15 @@ For a female MP (MPs = "F"), the joint probabilities are:
 The hair color probabilities come from the error matrix row corresponding
 to the MP's true hair color.
 }
+\section{Deprecation}{
+
+Soft-deprecated in mispitools 2.0. The per-feature H1 CPT it builds
+as an outer product is generalised by \code{\link{nongenetic_feature}}
+plus the unified per-feature engine (one feature per trait, combined
+downstream). The legacy function still works for the 2.0
+release-candidate cycle and will be removed afterwards.
+}
+
 \examples{
 # Default: Female MP with black hair
 cpt_h1 <- cpt_missing_person()
@@ -88,6 +97,7 @@ in missing person cases." \emph{Forensic Science International: Genetics},
 66, 102891. \doi{10.1016/j.fsigen.2023.102891}
 }
 \seealso{
+\code{\link{nongenetic_feature}} for the unified replacement,
 \code{\link{cpt_population}} for the H2 conditional probability table,
 \code{\link{error_matrix_hair}} for creating the color error matrix,
 \code{\link{plot_cpt}} for visualization of CPTs.

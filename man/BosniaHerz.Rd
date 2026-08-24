@@ -38,8 +38,6 @@ data(BosniaHerz)
 # View structure
 head(BosniaHerz)
 
-# Calculate KL divergence with Austria
-# kl_bidirectional(BosniaHerz, Austria)
 }
 \references{
 Marjanovic D, et al. (2006). "Population data at 15 STR loci in

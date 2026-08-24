@@ -44,7 +44,15 @@
 #' LR = P(observed color | true color is MPc) / P(observed color in population)
 #' \code{LR = epc(MPc, observed) / Pc(observed)}
 #'
+#' @section Deprecation:
+#' Soft-deprecated in mispitools 2.0. This feature is generalised by
+#' \code{\link{nongenetic_feature}} (a categorical feature with a full
+#' confusion matrix); the unified per-feature engine reproduces
+#' \code{epc[MPc, o] / Pc[o]} exactly. The legacy function still works
+#' for the 2.0 release-candidate cycle and will be removed afterwards.
+#'
 #' @seealso
+#' \code{\link{nongenetic_feature}} for the unified replacement,
 #' \code{\link{error_matrix_hair}} for creating the error matrix,
 #' \code{\link{lr_pigmentation}} for combined pigmentation traits,
 #' \code{\link{sim_lr_prelim}} for unified preliminary LR simulations.
@@ -83,6 +91,9 @@ lr_hair_color <- function(MPc = 1,
                           LR = FALSE,
                           seed = 1234,
                           nsims = NULL) {
+
+  ng_soft_deprecate("lr_hair_color",
+    "Use nongenetic_feature(type = \"hair\", ...) with the per-feature engine.")
 
   # Handle deprecated nsims parameter
   if (!is.null(nsims)) {
