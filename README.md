@@ -166,6 +166,72 @@ fr$statement   # natural-language sentence for the case file
 
 The framework — axiomatic characterization of $C_W^+$, the leave-one-out identity, and complementarity with population-level mis-specification bounds — is developed in Marsico & Egeland (in preparation).
 
+### Step 7: Sequential Evidence and Belief Trajectories
+
+The combined LR is a single number, but the evidence arrives in pieces. The
+trajectory of the posterior as each piece is added carries information the
+endpoint does not: whether belief moved steadily or turned on one step, and
+whether an intermediate state contradicted the final one.
+
+```r
+# Prior over the two hypotheses, then one LR vector per evidence step
+tr <- belief_trajectory(
+  prior    = c(0.05, 0.95),
+  lr_list  = list(c(5.2, 1), c(12.0, 1), c(3.1, 1), c(8.4, 1))
+)
+round(tr, 5)
+#>         [,1]    [,2]
+#> [1,] 0.05000 0.95000
+#> [2,] 0.21488 0.78512
+#> [3,] 0.76658 0.23342
+#> [4,] 0.91056 0.08944
+#> [5,] 0.98844 0.01156
+
+trajectory_metrics(tr)
+#> $kl_from_prior
+#> [1] 0.00000000 0.07106659 0.76656675 1.05583811 1.25887080
+#>
+#> $path_length
+#> [1] 0.9384421
+#>
+#> $concentration
+#> [1] 0.7031878
+```
+
+Row 1 is the prior and each subsequent row is the posterior after one more
+piece of evidence. `trajectory_metrics()` summarises the path: `kl_from_prior`
+is how far belief has travelled from the prior at each step, `path_length` the
+total distance covered, and `concentration` how much of that movement is owed
+to a single step. Here the second step alone accounts for most of the update.
+
+`binary_belief_trajectory()` is the two-hypothesis shortcut that takes
+per-marker LRs directly and returns the cumulative `log10` LR alongside the
+posterior. `familias_trajectory()` extracts the same metrics from a
+`Familias::FamiliasPosterior` result, so a case already worked up in Familias
+can be examined without recomputing it.
+
+### Step 8: Sensitivity to the Assumed Error Rates
+
+The non-genetic LRs depend on error rates that are assigned, not measured. A
+reported LR is only as defensible as the range of assumptions that leaves it
+unchanged, so the dependence can be traced explicitly:
+
+```r
+lr_sensitivity(evidence_type = "sex", param = "eps",
+               range = c(0.01, 0.2), steps = 5)
+#>   param_value    LR  log10_LR
+#> 1      0.0100 1.980 0.2966652
+#> 2      0.0575 1.885 0.2753114
+#> 3      0.1050 1.790 0.2528530
+#> 4      0.1525 1.695 0.2291697
+#> 5      0.2000 1.600 0.2041200
+```
+
+A twentyfold change in the assumed error rate moves the LR from 1.98 to 1.60.
+The evidence is weak either way, and the conclusion does not hinge on the
+choice — which is the statement worth making in a report.
+
+
 ## Extension in 2.0: Exact Evaluation
 
 Steps 1 to 6 estimate the LR distributions by simulation: `sim_lr_genetic()`
@@ -314,33 +380,113 @@ The app is also available online at: **https://francomarsico.shinyapps.io/mispit
 
 It provides tools for calculating LRs from non-genetic evidence, visualizing probability tables, and exploring decision thresholds.
 
-## Main Functions
+## Function Reference
+
+Version 2.0.0 exports 45 functions. They fall into eight groups.
+
+**Simulating evidence.** The 1.x route to LR distributions: draw profiles or
+preliminary data and let the distribution emerge from the sample.
 
 | Function | Purpose |
 |----------|---------|
-| `sim_lr_genetic()` | Simulate LRs from DNA evidence |
-| `sim_lr_prelim()` | Simulate LRs from non-genetic evidence |
+| `sim_lr_genetic()` | LR distributions from DNA evidence under H1 and H2, given a pedigree |
+| `sim_lr_prelim()` | LR distributions from non-genetic evidence |
+| `sim_mp_prelim()` | Simulate preliminary investigation data for missing persons |
+| `sim_poi_prelim()` | Simulate preliminary investigation data for persons of interest |
+| `sim_reference_pop()` | Simulate a reference population with pigmentation traits |
+
+**Non-genetic likelihood ratios.** One LR per feature, each built from a
+population distribution, an observed value and an error rate.
+
+| Function | Purpose |
+|----------|---------|
+| `lr_sex()` | LR for biological sex |
+| `lr_age()` | LR for age |
+| `lr_birthdate()` | LR for birth date, open or closed search |
+| `lr_hair_color()` | LR for hair colour |
+| `lr_pigmentation()` | LR distributions for joint pigmentation traits (hair, skin, eye) |
+| `lr_compute_pigmentation()` | LRs from conditioned and reference proportions |
+| `error_matrix_hair()` | Hair-colour confusion matrix used as the error model |
+| `cpt_population()` | Population-based conditional probability table |
+| `cpt_missing_person()` | Missing-person-based conditional probability table |
+| `plot_cpt()` | Compare the two conditional probability tables visually |
+| `compute_reference_prop()` | Reference population proportions for pigmentation traits |
+| `compute_conditioned_prop()` | Proportions conditioned on the missing person's traits |
+
+**Combining and reporting.**
+
+| Function | Purpose |
+|----------|---------|
 | `lr_combine()` | Combine independent evidence sources |
-| `lr_to_dataframe()` | Convert genetic LR results to data frame |
-| `decision_threshold()` | Find optimal classification threshold |
-| `threshold_rates()` | Compute error rates at a given threshold |
-| `plot_lr_distribution()` | Visualize LR distributions |
+| `lr_to_dataframe()` | Convert genetic LR results to a data frame |
+| `plot_lr_distribution()` | Visualise LR distributions under both hypotheses |
+
+**Decision analysis.** Turning an LR into a decision requires a threshold and
+an explicit statement of what each kind of error costs.
+
+| Function | Purpose |
+|----------|---------|
+| `decision_threshold()` | Optimal threshold for a given relative cost of errors |
+| `threshold_rates()` | False positive, false negative and related rates at a threshold |
+| `plot_decision_curve()` | Error rates across the range of thresholds |
+
+**Fragility and concentration.** Two cases with the same combined LR can differ
+in how evenly the support is spread across markers.
+
+| Function | Purpose |
+|----------|---------|
 | `concentration_index_positive()` | Inclusion concentration index $C_W^+$ |
-| `leave_one_out()` | Leave-one-out fragility table |
+| `concentration_index()` | Concentration of per-step evidence contributions |
+| `herfindahl_index()` | Herfindahl-Hirschman concentration of contributions |
+| `shannon_concentration()` | Entropy-based concentration of contributions |
+| `leave_one_out()` | Per-marker leave-one-out fragility table |
 | `calibrate_concentration_cutoff()` | Pedigree-specific $C_W^+$ cutoff under $H_p$ |
 | `fragility_report()` | Per-case reportable fragility statement |
-| `mispitools_app()` | Interactive Shiny application |
 
-Exact engine added in 2.0:
+**Sequential evidence.** How belief moves as the evidence accumulates, not only
+where it ends.
+
+| Function | Purpose |
+|----------|---------|
+| `belief_trajectory()` | Bayesian belief trajectory over n hypotheses |
+| `binary_belief_trajectory()` | Two-hypothesis trajectory from per-marker LRs |
+| `trajectory_metrics()` | Path length, divergence from prior, concentration |
+| `familias_trajectory()` | The same metrics from a `Familias::FamiliasPosterior` result |
+| `entropy_log10()` | Shannon entropy in bans |
+| `kl_divergence_log10()` | Kullback-Leibler divergence in bans |
+
+**Exact engine (new in 2.0).** The same quantities computed from the pedigree
+and the allele frequencies rather than sampled.
 
 | Function | Purpose |
 |----------|---------|
 | `marker_model()` | Marker model: pedigree, frequencies, mutation, linkage |
-| `per_marker_kl()` | Discriminating power of one marker (KL divergence) |
-| `per_marker_kl_profile()` | The same across a profile |
-| `lr_distribution()` | Exact distribution of the profile LR, both hypotheses |
 | `nongenetic_feature()` | Non-genetic evidence on the same `log10` LR scale |
 | `get_allele_freqs()` | Population database in the format the engine expects |
+| `lr_distribution()` | Exact distribution of the profile LR under both hypotheses |
+| `per_marker_kl()` | Discriminating power of one marker, before any profile is seen |
+| `per_marker_kl_profile()` | The same across a profile |
+| `as_lr_dist()` | Coerce simulated LRs into the `lr_dist` class |
+
+The `lr_dist` object returned by `lr_distribution()` has `summary()`,
+`quantile()`, `plot()` and `print()` methods.
+
+**Sensitivity and interface.**
+
+| Function | Purpose |
+|----------|---------|
+| `lr_sensitivity()` | Trace an LR across a range of an assumed parameter |
+| `mispitools_app()` | Interactive Shiny application |
+
+### Functions renamed in 2.0
+
+The 1.x names remain exported and continue to work, now as deprecated aliases
+that emit a message pointing to the current name. Existing scripts do not break.
+Among them: `simLRgen()`, `simLRprelim()`, `simRef()`, `makeMPprelim()`,
+`makePOIprelim()`, `LRsex()`, `LRage()`, `LRdate()`, `LRcol()`, `LRcolors()`,
+`combLR()`, `CPT_POP()`, `CPT_MP()`, `Cmodel()`, `LRdist()`, `deplot()`,
+`CondPlot()`, `DeT()`, `Trates()`, `getfreqs()` and `mispiApp()`. See
+`?"mispitools-deprecated"` for the full list of 28.
 
 ## Citations
 
