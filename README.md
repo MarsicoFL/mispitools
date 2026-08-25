@@ -297,6 +297,13 @@ person. The two KL columns are asymmetric on purpose: a marker can be much
 better at excluding than at including, and the difference is what those two
 numbers show.
 
+Read across a marker set, this is a ranking of what each locus is worth for a
+given pedigree, obtained without typing anyone.
+
+<p align="center">
+<img src="man/figures/bench_permarker_kl.png" width="620">
+</p>
+
 ### The distribution of the profile LR
 
 `lr_distribution()` returns the whole distribution under both hypotheses, not
@@ -357,6 +364,49 @@ nongenetic_feature(type = "sex", observed = "F",
 #>   error         : eps=0.05
 ```
 
+### What the exact route adds
+
+Two quantities that a simulation of the usual size does not deliver.
+
+The first is the value of the pedigree itself. `sim_lr_genetic()` starts from a
+reference profile, so the distribution it returns belongs to that case. Across
+24 reference profiles drawn from the same trio and the same frequency
+database, the expected weight of evidence under H1 ranged from 1.31 to 3.33
+bans, with a standard deviation of 0.56. Averaged over them it is 2.04 against
+the exact 2.107, a difference of 0.6 standard errors. The two numbers answer
+different questions: the simulation says what to expect in the case at hand,
+the engine says what the pedigree is worth before any reference has been
+typed.
+
+<p align="center">
+<img src="man/figures/bench_case_spread.png" width="620">
+</p>
+
+The second is the tail. The false positive rate at the threshold where an
+identification would be reported is computed directly from the distribution:
+
+| threshold `log10` LR | P(`log10` LR > t \| H2) |
+|---|---|
+| 2 | 2.11e-03 |
+| 3 | 4.09e-05 |
+| 4 | 8.16e-07 |
+| 5 | 1.31e-08 |
+| 6 | 1.85e-10 |
+
+Estimating the same rates by simulation requires observing the events. At
+threshold 4 the expected number of profiles needed to see a single one is
+around 1.2 million, and useful precision needs orders of magnitude more. In
+runs of 1000 profiles the estimate is exactly zero at that threshold; at 32000
+profiles, half of the runs still return zero at threshold 3. The estimate is
+not imprecise there, it is empty.
+
+<p align="center">
+<img src="man/figures/bench_tail.png" width="620">
+</p>
+
+For the three markers above, the exact distribution takes about one second,
+while a single simulated run of 32000 profiles takes about five minutes.
+
 ### Scope of the exact engine
 
 The engine enumerates joint genotype states, so its cost is driven by the
@@ -367,6 +417,18 @@ five-individual pedigree such as `linearPed(2)`, the same computation exceeded
 trios and small pedigrees; for larger pedigrees and full profiles, the
 simulation workflow of Steps 1 to 6 remains the practical one, and the two
 give answers on the same scale.
+
+Within that scope the cost is dominated by the number of alleles. The package
+keeps a reference implementation in R, used as the oracle for the C++ kernel
+and cross-checked against it in the test suite, so the two can be timed
+against each other on the same call. On a trio they agree to 1e-11 wherever
+both finish, and the C++ engine is around seven times faster; at 23 alleles
+the R implementation returns nothing within 45 seconds while the engine
+finishes in 16.
+
+<p align="center">
+<img src="man/figures/bench_engine.png" width="620">
+</p>
 
 ## Interactive Application
 
