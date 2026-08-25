@@ -82,9 +82,18 @@ MUTS_F26 <- list(
 ## the joint table size axis. D10S1248 -> top-3 (K=3, 6 genotypes per
 ## member). D5S818 -> top-4 (K=4, 10 genotypes per member). Both are
 ## STR loci with integer-coded alleles, valid for the stepwise model.
+##
+## The top-4 set is the expensive half of the grid: the pedprobr oracle
+## enumerates 10 genotypes per member over 5-member pedigrees, and those
+## six cells alone account for ~95% of this file's runtime. They are
+## therefore marked `exhaustive` and gated (see helper-cran.R). The
+## top-3 set keeps all three pedigrees and both mutation models covered
+## on CRAN, which is what closes the binding-layer chain described above.
 MARKER_SETS_F26 <- list(
-  "D10S1248_top3" = list(marker = "D10S1248", top_k = 3L),
-  "D5S818_top4"   = list(marker = "D5S818",   top_k = 4L)
+  "D10S1248_top3" = list(marker = "D10S1248", top_k = 3L,
+                         exhaustive = FALSE),
+  "D5S818_top4"   = list(marker = "D5S818",   top_k = 4L,
+                         exhaustive = TRUE)
 )
 
 for (pn in names(PEDS_F26)) {
@@ -95,9 +104,10 @@ for (pn in names(PEDS_F26)) {
         test_that(sprintf("cpp vs pedprobr+pedmut: %s / %s / %s",
                           pn_, mut_, ms_), {
           skip_if_no_oracle()
+          ms <- MARKER_SETS_F26[[ms_]]
+          if (ms$exhaustive) skip_if_exhaustive_disabled()
           data(Argentina, package = "mispitools", envir = environment())
           ped <- PEDS_F26[[pn_]]()
-          ms <- MARKER_SETS_F26[[ms_]]
           freqs <- top_k_freqs(Argentina, ms$marker, top_k = ms$top_k)
           d <- joint_max_abs_diff_cpp(ped, ms$marker, freqs,
                                       MUTS_F26[[mut_]])

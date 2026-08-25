@@ -51,6 +51,23 @@ PEDS <- list(
   grandparent_grandchild = ped_grandparent_grandchild
 )
 
+## Cost is set by pedigree size, not by the marker: at top_k = 4 the
+## brute-force enumeration is 10^3 states for the 3-member parent_child
+## and 10^5 for the two 5-member pedigrees, so the ten cells on those
+## two carry ~95% of this file's runtime. The always-on subset keeps
+## parent_child across all five markers (the marker axis) plus the
+## half-sib cell on one marker (a topology with a non-trivial peeling
+## order). The grandparent_grandchild topology is covered on CRAN by
+## test-vs-pedprobr-cpp.R against the same oracle, so the remaining
+## nine cells here are gated (see helper-cran.R).
+CORE_MARKER <- "D10S1248"
+CORE_LARGE_PED <- "half_sibs"
+
+is_exhaustive_cell <- function(ped_name, marker_name) {
+  if (ped_name == "parent_child") return(FALSE)
+  !(ped_name == CORE_LARGE_PED && marker_name == CORE_MARKER)
+}
+
 for (ped_name in names(PEDS)) {
   for (marker_name in ARG_MARKERS) {
     local({
@@ -58,6 +75,7 @@ for (ped_name in names(PEDS)) {
       mk <- marker_name
       test_that(sprintf("P_H1 matches pedprobr: %s / %s", pn, mk), {
         skip_if_no_oracle()
+        if (is_exhaustive_cell(pn, mk)) skip_if_exhaustive_disabled()
         data(Argentina, package = "mispitools", envir = environment())
         ped <- PEDS[[pn]]()
         freqs <- top_k_freqs(Argentina, mk, top_k = 4L)

@@ -142,8 +142,19 @@ test_that("nuclearPed(2): stepwise+equal mutation x linkage == pedprobr::likelih
                                  rate = rateB)
   x <- .f53_oracle_ped(pedtools::nuclearPed(2), gA, gB, fa, fb, mutA, mutB)
 
+  ## Every rho costs one pedprobr::likelihood2() call on the oracle
+  ## side, which is what makes this the slowest test in the file. The
+  ## endpoints rho = 0 (complete linkage) and rho = 0.5 (independence)
+  ## are the two that pin the model down; the interior points check
+  ## monotonicity in between and are gated (see helper-cran.R).
+  rhos <- if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+    c(0, 0.1, 0.25, 0.5)
+  } else {
+    c(0, 0.5)
+  }
+
   prev <- NA_real_
-  for (rho in c(0, 0.1, 0.25, 0.5)) {
+  for (rho in rhos) {
     ours   <- .f53_linked_lik(father, mother, fa, fb, rho, obs,
                               mutA_core, mutB_core)
     oracle <- pedprobr::likelihood2(x, marker1 = 1, marker2 = 2, rho = rho)
@@ -157,6 +168,12 @@ test_that("nuclearPed(2): stepwise+equal mutation x linkage == pedprobr::likelih
 })
 
 test_that("rho == 0.5 factorises into product of single-marker likelihoods (mutation on both)", {
+  ## Redundant on CRAN: the rho = 0.5 cell of the test above already
+  ## compares the same engine against pedprobr::likelihood2() on the
+  ## same pedigree. This one restates the identity in factorised form,
+  ## which is worth two more oracle calls locally but not on CRAN
+  ## (see helper-cran.R).
+  skip_if_exhaustive_disabled()
   skip_if_not_installed("pedtools")
   skip_if_not_installed("pedprobr")
   skip_if_not_installed("pedmut")
@@ -201,7 +218,15 @@ test_that("linked joint with mutation is a proper distribution (sums to 1)", {
 
   father <- c(-1L, -1L, 0L, 0L)
   mother <- c(-1L, -1L, 1L, 1L)
-  fa <- c("12" = 0.5, "13" = 0.3, "14" = 0.2)
+  ## The joint has (K_a(K_a+1)/2 * K_b(K_b+1)/2)^n rows: 9^4 at
+  ## K_a = K_b = 2, 18^4 at K_a = 3. Both exercise the same
+  ## normalisation path, so the larger marker A runs off CRAN only
+  ## (see helper-cran.R).
+  fa <- if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+    c("12" = 0.5, "13" = 0.3, "14" = 0.2)
+  } else {
+    c("12" = 0.6, "13" = 0.4)
+  }
   fb <- c("1"  = 0.7, "2"  = 0.3)
 
   res <- cpp_linked_pair_joint(
@@ -217,6 +242,10 @@ test_that("linked joint with mutation is a proper distribution (sums to 1)", {
 })
 
 test_that("first-cousin x 2 linked markers (named F5.3 scope)", {
+  ## Topology breadth (8 members) on top of the nuclearPed(2) cell that
+  ## always runs; three more pedprobr::likelihood2() calls. Gated
+  ## (see helper-cran.R).
+  skip_if_exhaustive_disabled()
   # F5.5 closed the engine-scalability gap: core::linked_pair_joint()
   # now marginalises non-relevant members via Elston-Stewart online
   # variable elimination instead of materialising the dense joint over
@@ -247,7 +276,14 @@ test_that("first-cousin x 2 linked markers (named F5.3 scope)", {
                      sex = c(1, 2, 1, 1, 2, 2, 1, 1))
   x <- .f53_oracle_ped(x, gA, gB, fa, fb, mutA, mutB)
 
-  for (rho in c(0, 0.1, 0.5)) {
+  ## As above: endpoints always, interior point off CRAN only.
+  rhos <- if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+    c(0, 0.1, 0.5)
+  } else {
+    c(0, 0.5)
+  }
+
+  for (rho in rhos) {
     ours <- .f53_linked_lik(
       father, mother, fa, fb, rho, obs,
       list(kind = 2L, rate = 0.004, range = 0.1,

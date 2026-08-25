@@ -193,7 +193,7 @@ test_that("forrel Monte Carlo: E[log10 LR|H1] matches per_marker_kl (mut=none)",
   ped <- pedtools::nuclearPed(1)
   mm <- marker_model(ped, "M", FR3, mutation = MUT_NONE)
   exact <- per_marker_kl(mm)$e_log10_lr_h1
-  mc <- mc_mean_log10lr(ped, FR3, MUT_NONE, n = 20000L, seed = 4071L)
+  mc <- mc_mean_log10lr(ped, FR3, MUT_NONE, n = mc_sample_size(), seed = 4071L)
   ## Statistical tolerance: 6 standard errors of the sample mean. The
   ## sampler (profileSim) is independent of the exact engine; this is a
   ## distribution-shape check, not a deterministic identity. 6*SE keeps
@@ -206,7 +206,7 @@ test_that("forrel Monte Carlo: E[log10 LR|H1] matches per_marker_kl (mut=equal)"
   ped <- pedtools::nuclearPed(1)
   mm <- marker_model(ped, "M", FR3, mutation = MUT_EQUAL)
   exact <- per_marker_kl(mm)$e_log10_lr_h1
-  mc <- mc_mean_log10lr(ped, FR3, MUT_EQUAL, n = 20000L, seed = 4072L)
+  mc <- mc_mean_log10lr(ped, FR3, MUT_EQUAL, n = mc_sample_size(), seed = 4072L)
   expect_lt(abs(mc$mean - exact), 6 * mc$se)
 })
 
@@ -247,7 +247,7 @@ test_that("forrel Monte Carlo: composed two-marker mean matches lr_distribution(
     pedM, pedtools::marker(ped, afreq = FR4, name = "MB"))
 
   set.seed(4073L)
-  n <- 20000L
+  n <- mc_sample_size()
   sims <- suppressMessages(forrel::profileSim(
     pedM, N = n, ids = members, verbose = FALSE))
   tot <- vapply(sims, function(s) {

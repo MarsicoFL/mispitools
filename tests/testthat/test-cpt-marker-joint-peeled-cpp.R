@@ -45,8 +45,15 @@
 test_that("peeled keep-all reproduces the dense full joint (K=2,3)", {
   fm <- .cousin_fm()
   n <- length(fm$father)
-  for (freqs in list(c(a = 0.6, b = 0.4),
-                     c(a = 0.3, b = 0.5, c = 0.2))) {
+  ## The dense reference is 3^8 rows at K=2 and 6^8 = 1.7M rows at K=3;
+  ## the K=3 pass is ~4x the cost of the whole rest of this file. K=2
+  ## already exercises the keep-all peeling path, so K=3 is gated
+  ## (see helper-cran.R).
+  freq_sets <- list(c(a = 0.6, b = 0.4))
+  if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+    freq_sets <- c(freq_sets, list(c(a = 0.3, b = 0.5, c = 0.2)))
+  }
+  for (freqs in freq_sets) {
     dense <- cpt_marker_joint_cpp(fm$father, fm$mother, poi = 6L,
                                   freqs = unname(freqs))
     peeled <- cpt_marker_joint_cpp(fm$father, fm$mother, poi = 6L,
@@ -66,7 +73,14 @@ test_that("peeled subset == dense marginalised over the kept members", {
                                 freqs = unname(freqs))
   ## Typed = the two cousins (6, 7) + a grandparent (0); POI (6) is
   ## always forced into the keep-set by the engine.
-  for (subset in list(c(6L, 7L), c(0L, 6L, 7L), c(6L))) {
+  ## Each subset is checked against the same K=3 dense joint (6^8 rows).
+  ## The two-cousin subset is the representative case; the other two
+  ## vary the keep-set and are gated (see helper-cran.R).
+  subsets <- list(c(6L, 7L))
+  if (identical(Sys.getenv("NOT_CRAN"), "true")) {
+    subsets <- list(c(6L, 7L), c(0L, 6L, 7L), c(6L))
+  }
+  for (subset in subsets) {
     keep0 <- sort(unique(c(subset, 6L)))         # engine forces POI in
     peeled <- cpt_marker_joint_cpp(fm$father, fm$mother, poi = 6L,
                                    freqs = unname(freqs),
