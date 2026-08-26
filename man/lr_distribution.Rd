@@ -54,6 +54,16 @@ work. \code{+Inf} / \code{-Inf} atoms (which arise under \code{mutation = "none"
 when a hypothesis assigns zero mass to a state the other supports)
 propagate through the exact convolution and are reported by
 \code{\link[=summary.lr_dist]{summary.lr_dist()}}; \code{method = "grid"} rejects infinite support.
+
+Two atoms carry the same \code{log10} LR when they agree to a relative
+tolerance of 1e-12, rather than bit for bit. A single atom is a real
+number that the engine can reach by more than one arithmetic route, and
+on a platform that contracts \code{a * b + c} into a fused multiply-add the
+routes differ in the last bits; grouping by exact equality would make the
+size of the support depend on the compiler. The tolerance sits four
+orders of magnitude above that rounding noise and four below the closest
+genuinely distinct pair observed, so it merges duplicates and nothing
+else.
 }
 \examples{
 if (requireNamespace("pedtools", quietly = TRUE)) {

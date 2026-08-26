@@ -1,3 +1,42 @@
+# mispitools 2.0.1
+
+Fixes a test failure reported by CRAN on macOS arm64 (r-release and
+r-oldrel) and on the M1mac additional check, and with it a genuine
+platform dependence in the size of the exact LR support.
+
+## Atoms of the LR distribution
+
+A `log10` LR atom is a real number that the C++ engine and the R reference
+implementation reach by different arithmetic routes. On a platform whose
+compiler contracts `a * b + c` into a fused multiply-add, which is the
+default on aarch64, one route rounds once where the other rounds twice, and
+two mathematically equal atoms end up differing in the last bits. Grouping
+them by IEEE equality, as 2.0.0 did, then split one atom into two, so the
+number of support points of `lr_distribution()` depended on the platform and
+the cross-check against the reference failed on arm64 while passing on x86.
+
+* `lr_distribution()`, `per_marker_lr_dist()` and the evidence combination
+  kernel now close an atom group by a relative tolerance (`kAtomRelTol`,
+  1e-12) rather than by exact equality. The measured separation justifies
+  the constant: consecutive keys are either within one unit in the last
+  place of each other or more than 1e-8 apart in relative terms, with
+  nothing in between.
+* The R reference `aggregate_lr_dist()` applies the same rule, so the two
+  engines agree on the size of the support on every platform.
+* The composed distribution is unchanged as a distribution. Its support is
+  smaller because the duplicates that rounding had split are now merged:
+  composing two nine-allele markers on a trio gives 98 415 atoms instead of
+  602 991, with the same total mass and an expected weight of evidence
+  identical to twelve decimal places. Exact composition of two markers of
+  10 and 12 alleles drops from about 1.9 million support points to about
+  317 000, so it is correspondingly cheaper in time and memory.
+
+## Documentation
+
+* The README opens the 2.0 section by carrying the tutorial case of Steps 1
+  to 6 through the four entry points of the exact engine, with the marker
+  set and the frequency database used there.
+
 # mispitools 2.0.0
 
 This release adds an exact computational engine alongside the simulation

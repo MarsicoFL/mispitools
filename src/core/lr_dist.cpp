@@ -72,10 +72,12 @@ Result<LrDist> per_marker_lr_dist(const JointTable& joint, bool aggregate) {
     }
 
     // Aggregate: stable-sort ascending by log10_lr (R `order()` is a
-    // radix sort — stable; -Inf first, +Inf last), then collapse equal
-    // keys summing the probabilities in the post-sort order (R `tapply`
-    // sum). IEEE makes `Inf == Inf` and `-Inf == -Inf`, so the infinite
-    // atoms each collapse into a single bucket, matching R-ref.
+    // radix sort — stable; -Inf first, +Inf last), then collapse the keys
+    // that name the same atom, summing the probabilities in the post-sort
+    // order (R `tapply` sum). `same_atom` folds each infinite class into a
+    // single bucket through IEEE equality and absorbs the last-bit spread
+    // that separates two arithmetic routes to one value, matching R-ref
+    // `aggregate_lr_dist` on every platform.
     const std::size_t m = out.log10_lr.size();
     std::vector<std::size_t> idx(m);
     std::iota(idx.begin(), idx.end(), std::size_t{0});
@@ -94,9 +96,7 @@ Result<LrDist> per_marker_lr_dist(const JointTable& joint, bool aggregate) {
         double s1 = 0.0;
         double s2 = 0.0;
         std::size_t j = i;
-        // `!(key != next)` keeps Inf/-Inf grouped via IEEE equality,
-        // exactly like R `k[-1] != k[-length(k)]`.
-        while (j < m && !(out.log10_lr[idx[j]] != key)) {
+        while (j < m && same_atom(out.log10_lr[idx[j]], key)) {
             s1 += out.p_h1[idx[j]];
             s2 += out.p_h2[idx[j]];
             ++j;
@@ -112,12 +112,14 @@ Result<LrDist> per_marker_lr_dist(const JointTable& joint, bool aggregate) {
 
 namespace {
 
-// Sort ascending by key (stable, like R `order()` radix) and collapse
-// adjacent keys whose gap is `<= merge_tol` (representative = the group's
-// first key, summing the parallel probabilities in post-sort order — the
-// same convention as `aggregate_lr_dist`). IEEE makes Inf == Inf, and
-// `Inf - Inf` is NaN (any comparison false), so each infinite class
-// collapses into its own bucket regardless of `merge_tol`.
+// Sort ascending by key (stable, like R `order()` radix) and collapse the
+// keys that `same_atom` calls one atom: the `kAtomRelTol` floor always, and
+// `merge_tol` on top of it when the caller asks for coarser bucketing
+// (representative = the group's first key, summing the parallel
+// probabilities in post-sort order — the same convention as
+// `aggregate_lr_dist`). IEEE makes Inf == Inf, and `Inf - Inf` is NaN (any
+// comparison false), so each infinite class collapses into its own bucket
+// regardless of the tolerance.
 LrDist aggregate_sparse(std::vector<double> lr,
                         std::vector<double> p1,
                         std::vector<double> p2,
@@ -144,11 +146,7 @@ LrDist aggregate_sparse(std::vector<double> lr,
         double s2 = 0.0;
         std::size_t j = i;
         while (j < m) {
-            const double k = lr[idx[j]];
-            const bool same = (k == key) ||
-                              (std::isfinite(k) && std::isfinite(key) &&
-                               (k - key) <= merge_tol);
-            if (!same) break;
+            if (!same_atom(lr[idx[j]], key, merge_tol)) break;
             s1 += p1[idx[j]];
             s2 += p2[idx[j]];
             ++j;

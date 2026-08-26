@@ -242,7 +242,124 @@ rather than sampled. There is no simulation error to report and no `numsims`
 to choose; the cost moves elsewhere, to the size of the pedigree, as described
 at the end of this section.
 
-The engine is written in C++ and is reached through four entry points.
+The engine is written in C++ and is reached through four entry points. The
+section below runs all four on the case of Steps 1 to 6, and the sections
+after it document each one on its own.
+
+### Continuing the tutorial case
+
+Step 1 drew 500 profiles on `linearPed(2)` with the first fifteen Norwegian
+markers, and Steps 3 to 6 worked from that sample. The same family, the same
+markers and the same questions can be handed to the engine instead. One
+change is forced: the engine enumerates joint genotype states, so a
+five-person pedigree is beyond it (see Scope below) and the computation runs
+on the trio inside that family, the missing person and the parents.
+
+A `marker_model()` is the unit the engine works with. It bundles the pedigree,
+the marker, its allele frequencies and the mutation model, and it validates
+all of them on construction.
+
+```r
+library(mispitools)
+library(pedtools)
+library(forrel)
+
+fr <- NorwegianFrequencies[1:15]
+trio <- nuclearPed(1)              # the missing person is the child, '3'
+
+models <- lapply(names(fr), function(m) {
+  f <- fr[[m]]; f <- f[f > 0]; f <- f / sum(f)
+  marker_model(trio, marker_id = m, freqs = f,
+               mutation = list(model = "equal", rate = 1e-3))
+})
+names(models) <- names(fr)
+
+models$TH01
+#> <marker_model>
+#>   marker_id : TH01
+#>   alleles   : 10 (5, 6, 7, 8, 8.3, 9, ...)
+#>   mutation  : equal (rate=0.001)
+#>   linkage   : none
+#>   pedigree  : 3 individuals
+```
+
+`per_marker_kl_profile()` then answers a question Step 1 could not ask,
+because it needs no profile at all: of the fifteen markers, which ones carry
+the evidence in this pedigree.
+
+```r
+kl <- per_marker_kl_profile(models, poi = "3")
+head(kl[order(-kl$kl_h1_to_h2), 1:5], 6)
+#>    marker e_log10_lr_h1 e_log10_lr_h2 kl_h1_to_h2 kl_h2_to_h1
+#>   PENTA_E     1.3193831     -4.098429    3.037992    9.436981
+#>    D18S51     1.1536985     -3.936244    2.656489    9.063537
+#>       FGA     1.0972130     -3.868368    2.526426    8.907247
+#>    D21S11     1.0226621     -3.619016    2.354766    8.333093
+#>   PENTA_D     0.9078383     -3.445376    2.090375    7.933271
+#>   D8S1179     0.8662199     -2.974436    1.994545    6.848893
+```
+
+The ranking is a typing order. PENTA_E is worth around one and a half times
+what D8S1179 is worth in this pedigree, and that is known before anyone is
+typed.
+
+`lr_distribution()` returns what Step 1 estimated from 500 draws, now as the
+distribution itself.
+
+```r
+d <- lr_distribution(models, poi = "3", method = "grid", grid_points = 512L)
+
+summary(d)
+#> Likelihood-ratio distribution summary
+#>                    H1         H2
+#> E[log10 LR] 12.651372 -45.312343
+#> Var          3.341027  79.709603
+#> SD           1.827848   8.928023
+#> mass         1.000000   1.000000
+#>
+#> AUC: 1
+#> Quantiles of log10 LR | H1:
+#>    2.5%     25%     50%     75%   97.5%
+#>  9.4716 11.2757 12.6288 13.9819 16.6881
+#> Quantiles of log10 LR | H2:
+#>     2.5%      25%      50%      75%    97.5%
+#> -62.6930 -51.4173 -45.1029 -39.2395 -27.9638
+```
+
+Step 5 read its error rates off the 500 simulated LRs, and those rates run out
+where the sample does. Across five runs of 500 unrelated profiles on this trio,
+none reached a `log10` LR of 4, so every threshold from there upwards is
+estimated as zero. Read off the distribution the same thresholds are not zero.
+
+```r
+sapply(4:8, function(t) sum(d$p_h2[d$log10_lr > t]))
+#> [1] 2.66e-09 8.42e-10 3.88e-10 1.54e-10 5.53e-11
+```
+
+The false positive rate at a threshold of 4 is roughly one in four hundred
+million for this pedigree, this database and the assumed mutation rate of
+1e-3. Reaching it by simulation means observing the event, which takes on the
+order of a hundred million profiles before the estimate stops being zero.
+
+The fifteen models take about a minute for the KL profile and about a minute
+and a half for the distribution, both on one core.
+
+Whether to compose exactly or on a lattice is the one choice the route asks
+for. On the two smallest markers of the set, where both finish, they agree on
+the mean to the eighth decimal, and the exact support is two hundred times
+larger than the lattice.
+
+```r
+small <- models[c("D5S818", "D13S317")]
+
+nrow(lr_distribution(small, poi = "3", method = "exact"))
+#> [1] 98415
+nrow(lr_distribution(small, poi = "3", method = "grid", grid_points = 512L))
+#> [1] 514
+```
+
+Non-genetic evidence, the subject of Step 2, enters the same machinery through
+`nongenetic_feature()`, described further down.
 
 ### Marker models
 
@@ -342,7 +459,7 @@ database.
 convolution atom by atom; `method = "grid"` projects onto a lattice, which
 preserves the total mass and the mean exactly and discretises only the shape.
 The choice matters in practice: composing two markers of 10 and 12 alleles
-exactly already yields around 2.2 million support points, and that number
+exactly already yields around 317 000 support points, and that number
 multiplies with each marker added. For anything beyond two markers, use the
 grid.
 

@@ -72,10 +72,12 @@ per_marker_kl_R <- function(model, poi = NULL) {
 ## convolution of independent per-feature LR distributions: the total
 ## log10 LR is the sum of the per-feature log10 LRs (conditional
 ## independence), so the composed distribution is their convolution.
-## The C++ kernel `core::lr_dist_compose` (exact mode) reproduces this
-## bit-for-bit (1e-12 tol) — the cartesian product is iterated in the
-## same order (feature outermost, accumulator innermost) so the
-## post-sort summation in `aggregate_lr_dist` matches.
+## The C++ kernel `core::lr_dist_compose` (exact mode) reproduces this to
+## 1e-12 — the cartesian product is iterated in the same order (feature
+## outermost, accumulator innermost) so the post-sort summation in
+## `aggregate_lr_dist` matches, and both sides close their atom groups by
+## the same tolerance rule, so the support has the same size on a platform
+## that fuses multiply-add and on one that does not.
 
 #' @noRd
 lr_dist_compose_R <- function(dists) {
@@ -267,6 +269,40 @@ choose_threshold_weighted_R <- function(d, weight) {
   best
 }
 
+## Relative floor below which two keys name the same atom. Mirrors
+## `kAtomRelTol` in src/core/lr_dist.h, where the choice is justified: an
+## atom is a real number two arithmetic routes can reach with different
+## last bits, so grouping by IEEE equality alone splits one atom in two as
+## soon as a platform contracts `a * b + c` into a fused multiply-add.
+.atom_rel_tol <- 1e-12
+
+## Group boundaries of a sorted key vector under the `same_atom` rule of
+## src/core/lr_dist.h: a group opens at its first key and admits every key
+## within the tolerance of *that* key (never of its own predecessor, so a
+## chain of near-equal keys cannot drift). Infinite keys admit only their
+## own IEEE equals. `findInterval` closes each group in one binary search,
+## so the cost follows the number of groups, not the number of atoms.
+#' @noRd
+atom_group_starts <- function(k) {
+  n <- length(k)
+  starts <- integer(n)
+  n_groups <- 0L
+  i <- 1L
+  while (i <= n) {
+    n_groups <- n_groups + 1L
+    starts[n_groups] <- i
+    key <- k[i]
+    lim <- if (is.finite(key)) {
+      key + .atom_rel_tol * max(1, abs(key))
+    } else {
+      key
+    }
+    j <- findInterval(lim, k)
+    i <- max(j, i) + 1L
+  }
+  starts[seq_len(n_groups)]
+}
+
 #' @noRd
 aggregate_lr_dist <- function(d) {
   if (nrow(d) == 0L) return(d)
@@ -277,7 +313,8 @@ aggregate_lr_dist <- function(d) {
   if (length(k) == 1L) {
     grp <- 1L
   } else {
-    grp <- cumsum(c(TRUE, k[-1] != k[-length(k)]))
+    starts <- atom_group_starts(k)
+    grp <- rep(seq_along(starts), diff(c(starts, length(k) + 1L)))
   }
   ph1 <- tapply(d$p_h1, grp, sum)
   ph2 <- tapply(d$p_h2, grp, sum)

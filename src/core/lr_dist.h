@@ -1,6 +1,8 @@
 #ifndef MISPITOOLS_CORE_LR_DIST_H
 #define MISPITOOLS_CORE_LR_DIST_H
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -37,6 +39,45 @@ struct LrDist {
     bool empty() const noexcept { return log10_lr.empty(); }
 };
 
+/// @brief Relative floor below which two atom keys are the same atom.
+///
+/// A log10 LR atom is a real number reached by two different arithmetic
+/// routes: the C++ engine and the R reference compute the same quantity
+/// with different association orders, and a compiler that contracts
+/// `a * b + c` into a fused multiply-add (the default on aarch64, and on
+/// any target where the FMA instruction is in the baseline ISA) rounds
+/// once where another rounds twice. Mathematically equal atoms then differ
+/// in the last bits, and grouping by IEEE equality splits them into
+/// separate buckets, which makes the size of the support platform
+/// dependent.
+///
+/// The separation is measured, not assumed: over the composed profiles the
+/// test suite exercises, consecutive keys either sit within one unit in the
+/// last place of each other (the same atom reached twice) or are more than
+/// 1e-8 apart in relative terms (genuinely different atoms). The band
+/// between those two populations is empty across seven orders of magnitude,
+/// and `1e-12` sits in the middle of it: four orders above the rounding
+/// noise it has to absorb, four orders below the closest genuine pair it
+/// must keep apart.
+constexpr double kAtomRelTol = 1e-12;
+
+/// @brief True when key `k` belongs to the group opened by `key`.
+///
+/// `k` is assumed to come from an ascending sort, so `k >= key`. IEEE
+/// equality is tested first, which folds each infinite class into a single
+/// bucket (`Inf == Inf`) and leaves `Inf - Inf` (NaN) out of the arithmetic
+/// path. Finite keys additionally merge when their gap falls under
+/// `extra_tol` (a caller-supplied absolute tolerance, `LrDistComposeOptions
+///::merge_tol`) or under the `kAtomRelTol` floor scaled by the magnitude of
+/// the key.
+inline bool same_atom(double k, double key, double extra_tol = 0.0) {
+    if (!(k != key)) return true;
+    if (!std::isfinite(k) || !std::isfinite(key)) return false;
+    const double tol =
+        std::max(extra_tol, kAtomRelTol * std::max(1.0, std::fabs(key)));
+    return (k - key) <= tol;
+}
+
 /// @brief Per-marker LR distribution from a sparse joint table.
 ///
 /// @param joint joint genotype distribution (output of `cpt_marker_joint`);
@@ -63,8 +104,11 @@ struct LrDistComposeOptions {
     ComposeMethod method = ComposeMethod::Exact;
     /// Exact mode: collapse finite keys whose ascending gap is `<= merge_tol`
     /// (representative = the group's first key, matching R-ref `aggregate`).
-    /// Default 0.0 → exact-equality grouping, bit-for-bit with the R
-    /// reference. Set > 0 to bucket near-equal atoms (caps support growth).
+    /// Default 0.0 → grouping by the `kAtomRelTol` floor alone, which merges
+    /// rounding-noise duplicates and nothing else, and agrees with the R
+    /// reference on every platform. Raise it to bucket genuinely distinct
+    /// but near-equal atoms (caps support growth); it is applied as a floor,
+    /// so a value under `kAtomRelTol` has no effect.
     double merge_tol = 0.0;
     /// Grid mode: number of lattice points spanning the finite total range
     /// `[Σ min, Σ max]`. Discretisation error is O(span / (grid_points-1)).

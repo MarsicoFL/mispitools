@@ -26,9 +26,10 @@ constexpr double kRowSumTol = 1e-9;  // user-supplied transition rows
 
 // Aggregate sparse atoms with the exact convention of
 // `per_marker_lr_dist` (lr_dist.cpp): stable sort ascending by log10_lr,
-// collapse equal keys via IEEE equality (so each ±Inf class folds into a
-// single bucket), representative = the group's first key, probabilities
-// summed in post-sort order.
+// collapse the keys that `same_atom` calls one atom (so each ±Inf class
+// folds into a single bucket and last-bit duplicates fold with it),
+// representative = the group's first key, probabilities summed in post-sort
+// order.
 LrDist aggregate_atoms(std::vector<double> lr,
                        std::vector<double> p1,
                        std::vector<double> p2,
@@ -53,9 +54,7 @@ LrDist aggregate_atoms(std::vector<double> lr,
         double s1 = 0.0;
         double s2 = 0.0;
         std::size_t j = i;
-        // `!(k != key)` keeps Inf/-Inf grouped via IEEE equality, exactly
-        // like R `k[-1] != k[-length(k)]`.
-        while (j < m && !(lr[idx[j]] != key)) {
+        while (j < m && same_atom(lr[idx[j]], key)) {
             s1 += p1[idx[j]];
             s2 += p2[idx[j]];
             ++j;

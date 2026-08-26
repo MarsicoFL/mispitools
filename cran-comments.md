@@ -1,108 +1,100 @@
-## Resubmission
+## Submission of 2.0.1
 
-This is a resubmission of version 2.0.0. The 2026-08-24 submission was
-rejected by the incoming auto-check for
+This release answers the check failure reported for 2.0.0 on
+r-release-macos-arm64, r-oldrel-macos-arm64 and the M1mac additional
+check (23 test failures, all of them in the two files that cross-check
+the C++ engine against the package's own R reference implementation).
 
-    Overall checktime 17 min > 10 min
+### Diagnosis
 
-on r-devel-windows-x86_64, of which the test suite accounted for 12 minutes.
+The failures were not a difference in the computed likelihood ratios.
+They were a difference in how many support points the distribution was
+reported to have: the engine returned 37 203 atoms where the reference
+returned 37 108, and the tests compare the two vectors elementwise.
 
-The fix is confined to the test suite. Relative to the rejected tarball,
-`R/`, `src/`, `man/*.Rd`, `NAMESPACE` and `DESCRIPTION` are unchanged, so
-the exported API and the compiled kernel are identical. The only other
-change is `README.md`, which gained a section reporting measured
-comparisons of the exact engine against the simulation workflow, with
-four figures under `man/figures/`.
+An atom of the `log10` LR distribution is a real number that the two
+implementations reach by different arithmetic routes. On aarch64 the
+compiler contracts `a * b + c` into a fused multiply-add by default, so
+one route rounds once where the other rounds twice, and two atoms that
+are equal in exact arithmetic end up differing in their last bits.
+Version 2.0.0 grouped atoms by IEEE equality, which then split one atom
+into two. On x86-64, where the baseline ISA has no FMA and no
+contraction takes place, both routes agree bit for bit and the tests
+passed, which is why the failure was confined to the arm64 flavours.
 
-### What was slow, and what was done about it
+The diagnosis was confirmed rather than inferred. Rebuilding 2.0.0 on
+x86-64 with `-mfma -ffp-contract=fast` reproduces the reported failures
+in the same two files and with the same signature (37 513 atoms against
+37 251).
 
-The cost sat in the cross-engine verification files (`tests/testthat/
-test-vs-*.R`). Those compare the package engines against independent
-oracles -- pedprobr, pedmut, Familias and forrel -- over a full grid of
-pedigree x mutation model x marker, plus two Monte Carlo checks at
-N = 20000 simulated profiles. The slowest cells are dominated by the
-oracle's brute-force enumeration over 5- and 8-member pedigrees, not by
-mispitools itself.
+### Fix
 
-Following the suggestion in the rejection message, each grid is now split
-in two: a representative subset that always runs, and the exhaustive
-remainder gated on an environment variable. The gate is
-`testthat::skip_on_cran()`, i.e. the remainder runs only when `NOT_CRAN`
-is set to "true", which is the case under `devtools::test()`,
-`devtools::check()` and CI, and is not the case on CRAN. The rationale
-and the split are documented in `tests/testthat/helper-cran.R` and at
-each gate.
+Atom grouping now closes a group by a relative tolerance of 1e-12
+instead of by exact equality, in the C++ kernel and in the R reference
+alike, so the two agree on the size of the support on any platform. The
+constant is chosen from a measurement: over the composed profiles the
+suite exercises, consecutive keys are either within one unit in the last
+place of each other, which means the same atom reached twice, or more
+than 1e-8 apart in relative terms, which means genuinely distinct atoms.
+The band between those two populations is empty across seven orders of
+magnitude.
 
-Concretely:
+No compiler flag was added. `src/Makevars` still sets only
+`CXX_STD = CXX17`, `-I.` and `$(SHLIB_OPENMP_CXXFLAGS)`.
 
-* Toy data throughout: the always-on cells keep the small pedigrees and
-  the smaller allele sets (3 alleles rather than 4, 2 rather than 3),
-  which is where the state space of the comparison actually lives.
-* Fewer iterations: the two forrel Monte Carlo checks run at N = 2000 on
-  CRAN instead of N = 20000. Their gates are stated as multiples of the
-  sample standard error of the mean, which is recomputed from the draws,
-  so they stay correctly calibrated at the smaller N.
-* Conditional tests: the redundant cells of each grid -- larger allele
-  sets, additional pedigree topologies, interior recombination fractions,
-  identities already covered by another always-on cell -- are skipped
-  unless `NOT_CRAN` is set.
+The distribution itself is unchanged. Total mass is unchanged and the
+expected weight of evidence agrees with 2.0.0 to twelve decimal places;
+what changes is that duplicates split by rounding are now merged, so the
+support is smaller and exact composition is correspondingly cheaper.
 
-No test was deleted, and every code path that had an oracle check still
-has one on CRAN.
+### Verification
 
-### Measured effect
+Built and checked in two configurations on Ubuntu 24.04, R 4.5.2,
+gcc 13: the ordinary build, and a build with `-mfma -mavx2
+-ffp-contract=fast`, which stands in for the arm64 arithmetic that
+produced the failures. Both pass the full suite with no failures and no
+errors, in CRAN mode (2469 passing, 23 skipped) and with `NOT_CRAN=true`
+(2519 passing, 3 skipped). Under 2.0.0 the same instrumented build
+reproduces the CRAN failures.
 
-`R CMD check --as-cran` on the maintainer's machine (Ubuntu 24.04,
-R 4.5.2, gcc 13), the two tarballs run back to back:
+Check time is unaffected by this release and remains well inside the
+budget that 2.0.0 was resubmitted to meet; the exact composition path is
+faster, since it now allocates a smaller support.
 
-    checking tests    rejected tarball   73 s
-    checking tests    this tarball       14 s
+### On the short interval since 2.0.0
 
-The same ratio holds for the suite run on its own: 90 s with `NOT_CRAN`
-set against 16 s without it. Scaled onto the 12 minutes the rejected
-tarball spent in `checking tests` on r-devel-windows-x86_64, this puts
-the test block at roughly 2 minutes and the overall check comfortably
-inside the 10-minute budget.
-
-Coverage: with `NOT_CRAN=true` the suite runs 2522 tests, 3 skipped, all
-passing. On CRAN it runs 2492 of them, 23 skipped.
+2.0.0 was published on 2026-08-25. This submission follows one day later
+because it answers the check failure reported for it on the arm64
+flavours, within the correction window given in the message of
+2026-08-26. It contains that fix, its documentation, and nothing else.
 
 ## Test environments
 
 * local: Ubuntu 24.04, R 4.5.2, gcc 13 (`R CMD check --as-cran`)
+* local: the same, rebuilt with FMA contraction enabled to emulate arm64
+* win-builder, R-devel
 
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes attributable to the package.
 
-The local run reports one warning and two notes, all three of which come
-from the checking environment rather than from the package, and none of
-which appeared on the CRAN pre-test machines:
+The local run reports one warning and two notes, all three from the
+checking environment rather than the package:
 
 * `'qpdf' is needed for checks on size reduction of PDFs` -- qpdf is not
   installed on the machine used for the check.
 * `Skipping checking HTML validation: no command 'tidy' found` -- likewise.
 * `Compilation used the following non-portable flag(s): '-mno-omit-leaf-frame-pointer'`
-  -- this flag is injected by the Debian/Ubuntu build of R through
+  -- injected by the Debian/Ubuntu build of R through
   `/usr/lib/R/etc/Makeconf`; it does not appear in the package.
-  `src/Makevars` sets only `CXX_STD = CXX17`, `-I.`, and
-  `$(SHLIB_OPENMP_CXXFLAGS)`.
 
 ## Compiled code
 
-The package contains a C++17 kernel reached through Rcpp and
-RcppArmadillo. OpenMP is requested through `$(SHLIB_OPENMP_CXXFLAGS)` so
-that R resolves the correct flag for the toolchain, and every region
-touching the runtime is guarded by `#ifdef _OPENMP`. The package builds
-and runs single-threaded when OpenMP is unavailable, with identical
-results.
-
-## Package size
-
-The previous development tarball carried a 6.6 MB tutorial video under
-`man/figures/`. It has been excluded from the build; the tutorial is
-linked from the README to its hosted location. The source tarball is
-1.8 MB.
+A C++17 kernel reached through Rcpp and RcppArmadillo. OpenMP is
+requested through `$(SHLIB_OPENMP_CXXFLAGS)` so that R resolves the
+correct flag for the toolchain, and every region touching the runtime is
+guarded by `#ifdef _OPENMP`. The package builds and runs single-threaded
+when OpenMP is unavailable, with identical results.
 
 ## Downstream dependencies
 
