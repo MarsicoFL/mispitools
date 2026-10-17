@@ -45,11 +45,13 @@ The LR is **not** a probability of identification. It measures the relative supp
 
 ```r
 # From CRAN
-install.packages("mispitools")
+install.packages(c("mispitools", "forrel"))
 
 # Development version
 devtools::install_github("MarsicoFL/mispitools")
 ```
+
+The development version compiles C++ code, so it needs build tools: on Windows, [Rtools](https://cran.r-project.org/bin/windows/Rtools/) matching your R version; on macOS, the Xcode command line tools (`xcode-select --install`).
 
 ## Tutorial: A Complete Workflow
 
