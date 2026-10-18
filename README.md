@@ -141,8 +141,7 @@ threshold <- decision_threshold(lr_total, weight = 10)
 threshold_rates(lr_total, threshold)
 ```
 
-The `weight` parameter reflects the relative cost of false positives versus false negatives. In forensic contexts, falsely identifying someone (false positive) is typically considered more serious than failing to identify (false negative).
-
+`decision_threshold()` picks the LR threshold that minimizes $\sqrt{FNR^2 + (w \cdot FPR)^2}$, where $w$ is `weight`, FNR is the share of true matches (H1) below the threshold, and FPR the share of unrelated individuals (H2) above the threshold. With `weight = 10`, an FPR of 0.01 counts as much as an FNR of 0.1. In forensic contexts, falsely identifying someone (false positive) is typically considered more serious than failing to identify (false negative).
 ### Step 6: Fragility Diagnostics
 
 Two cases with the same combined LR can have very different inferential stability. One may distribute the support evenly across markers; another may owe most of its weight to a single marker — and would collapse if that marker were challenged. **mispitools** quantifies this with the inclusion concentration index $C_W^+$ and the leave-one-out diagnostic, and provides a per-case reportable statement:
