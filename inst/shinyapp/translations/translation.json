@@ -81,10 +81,6 @@
    "es": "forrel 1.9.1: 10,000 simulaciones por hipótesis, 24 STR autosómicos, frecuencias alélicas de Argentina, sin mutación. Ref = familiar genotipado."
   },
   {
-   "en": "Only one sex is present in the database: the default female proportion (0.51) is used.",
-   "es": "La base de datos contiene un solo sexo: se usa la proporción femenina predeterminada (0.51)."
-  },
-  {
    "en": "No candidate has hair color %s: the default population frequency (%.2f) is used for it.",
    "es": "Ningún candidato tiene color de cabello %s: se usa la frecuencia poblacional predeterminada (%.2f)."
   },
@@ -125,18 +121,6 @@
    "es": "La LR no es la probabilidad de que la persona sea la PD."
   },
   {
-   "en": "Single-observation LR",
-   "es": "LR de una observación"
-  },
-  {
-   "en": "Individual evidence",
-   "es": "Evidencia individual"
-  },
-  {
-   "en": "Combined evidence",
-   "es": "Evidencia combinada"
-  },
-  {
    "en": "Expected false positives",
    "es": "Falsos positivos esperados"
   },
@@ -153,10 +137,6 @@
    "es": "Elección del umbral"
   },
   {
-   "en": "Non-genetic: 3. Choose threshold",
-   "es": "No genética: 3. Elegir el umbral"
-  },
-  {
    "en": "Genetic: optimal threshold",
    "es": "Genética: umbral óptimo"
   },
@@ -169,40 +149,8 @@
    "es": "Evidencia no genética"
   },
   {
-   "en": "Individual Evidence",
-   "es": "Evidencia individual"
-  },
-  {
-   "en": "Evidence Type:",
-   "es": "Tipo de evidencia:"
-  },
-  {
-   "en": "Case",
-   "es": "Caso"
-  },
-  {
-   "en": "MP reported sex:",
-   "es": "Sexo informado de la PD:"
-  },
-  {
    "en": "Observed sex:",
    "es": "Sexo observado:"
-  },
-  {
-   "en": "Model",
-   "es": "Modelo"
-  },
-  {
-   "en": "Observation error rate:",
-   "es": "Tasa de error de observación:"
-  },
-  {
-   "en": "Female proportion in population:",
-   "es": "Proporción femenina en la población:"
-  },
-  {
-   "en": "MP estimated age (years):",
-   "es": "Edad estimada de la PD (años):"
   },
   {
    "en": "Age uncertainty (± years):",
@@ -213,84 +161,24 @@
    "es": "Edad observada (años):"
   },
   {
-   "en": "Age category error rate:",
-   "es": "Tasa de error de la categoría de edad:"
-  },
-  {
-   "en": "MP hair color:",
-   "es": "Color de cabello de la PD:"
-  },
-  {
    "en": "Observed hair color:",
    "es": "Color de cabello observado:"
-  },
-  {
-   "en": "Color misclassification rate (total):",
-   "es": "Tasa de clasificación errónea del color (total):"
   },
   {
    "en": "Likelihood Ratio",
    "es": "Razón de verosimilitud"
   },
   {
-   "en": "Calculation",
-   "es": "Cálculo"
-  },
-  {
-   "en": "Combine Evidence",
-   "es": "Combinar evidencias"
-  },
-  {
-   "en": "Assumption: ",
-   "es": "Supuesto: "
-  },
-  {
-   "en": "sex, age and hair colour are conditionally independent, so their LRs multiply.",
-   "es": "el sexo, la edad y el color de cabello son condicionalmente independientes; sus LR se multiplican."
-  },
-  {
    "en": "Sex",
    "es": "Sexo"
-  },
-  {
-   "en": "Include",
-   "es": "Incluir"
-  },
-  {
-   "en": "MP:",
-   "es": "PD:"
-  },
-  {
-   "en": "Observed:",
-   "es": "Observado:"
-  },
-  {
-   "en": "Observation error rate (0–1):",
-   "es": "Tasa de error de observación (0–1):"
   },
   {
    "en": "Age",
    "es": "Edad"
   },
   {
-   "en": "MP age (years):",
-   "es": "Edad de la PD (años):"
-  },
-  {
    "en": "Hair colour",
    "es": "Color de cabello"
-  },
-  {
-   "en": "Observation error rate, total (0–1):",
-   "es": "Tasa de error de observación, total (0–1):"
-  },
-  {
-   "en": "Combined LR",
-   "es": "LR combinada"
-  },
-  {
-   "en": "1. Define profile",
-   "es": "1. Definir el perfil"
   },
   {
    "en": "Missing person (MP)",
@@ -331,14 +219,6 @@
   {
    "en": "log10(LR): blue supports H1, orange supports H2. Rows: F/M = sex; T1/T0 = age inside/outside the MP range.",
    "es": "log10(LR): azul apoya H1, naranja apoya H2. Filas: F/M = sexo; T1/T0 = edad dentro/fuera del rango de la PD."
-  },
-  {
-   "en": "2. LR distribution",
-   "es": "2. Distribución de la LR"
-  },
-  {
-   "en": "3. Choose threshold",
-   "es": "3. Elegir el umbral"
   },
   {
    "en": "log10(LR) decision threshold:",
@@ -391,10 +271,6 @@
   {
    "en": "Estimate population frequencies from the database",
    "es": "Estimar las frecuencias poblacionales a partir de la base de datos"
-  },
-  {
-   "en": "Unchecked: female proportion 0.51, default hair colour frequencies, uniform age 1-80.",
-   "es": "Sin marcar: proporción femenina 0.51, frecuencias predeterminadas de color de cabello, edad uniforme 1-80."
   },
   {
    "en": "Top candidates shown:",
@@ -541,14 +417,6 @@
    "es": "Ningún archivo seleccionado"
   },
   {
-   "en": "Profile from 1. Define profile: %s, %s ± %s, %s.",
-   "es": "Perfil de 1. Definir el perfil: %s, %s ± %s, %s."
-  },
-  {
-   "en": "Edit",
-   "es": "Editar"
-  },
-  {
    "en": "Impossible under H1 (exclusion).",
    "es": "Imposible bajo H1 (exclusión)."
   },
@@ -561,18 +429,6 @@
    "es": "Coincidencia si %s"
   },
   {
-   "en": "Observation error rate",
-   "es": "Tasa de error de observación"
-  },
-  {
-   "en": "Female proportion in population",
-   "es": "Proporción femenina en la población"
-  },
-  {
-   "en": "MP estimated age",
-   "es": "Edad estimada de la PD"
-  },
-  {
    "en": "Age uncertainty",
    "es": "Incertidumbre de la edad"
   },
@@ -581,96 +437,12 @@
    "es": "Edad observada"
   },
   {
-   "en": "Age category error rate",
-   "es": "Tasa de error de la categoría de edad"
-  },
-  {
-   "en": "Color misclassification rate",
-   "es": "Tasa de clasificación errónea del color"
-  },
-  {
-   "en": "Sex Evidence (%s)",
-   "es": "Evidencia de sexo (%s)"
-  },
-  {
-   "en": "concordant",
-   "es": "concordante"
-  },
-  {
-   "en": "discordant",
-   "es": "discordante"
-  },
-  {
-   "en": "P(observed | H1) = 1 - eps =",
-   "es": "P(observado | H1) = 1 - eps ="
-  },
-  {
-   "en": "P(observed | H1) = eps =",
-   "es": "P(observado | H1) = eps ="
-  },
-  {
-   "en": "P(observed | H2) =",
-   "es": "P(observado | H2) ="
-  },
-  {
-   "en": "Age Evidence (%s)",
-   "es": "Evidencia de edad (%s)"
-  },
-  {
    "en": "in range",
    "es": "dentro del rango"
   },
   {
    "en": "out of range",
    "es": "fuera del rango"
-  },
-  {
-   "en": "MP age:",
-   "es": "Edad de la PD:"
-  },
-  {
-   "en": "years",
-   "es": "años"
-  },
-  {
-   "en": "Range used (ages 1-80):",
-   "es": "Rango utilizado (edades 1-80):"
-  },
-  {
-   "en": "to",
-   "es": "a"
-  },
-  {
-   "en": "integer ages",
-   "es": "edades enteras"
-  },
-  {
-   "en": "P(in range | H1) = 1 - eps =",
-   "es": "P(dentro del rango | H1) = 1 - eps ="
-  },
-  {
-   "en": "P(in range | H2) =",
-   "es": "P(dentro del rango | H2) ="
-  },
-  {
-   "en": "P(out of range | H1) = eps =",
-   "es": "P(fuera del rango | H1) = eps ="
-  },
-  {
-   "en": "P(out of range | H2) = 1 -",
-   "es": "P(fuera del rango | H2) = 1 -"
-  },
-  {
-   "en": "Hair Color Evidence (%s)",
-   "es": "Evidencia de color de cabello (%s)"
-  },
-  {
-   "en": "P(observed | H1) = eps / 4 =",
-   "es": "P(observado | H1) = eps / 4 ="
-  },
-  {
-   "en": "P(observed | H2) = population frequency =",
-   "es": "P(observado | H2) = frecuencia poblacional ="
   },
   {
    "en": "Female proportion",
@@ -711,34 +483,6 @@
   {
    "en": "Range:",
    "es": "Rango:"
-  },
-  {
-   "en": "False Positive Rate (1 - Specificity)",
-   "es": "Tasa de falsos positivos (1 - especificidad)"
-  },
-  {
-   "en": "True Positive Rate\n(Sensitivity)",
-   "es": "Tasa de verdaderos positivos\n(sensibilidad)"
-  },
-  {
-   "en": "Sex observation error rate",
-   "es": "Tasa de error de observación del sexo"
-  },
-  {
-   "en": "MP age",
-   "es": "Edad de la PD"
-  },
-  {
-   "en": "Age observation error rate",
-   "es": "Tasa de error de observación de la edad"
-  },
-  {
-   "en": "Hair observation error rate",
-   "es": "Tasa de error de observación del cabello"
-  },
-  {
-   "en": "Not included",
-   "es": "No incluida"
   },
   {
    "en": "No evidence selected",
@@ -1105,10 +849,6 @@
    "es": "Las observaciones son %s veces más probables bajo H2 que bajo H1."
   },
   {
-   "en": "Biological Sex",
-   "es": "Sexo biológico"
-  },
-  {
    "en": "The file could not be read.",
    "es": "No se pudo leer el archivo."
   },
@@ -1163,6 +903,94 @@
   {
    "en": "PPV:",
    "es": "VPP:"
+  },
+  {
+   "en": "MP",
+   "es": "PD"
+  },
+  {
+   "en": "Black dashed line: threshold.",
+   "es": "Línea negra discontinua: umbral."
+  },
+  {
+   "en": "Case LR",
+   "es": "LR del caso"
+  },
+  {
+   "en": "Checked, candidate LRs can differ from Case LR, which uses the population values of the MP panel. Unchecked, they are the same.",
+   "es": "Marcado, los LR de los candidatos pueden diferir del LR del caso, que usa los valores poblacionales del panel de la PD. Sin marcar, coinciden."
+  },
+  {
+   "en": "Evidence",
+   "es": "Evidencia"
+  },
+  {
+   "en": "LR of one observed person",
+   "es": "LR de una persona observada"
+  },
+  {
+   "en": "Non-genetic: case LR",
+   "es": "No genética: LR del caso"
+  },
+  {
+   "en": "Non-genetic: profile performance",
+   "es": "No genética: rendimiento del perfil"
+  },
+  {
+   "en": "Not a case result. Every possible observation (sex, age inside or outside the MP range, hair colour) is scored against the MP profile. Weighting those LRs by P(D | H1) and by P(D | H2) gives the LRs to expect if the person is the MP or unrelated, and the error rates of a threshold.",
+   "es": "No es el resultado de un caso. Cada observación posible (sexo, edad dentro o fuera del rango de la PD, color de cabello) se evalúa contra el perfil de la PD. Ponderando esos LR por P(D | H1) y por P(D | H2) se obtienen los LR esperables si la persona es la PD o no está emparentada, y las tasas de error de un umbral."
+  },
+  {
+   "en": "Observed",
+   "es": "Observado"
+  },
+  {
+   "en": "Observed person",
+   "es": "Persona observada"
+  },
+  {
+   "en": "One observed person compared with the MP profile.",
+   "es": "Una persona observada comparada con el perfil de la PD."
+  },
+  {
+   "en": "Only one sex is present in the database: the female proportion of the MP panel is used.",
+   "es": "La base tiene un solo sexo: se usa la proporción de mujeres del panel de la PD."
+  },
+  {
+   "en": "Outlined cell: the observation entered in Case LR.",
+   "es": "Celda recuadrada: la observación cargada en LR del caso."
+  },
+  {
+   "en": "Profile performance",
+   "es": "Rendimiento del perfil"
+  },
+  {
+   "en": "Purple line: Case LR.",
+   "es": "Línea violeta: LR del caso."
+  },
+  {
+   "en": "Sex, age and hair colour are assumed conditionally independent, so their LRs multiply.",
+   "es": "Se asume que sexo, edad y color de cabello son condicionalmente independientes, por lo que sus LR se multiplican."
+  },
+  {
+   "en": "This LR is the outlined cell of the table in",
+   "es": "Este LR es la celda recuadrada de la tabla en"
+  },
+  {
+   "en": "Use age",
+   "es": "Usar edad"
+  },
+  {
+   "en": "Use hair colour",
+   "es": "Usar color de cabello"
+  },
+  {
+   "en": "Use sex",
+   "es": "Usar sexo"
+  },
+  {
+   "en": "With evidence left out, this LR is not a cell of the Profile performance table.",
+   "es": "Con evidencia excluida, este LR no es una celda de la tabla de Rendimiento del perfil."
   }
  ]
 }

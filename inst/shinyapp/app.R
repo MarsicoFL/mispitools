@@ -32,6 +32,7 @@ COL_THRESHOLD <- "#000000"
 COL_OPTIMAL <- "#009E73"
 COL_MP <- "#CC79A7"
 COL_NEUTRAL <- "#999999"
+COL_CASE <- "#6A3D9A"
 COL_REFERENCE_LINE <- "grey60"
 
 Hypothesis <- logLR <- w <- Var1 <- Var2 <- value <- label <- TPR <- FPR <- FNR <- NULL
@@ -125,7 +126,7 @@ build_cpt_mp <- function(MPs, MPc, eps, epa, epc) {
   CPT_MP
 }
 
-create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
+create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE, case_cell = NULL) {
   dfPOP <- reshape2::melt(CPT_POP)
   dfMP <- reshape2::melt(CPT_MP)
   dfLR <- reshape2::melt(log10(CPT_MP / CPT_POP))
@@ -183,6 +184,15 @@ create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
                   x = tr("Hair Color"), y = "", fill = expression(log[10](LR))) +
     base_theme
 
+  if (!is.null(case_cell)) {
+    outline <- ggplot2::geom_tile(data = data.frame(Var1 = case_cell[1], Var2 = case_cell[2]),
+                                  ggplot2::aes(x = Var2, y = Var1), inherit.aes = FALSE,
+                                  fill = NA, color = COL_CASE, linewidth = 1.4)
+    p1 <- p1 + outline
+    p2 <- p2 + outline
+    p3 <- p3 + outline
+  }
+
   p1 + p2 + p3 + patchwork::plot_layout(ncol = if (narrow) 1 else 3)
 }
 
@@ -225,7 +235,8 @@ dist_title <- function(distH1, distH2) {
       format_log_value(weighted_median(distH2$x, distH2$w)))
 }
 
-create_dist_plot <- function(distH1, distH2, binwidth = 0.25, base_size = 12) {
+create_dist_plot <- function(distH1, distH2, binwidth = 0.25, base_size = 12,
+                             threshold = NULL, case_log = NULL) {
   if (nrow(distH1) == 0 || nrow(distH2) == 0) {
     return(ggplot2::ggplot() +
              ggplot2::annotate("text", x = 0.5, y = 0.5, label = tr("Insufficient data")) +
@@ -274,6 +285,19 @@ create_dist_plot <- function(distH1, distH2, binwidth = 0.25, base_size = 12) {
       ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.45))) +
       ggplot2::coord_cartesian(clip = "off") +
       ggplot2::labs(subtitle = tr("Grey line: LR = 1 (uninformative).\nLeft bar: LR = 0 (exclusion)"))
+  }
+  marks <- character(0)
+  if (!is.null(threshold)) {
+    p <- p + ggplot2::geom_vline(xintercept = threshold, color = COL_THRESHOLD, linewidth = 0.8,
+                                 linetype = "dashed")
+    marks <- c(marks, tr("Black dashed line: threshold."))
+  }
+  if (!is.null(case_log)) {
+    p <- p + ggplot2::geom_vline(xintercept = case_log, color = COL_CASE, linewidth = 1)
+    marks <- c(marks, tr("Purple line: Case LR."))
+  }
+  if (length(marks) > 0) {
+    p <- p + ggplot2::labs(caption = paste(marks, collapse = " "))
   }
   p
 }
@@ -703,9 +727,9 @@ read_candidates <- function(filepath) {
   data
 }
 
-candidate_lrs <- function(cands, MPs, MPa, MPr, MPc, eps, epa, epc, empirical) {
+candidate_lrs <- function(cands, MPs, MPa, MPr, MPc, eps, epa, epc, propF_default, empirical) {
   aw <- age_window(MPa, MPr)
-  propF <- 0.51
+  propF <- propF_default
   hair_freq <- DEFAULT_HAIR_FREQ
   T1p <- aw$T1p
   notes <- character(0)
@@ -714,8 +738,8 @@ candidate_lrs <- function(cands, MPs, MPa, MPr, MPc, eps, epa, epc, empirical) {
     hair_freq <- vapply(names(DEFAULT_HAIR_FREQ), function(h) mean(cands$HairColor == h), numeric(1))
     T1p <- mean(cands$Age >= aw$min & cands$Age <= aw$max)
     if (propF %in% c(0, 1)) {
-      propF <- 0.51
-      notes <- c(notes, tr("Only one sex is present in the database: the default female proportion (0.51) is used."))
+      propF <- propF_default
+      notes <- c(notes, tr("Only one sex is present in the database: the female proportion of the MP panel is used."))
     }
     for (h in names(hair_freq)[hair_freq == 0]) {
       hair_freq[h] <- DEFAULT_HAIR_FREQ[h]
@@ -1128,9 +1152,8 @@ ui <- fluidPage(
           fluidRow(
             column(4,
               div(class = "well entry-card",
-                h5(tr("Single-observation LR")),
-                actionLink("go_individual", tr("Individual evidence")),
-                actionLink("go_combine", tr("Combined evidence"))
+                h5(tr("LR of one observed person")),
+                actionLink("go_case", tr("Non-genetic: case LR"))
               )
             ),
             column(4,
@@ -1143,7 +1166,7 @@ ui <- fluidPage(
             column(4,
               div(class = "well entry-card",
                 h5(tr("Choosing a threshold")),
-                actionLink("go_choose", tr("Non-genetic: 3. Choose threshold")),
+                actionLink("go_choose", tr("Non-genetic: profile performance")),
                 actionLink("go_gen_optimal", tr("Genetic: optimal threshold"))
               )
             )
@@ -1169,288 +1192,169 @@ ui <- fluidPage(
     tabPanel(
       tr("Non-Genetic Evidence"), value = "Non-Genetic Evidence",
       br(),
-      tabsetPanel(
-        id = "nongen_tabs",
-        type = "pills",
-
-    tabPanel(
-      tr("Individual Evidence"), value = "Individual Evidence",
-      br(),
       fluidRow(
         column(3,
-          wellPanel(
-            selectInput("indiv_type", tr("Evidence Type:"),
-              choices = c("Biological Sex" = "sex",
-                          "Age" = "age",
-                          "Hair Color" = "hair"), selectize = FALSE),
-            hr(),
-
-            conditionalPanel(
-              condition = "input.indiv_type == 'sex'",
-              h5(tr("Case")),
-              selectInput("indiv_MPs", tr("MP reported sex:"), sex_choices, selectize = FALSE),
-              selectInput("indiv_obsSex", tr("Observed sex:"), sex_choices, selectize = FALSE),
-              hr(),
-              h5(tr("Model")),
-              p(class = "text-muted small", tr(defaults_help)),
-              sliderInput("indiv_eps_sex", tr("Observation error rate:"),
-                0, 0.3, 0.05, 0.01),
-              sliderInput("indiv_propF", tr("Female proportion in population:"),
-                0.3, 0.7, 0.51, 0.01)
-            ),
-
-            conditionalPanel(
-              condition = "input.indiv_type == 'age'",
-              h5(tr("Case")),
-              numericInput("indiv_MPa", tr("MP estimated age (years):"), 35, 1, 80),
-              numericInput("indiv_MPr", tr("Age uncertainty (± years):"), 5, 1, 20),
-              numericInput("indiv_obsAge", tr("Observed age (years):"), 37, 1, 80),
-              hr(),
-              h5(tr("Model")),
-              p(class = "text-muted small", tr(defaults_help)),
-              sliderInput("indiv_epa", tr("Age category error rate:"),
-                0, 0.3, 0.05, 0.01)
-            ),
-
-            conditionalPanel(
-              condition = "input.indiv_type == 'hair'",
-              h5(tr("Case")),
-              selectInput("indiv_MPc", tr("MP hair color:"), hair_choices, selected = 2, selectize = FALSE),
-              selectInput("indiv_obsC", tr("Observed hair color:"), hair_choices, selected = 2, selectize = FALSE),
-              hr(),
-              h5(tr("Model")),
-              p(class = "text-muted small", tr(defaults_help)),
-              sliderInput("indiv_epc", tr("Color misclassification rate (total):"),
-                0, 0.3, 0.05, 0.01),
-              p(class = "text-muted small", tr(hair_error_help)),
-              p(class = "text-muted small", tr(hair_freq_help))
-            )
-          )
-        ),
-        column(9,
-          div(class = "result-box",
-            h4(tr("Likelihood Ratio")),
-            h2(textOutput("indiv_lr_value")),
-            p(textOutput("indiv_lr_log")),
-            p(class = "plain-sentence", textOutput("indiv_interp", inline = TRUE))
-          ),
-          div(class = "formula-box",
-            h5(style = "margin-top: 0;", tr("Calculation")),
-            verbatimTextOutput("indiv_formula")
-          )
-        )
-      )
-    ),
-
-    tabPanel(
-      tr("Combine Evidence"), value = "Combine Evidence",
-      br(),
-      div(class = "warning-box",
-        strong(tr("Assumption: ")),
-        tr("sex, age and hair colour are conditionally independent, so their LRs multiply.")
-      ),
-      fluidRow(
-        column(3,
-          wellPanel(
-            h5(tr("Sex")),
-            checkboxInput("comb_use_sex", tr("Include"), TRUE),
-            conditionalPanel(
-              condition = "input.comb_use_sex",
-              selectInput("comb_MPs", tr("MP:"), sex_choices, selectize = FALSE),
-              selectInput("comb_obsSex", tr("Observed:"), sex_choices, selectize = FALSE),
-              numericInput("comb_eps", tr("Observation error rate (0–1):"), 0.05, 0, 0.3, 0.01),
-              sliderInput("comb_propF", tr("Female proportion in population:"),
-                0.3, 0.7, 0.51, 0.01)
-            ),
-            hr(),
-            strong(textOutput("comb_lr_sex"))
-          )
-        ),
-        column(3,
-          wellPanel(
-            h5(tr("Age")),
-            checkboxInput("comb_use_age", tr("Include"), TRUE),
-            conditionalPanel(
-              condition = "input.comb_use_age",
-              numericInput("comb_MPa", tr("MP age (years):"), 35, 1, 80),
-              numericInput("comb_MPr", tr("Age uncertainty (± years):"), 5, 1, 20),
-              numericInput("comb_obsAge", tr("Observed age (years):"), 37, 1, 80),
-              numericInput("comb_epa", tr("Observation error rate (0–1):"), 0.05, 0, 0.3, 0.01)
-            ),
-            hr(),
-            strong(textOutput("comb_lr_age"))
-          )
-        ),
-        column(3,
-          wellPanel(
-            h5(tr("Hair colour")),
-            checkboxInput("comb_use_hair", tr("Include"), TRUE),
-            conditionalPanel(
-              condition = "input.comb_use_hair",
-              selectInput("comb_MPc", tr("MP:"), hair_choices, selected = 2, selectize = FALSE),
-              selectInput("comb_obsC", tr("Observed:"), hair_choices, selected = 2, selectize = FALSE),
-              numericInput("comb_epc", tr("Observation error rate, total (0–1):"), 0.05, 0, 0.3, 0.01),
-              p(class = "text-muted small", tr(hair_error_help))
-            ),
-            hr(),
-            strong(textOutput("comb_lr_hair"))
-          )
-        ),
-        column(3,
-          div(class = "result-box",
-            h4(tr("Combined LR")),
-            h2(textOutput("comb_lr_total")),
-            p(textOutput("comb_lr_log")),
-            p(class = "plain-sentence", style = "text-align: left;", textOutput("comb_interp", inline = TRUE)),
-            hr(),
-            verbatimTextOutput("comb_formula")
-          )
-        )
-      )
-    ),
-
-    tabPanel(
-      tr("1. Define profile"), value = "Probability Tables",
-      br(),
-      fluidRow(
-        column(2,
           wellPanel(
             h5(tr("Missing person (MP)")),
-            selectInput("cpt_MPs", tr("Sex:"), sex_choices, selectize = FALSE),
-            numericInput("cpt_MPa", tr("Age (years):"), 40, 1, 80),
-            numericInput("cpt_MPr", tr("Age uncertainty (± years):"), 6, 1, 20),
-            selectInput("cpt_MPc", tr("Hair color:"), hair_choices, selected = 2, selectize = FALSE)
-          )
-        ),
-        column(2,
-          wellPanel(
-            h5(tr("Observation error rates (0–1)")),
-            numericInput("cpt_eps", tr("Sex:"), 0.05, 0, 0.5, 0.01),
-            numericInput("cpt_epa", tr("Age:"), 0.05, 0, 0.5, 0.01),
-            numericInput("cpt_epc", tr("Hair (total):"), 0.05, 0, 0.5, 0.01),
-            p(class = "text-muted small", tr(hair_error_help))
-          ),
-          wellPanel(
-            h5(tr("Population")),
-            sliderInput("cpt_propF", tr("Female proportion (0–1):"), 0.3, 0.7, 0.51, 0.01)
-          )
-        ),
-        column(8,
-          plotOutput("cpt_plots", height = "auto"),
-          p(class = "text-muted small",
-            tr("log10(LR): blue supports H1, orange supports H2. Rows: F/M = sex; T1/T0 = age inside/outside the MP range."))
-        )
-      )
-    ),
-
-    tabPanel(
-      tr("2. LR distribution"), value = "LR Distribution",
-      uiOutput("profile_banner_dist"),
-      fluidRow(
-        column(6,
-          plotOutput("dist_plot", height = "350px")
-        ),
-        column(6,
-          plotOutput("dist_roc", height = "350px")
-        )
-      ),
-      fluidRow(
-        column(6,
-          div(class = "success-box h1-box",
-            h5(tr("H1: the person is the MP (related)")),
-            verbatimTextOutput("dist_stats_h1")
-          )
-        ),
-        column(6,
-          div(class = "warning-box h2-box",
-            h5(tr("H2: unrelated person")),
-            verbatimTextOutput("dist_stats_h2")
-          )
-        )
-      )
-    ),
-
-    tabPanel(
-      tr("3. Choose threshold"), value = "Decision Analysis",
-      uiOutput("profile_banner_dec"),
-      fluidRow(
-        column(4,
-          wellPanel(
-            sliderInput("dec_threshold", tr("log10(LR) decision threshold:"),
-                               min = -3, max = 3, value = 0, step = 0.1),
-            p(class = "text-muted small", textOutput("dec_threshold_lr", inline = TRUE)),
-            hr(),
-            verbatimTextOutput("dec_metrics"),
-            tags$details(
-              tags$summary(tr("Advanced metrics")),
-              p(class = "small", strong("MCC: "), textOutput("dec_mcc", inline = TRUE)),
-              p(class = "text-muted small", tr(mcc_help))
-            )
-          )
-        ),
-        column(8,
-          plotOutput("dec_roc_plot", height = "400px")
-        )
-      )
-    ),
-
-    tabPanel(
-      tr("Database Search"), value = "Database Search",
-      br(),
-      p(tr("Non-genetic LR of each candidate against the MP profile (Marsico & Caridi 2023)."), " ",
-        tr("Genetic false-positive rates:"), " ",
-        actionLink("go_gen_rates_dbs", tr("Genetic Evidence > Rates at Threshold"))),
-      fluidRow(
-        column(3,
-          wellPanel(
-            h5(tr("Candidate Database")),
-            fileInput("dbs_file", NULL, accept = c(".csv", ".tsv", ".txt", "text/csv", "text/plain"),
-              buttonLabel = tr("Browse...")),
-            p(class = "text-muted small",
-              tr("CSV columns: ID, Sex (F/M), Age (1-80), HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab.")),
-            actionButton("dbs_load_example", tr("Load example"), class = "btn-primary btn-block"),
-            downloadButton("dbs_download_example", tr("Download example"),
-              class = "btn-default btn-block", style = "margin-top: 6px;"),
-            p(class = "text-muted small", style = "margin-top: 6px;",
-              tr("Synthetic example: 2,001 candidates; C0001 matches the default MP profile.")),
-            uiOutput("dbs_msg"),
-            hr(),
-            h5(tr("Missing person (MP)")),
-            selectInput("dbs_MPs", tr("Sex:"), sex_choices, selectize = FALSE),
-            numericInput("dbs_MPa", tr("Age (years):"), 40, 1, 80),
-            numericInput("dbs_MPr", tr("Age uncertainty (± years):"), 6, 1, 20),
-            selectInput("dbs_MPc", tr("Hair color:"), hair_choices, selected = 2, selectize = FALSE),
+            selectInput("ng_MPs", tr("Sex:"), sex_choices, selectize = FALSE),
+            numericInput("ng_MPa", tr("Age (years):"), 40, 1, 80),
+            numericInput("ng_MPr", tr("Age uncertainty (± years):"), 6, 1, 20),
+            selectInput("ng_MPc", tr("Hair color:"), hair_choices, selected = 2, selectize = FALSE),
             hr(),
             h5(tr("Observation error rates (0–1)")),
-            numericInput("dbs_eps", tr("Sex:"), 0.05, 0, 0.5, 0.01),
-            numericInput("dbs_epa", tr("Age:"), 0.05, 0, 0.5, 0.01),
-            numericInput("dbs_epc", tr("Hair (total):"), 0.05, 0, 0.5, 0.01),
+            numericInput("ng_eps", tr("Sex:"), 0.05, 0, 0.5, 0.01),
+            numericInput("ng_epa", tr("Age:"), 0.05, 0, 0.5, 0.01),
+            numericInput("ng_epc", tr("Hair (total):"), 0.05, 0, 0.5, 0.01),
             p(class = "text-muted small", tr(hair_error_help)),
             hr(),
-            checkboxInput("dbs_empirical", tr("Estimate population frequencies from the database"), TRUE),
-            p(class = "text-muted small",
-              tr("Unchecked: female proportion 0.51, default hair colour frequencies, uniform age 1-80."))
+            h5(tr("Population")),
+            sliderInput("ng_propF", tr("Female proportion (0–1):"), 0.3, 0.7, 0.51, 0.01),
+            p(class = "text-muted small", tr(hair_freq_help)),
+            p(class = "text-muted small", tr(defaults_help))
           )
         ),
         column(9,
-          wellPanel(
-            sliderInput("dbs_threshold", tr("log10(LR) decision threshold:"),
-              min = -3, max = 3, value = 0, step = 0.1),
-            p(class = "text-muted small", textOutput("dbs_threshold_lr", inline = TRUE)),
-            p(class = "plain-sentence", textOutput("dbs_sentence", inline = TRUE)),
-            br(),
-            verbatimTextOutput("dbs_summary")
-          ),
-          plotOutput("dbs_hist", height = "350px"),
-          fluidRow(
-            column(6, numericInput("dbs_top", tr("Top candidates shown:"), 20, 1, 500)),
-            column(6, br(), downloadButton("dbs_download_results", tr("Download results")))
-          ),
-          div(style = "overflow-x: auto;", tableOutput("dbs_table"))
+          tabsetPanel(
+            id = "nongen_tabs",
+            type = "pills",
+
+            tabPanel(
+              tr("Case LR"), value = "Case LR",
+              br(),
+              p(class = "interpretation-text",
+                tr("One observed person compared with the MP profile.")),
+              fluidRow(
+                column(4,
+                  wellPanel(
+                    h5(tr("Observed person")),
+                    checkboxInput("case_use_sex", tr("Use sex"), TRUE),
+                    conditionalPanel(
+                      condition = "input.case_use_sex",
+                      selectInput("case_obsSex", tr("Observed sex:"), sex_choices, selectize = FALSE)
+                    ),
+                    checkboxInput("case_use_age", tr("Use age"), TRUE),
+                    conditionalPanel(
+                      condition = "input.case_use_age",
+                      numericInput("case_obsAge", tr("Observed age (years):"), 42, 1, 80)
+                    ),
+                    checkboxInput("case_use_hair", tr("Use hair colour"), TRUE),
+                    conditionalPanel(
+                      condition = "input.case_use_hair",
+                      selectInput("case_obsC", tr("Observed hair color:"), hair_choices,
+                                  selected = 2, selectize = FALSE)
+                    )
+                  )
+                ),
+                column(8,
+                  div(class = "result-box",
+                    h4(tr("Likelihood Ratio")),
+                    h2(textOutput("case_lr_value")),
+                    p(textOutput("case_lr_log")),
+                    p(class = "plain-sentence", textOutput("case_interp", inline = TRUE))
+                  ),
+                  div(style = "overflow-x: auto;", tableOutput("case_table")),
+                  p(class = "text-muted small",
+                    tr("Sex, age and hair colour are assumed conditionally independent, so their LRs multiply.")),
+                  uiOutput("case_cell_note")
+                )
+              )
+            ),
+
+            tabPanel(
+              tr("Profile performance"), value = "Profile performance",
+              br(),
+              div(class = "info-box",
+                p(style = "margin: 0;",
+                  tr("Not a case result. Every possible observation (sex, age inside or outside the MP range, hair colour) is scored against the MP profile. Weighting those LRs by P(D | H1) and by P(D | H2) gives the LRs to expect if the person is the MP or unrelated, and the error rates of a threshold."))
+              ),
+              plotOutput("cpt_plots", height = "auto"),
+              p(class = "text-muted small",
+                tr("log10(LR): blue supports H1, orange supports H2. Rows: F/M = sex; T1/T0 = age inside/outside the MP range."),
+                " ", textOutput("cpt_case_note", inline = TRUE)),
+              hr(),
+              fluidRow(
+                column(4,
+                  wellPanel(
+                    sliderInput("dec_threshold", tr("log10(LR) decision threshold:"),
+                                min = -3, max = 3, value = 0, step = 0.1),
+                    p(class = "text-muted small", textOutput("dec_threshold_lr", inline = TRUE)),
+                    hr(),
+                    verbatimTextOutput("dec_metrics"),
+                    tags$details(
+                      tags$summary(tr("Advanced metrics")),
+                      p(class = "small", strong("MCC: "), textOutput("dec_mcc", inline = TRUE)),
+                      p(class = "text-muted small", tr(mcc_help))
+                    )
+                  )
+                ),
+                column(8,
+                  plotOutput("dist_plot", height = "350px")
+                )
+              ),
+              fluidRow(
+                column(6,
+                  plotOutput("dec_roc_plot", height = "350px")
+                ),
+                column(6,
+                  div(class = "success-box h1-box",
+                    h5(tr("H1: the person is the MP (related)")),
+                    verbatimTextOutput("dist_stats_h1")
+                  ),
+                  div(class = "warning-box h2-box",
+                    h5(tr("H2: unrelated person")),
+                    verbatimTextOutput("dist_stats_h2")
+                  )
+                )
+              )
+            ),
+
+            tabPanel(
+              tr("Database Search"), value = "Database Search",
+              br(),
+              p(tr("Non-genetic LR of each candidate against the MP profile (Marsico & Caridi 2023)."), " ",
+                tr("Genetic false-positive rates:"), " ",
+                actionLink("go_gen_rates_dbs", tr("Genetic Evidence > Rates at Threshold"))),
+              fluidRow(
+                column(4,
+                  wellPanel(
+                    h5(tr("Candidate Database")),
+                    fileInput("dbs_file", NULL, accept = c(".csv", ".tsv", ".txt", "text/csv", "text/plain"),
+                      buttonLabel = tr("Browse...")),
+                    p(class = "text-muted small",
+                      tr("CSV columns: ID, Sex (F/M), Age (1-80), HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab.")),
+                    actionButton("dbs_load_example", tr("Load example"), class = "btn-primary btn-block"),
+                    downloadButton("dbs_download_example", tr("Download example"),
+                      class = "btn-default btn-block", style = "margin-top: 6px;"),
+                    p(class = "text-muted small", style = "margin-top: 6px;",
+                      tr("Synthetic example: 2,001 candidates; C0001 matches the default MP profile.")),
+                    uiOutput("dbs_msg"),
+                    hr(),
+                    checkboxInput("dbs_empirical", tr("Estimate population frequencies from the database"), TRUE),
+                    p(class = "text-muted small",
+                      tr("Checked, candidate LRs can differ from Case LR, which uses the population values of the MP panel. Unchecked, they are the same."))
+                  )
+                ),
+                column(8,
+                  wellPanel(
+                    sliderInput("dbs_threshold", tr("log10(LR) decision threshold:"),
+                      min = -3, max = 3, value = 0, step = 0.1),
+                    p(class = "text-muted small", textOutput("dbs_threshold_lr", inline = TRUE)),
+                    p(class = "plain-sentence", textOutput("dbs_sentence", inline = TRUE)),
+                    br(),
+                    verbatimTextOutput("dbs_summary")
+                  )
+                )
+              ),
+              plotOutput("dbs_hist", height = "350px"),
+              fluidRow(
+                column(6, numericInput("dbs_top", tr("Top candidates shown:"), 20, 1, 500)),
+                column(6, br(), downloadButton("dbs_download_results", tr("Download results")))
+              ),
+              div(style = "overflow-x: auto;", tableOutput("dbs_table"))
+            )
+          )
         )
       )
-    )
-    )
     ),
 
     tabPanel(
@@ -1634,11 +1538,8 @@ server <- function(input, output, session) {
   session$userData$shiny.i18n <- list(lang = reactiveVal("en"))
 
   select_choices <- list(
-    indiv_type = c("Biological Sex" = "sex", "Age" = "age", "Hair Color" = "hair"),
-    indiv_MPs = sex_choices, indiv_obsSex = sex_choices, cpt_MPs = sex_choices,
-    comb_MPs = sex_choices, comb_obsSex = sex_choices, dbs_MPs = sex_choices,
-    indiv_MPc = hair_choices, indiv_obsC = hair_choices, cpt_MPc = hair_choices,
-    comb_MPc = hair_choices, comb_obsC = hair_choices, dbs_MPc = hair_choices,
+    ng_MPs = sex_choices, case_obsSex = sex_choices,
+    ng_MPc = hair_choices, case_obsC = hair_choices,
     sim_example = genetic_examples
   )
 
@@ -1658,27 +1559,12 @@ server <- function(input, output, session) {
     if (!is.null(sim)) updateTabsetPanel(session, "sim_subtabs", selected = sim)
   }
 
-  observeEvent(input$go_individual, go_to("Non-Genetic Evidence", "Individual Evidence"))
-  observeEvent(input$go_combine, go_to("Non-Genetic Evidence", "Combine Evidence"))
+  observeEvent(input$go_case, go_to("Non-Genetic Evidence", "Case LR"))
   observeEvent(input$go_dbs, go_to("Non-Genetic Evidence", "Database Search"))
-  observeEvent(input$go_choose, go_to("Non-Genetic Evidence", "Decision Analysis"))
+  observeEvent(input$go_choose, go_to("Non-Genetic Evidence", "Profile performance"))
   observeEvent(input$go_gen_rates, go_to("Genetic Evidence", sim = "Rates at Threshold"))
   observeEvent(input$go_gen_rates_dbs, go_to("Genetic Evidence", sim = "Rates at Threshold"))
   observeEvent(input$go_gen_optimal, go_to("Genetic Evidence", sim = "Decision Plot"))
-  observeEvent(input$goto_profile_dist, go_to("Non-Genetic Evidence", "Probability Tables"))
-  observeEvent(input$goto_profile_dec, go_to("Non-Genetic Evidence", "Probability Tables"))
-
-  profile_banner <- function(link_id) {
-    div(class = "profile-banner",
-      trf("Profile from 1. Define profile: %s, %s \u00b1 %s, %s.",
-          input$cpt_MPs, input$cpt_MPa, input$cpt_MPr,
-          tr(names(hair_choices)[hair_choices == input$cpt_MPc])),
-      " ",
-      actionLink(link_id, tr("Edit")))
-  }
-
-  output$profile_banner_dist <- renderUI(profile_banner("goto_profile_dist"))
-  output$profile_banner_dec <- renderUI(profile_banner("goto_profile_dec"))
 
   interpretation <- function(LR, evidence) {
     if (LR == 0) return(tr("Impossible under H1 (exclusion)."))
@@ -1686,14 +1572,6 @@ server <- function(input, output, session) {
     trf(interpretation_templates[[evidence]][if (LR > 1) 1 else 2],
         format(signif(if (LR > 1) LR else 1 / LR, 3), big.mark = big_mark(), scientific = FALSE))
   }
-
-  output$indiv_interp <- renderText({
-    interpretation(indiv_lr(), "single")
-  })
-
-  output$comb_interp <- renderText({
-    interpretation(comb_total(), "combined")
-  })
 
   threshold_lr_text <- function(t) {
     trf("Match if %s", sprintf("log10(LR) \u2265 %.1f (LR \u2265 %s)", t,
@@ -1712,108 +1590,123 @@ server <- function(input, output, session) {
     if (is_narrow(id)) 10 else wide
   }
 
-  indiv_lr <- reactive({
-    if (input$indiv_type == "sex") {
-      validate(
-        check_num(input$indiv_eps_sex, "Observation error rate", 0, 0.3),
-        check_num(input$indiv_propF, "Female proportion in population", 0.3, 0.7)
-      )
-      calc_lr_sex(input$indiv_MPs, input$indiv_obsSex,
-                  input$indiv_eps_sex, input$indiv_propF)
-    } else if (input$indiv_type == "age") {
-      validate(
-        check_num(input$indiv_MPa, "MP estimated age", 1, 80, whole = TRUE),
-        check_num(input$indiv_MPr, "Age uncertainty", 1, 20, whole = TRUE),
-        check_num(input$indiv_obsAge, "Observed age", 1, 80, whole = TRUE),
-        check_num(input$indiv_epa, "Age category error rate", 0, 0.3)
-      )
-      calc_lr_age(input$indiv_MPa, input$indiv_MPr,
-                  input$indiv_obsAge, input$indiv_epa)
+  ng_profile <- reactive({
+    validate(
+      check_num(input$ng_MPa, "Age", 1, 80, whole = TRUE),
+      check_num(input$ng_MPr, "Age uncertainty", 1, 20, whole = TRUE),
+      check_num(input$ng_eps, "Sex error rate", 0, 0.5),
+      check_num(input$ng_epa, "Age error rate", 0, 0.5),
+      check_num(input$ng_epc, "Hair error rate", 0, 0.5),
+      check_num(input$ng_propF, "Female proportion", 0.3, 0.7)
+    )
+    list(MPs = input$ng_MPs, MPa = input$ng_MPa, MPr = input$ng_MPr, MPc = as.numeric(input$ng_MPc),
+         eps = input$ng_eps, epa = input$ng_epa, epc = input$ng_epc, propF = input$ng_propF)
+  })
+
+  case_parts <- reactive({
+    p <- ng_profile()
+    aw <- age_window(p$MPa, p$MPr)
+    sex_name <- function(s) tr(names(sex_choices)[sex_choices == s])
+    hair_name <- function(h) tr(names(hair_choices)[h])
+    rows <- list()
+    cell <- list()
+    if (isTRUE(input$case_use_sex)) {
+      obs <- input$case_obsSex
+      rows[[length(rows) + 1]] <- data.frame(
+        ev = tr("Sex"), mp = sex_name(p$MPs), obs = sex_name(obs),
+        h1 = if (obs == p$MPs) 1 - p$eps else p$eps,
+        h2 = if (obs == "F") p$propF else 1 - p$propF)
+      cell$sex <- obs
+    }
+    if (isTRUE(input$case_use_age)) {
+      validate(check_num(input$case_obsAge, "Observed age", 1, 80, whole = TRUE))
+      obs <- input$case_obsAge
+      inside <- obs >= aw$min && obs <= aw$max
+      rows[[length(rows) + 1]] <- data.frame(
+        ev = tr("Age"), mp = sprintf("%d-%d", aw$min, aw$max),
+        obs = sprintf("%d (%s)", obs, tr(if (inside) "in range" else "out of range")),
+        h1 = if (inside) 1 - p$epa else p$epa,
+        h2 = if (inside) aw$T1p else 1 - aw$T1p)
+      cell$age <- if (inside) "T1" else "T0"
+    }
+    if (isTRUE(input$case_use_hair)) {
+      obs <- as.numeric(input$case_obsC)
+      rows[[length(rows) + 1]] <- data.frame(
+        ev = tr("Hair colour"), mp = hair_name(p$MPc), obs = hair_name(obs),
+        h1 = if (obs == p$MPc) 1 - p$epc else p$epc / (length(DEFAULT_HAIR_FREQ) - 1),
+        h2 = unname(DEFAULT_HAIR_FREQ[obs]))
+      cell$hair <- names(DEFAULT_HAIR_FREQ)[obs]
+    }
+    tab <- do.call(rbind, rows)
+    if (!is.null(tab)) tab$lr <- tab$h1 / tab$h2
+    full <- length(cell) == 3
+    list(table = tab,
+         LR = if (is.null(tab)) NA else prod(tab$lr),
+         cell = if (full) c(paste(cell$sex, cell$age, sep = "-"), cell$hair) else NULL)
+  })
+
+  output$case_lr_value <- renderText({
+    LR <- case_parts()$LR
+    if (is.na(LR)) tr("No evidence selected") else format_lr(LR)
+  })
+
+  output$case_lr_log <- renderText({
+    LR <- case_parts()$LR
+    if (is.na(LR)) "" else format_log_lr(LR)
+  })
+
+  output$case_interp <- renderText({
+    cp <- case_parts()
+    if (is.na(cp$LR)) return("")
+    interpretation(cp$LR, if (nrow(cp$table) == 1) "single" else "combined")
+  })
+
+  output$case_table <- renderTable({
+    tab <- case_parts()$table
+    req(tab)
+    num <- function(x) sprintf("%.4g", x)
+    out <- data.frame(tab$ev, tab$mp, tab$obs, num(tab$h1), num(tab$h2), num(tab$lr),
+                      check.names = FALSE)
+    names(out) <- c(tr("Evidence"), tr("MP"), tr("Observed"),
+                    "P(obs | H1)", "P(obs | H2)", "LR")
+    out
+  }, striped = TRUE, align = "lllrrr")
+
+  output$case_cell_note <- renderUI({
+    if (is.null(case_parts()$cell)) {
+      p(class = "text-muted small",
+        tr("With evidence left out, this LR is not a cell of the Profile performance table."))
     } else {
-      validate(check_num(input$indiv_epc, "Color misclassification rate", 0, 0.3))
-      calc_lr_hair(as.numeric(input$indiv_MPc), as.numeric(input$indiv_obsC),
-                   input$indiv_epc, DEFAULT_HAIR_FREQ)
+      p(class = "text-muted small",
+        tr("This LR is the outlined cell of the table in"), " ",
+        actionLink("goto_performance", tr("Profile performance")))
     }
   })
 
-  output$indiv_lr_value <- renderText({
-    format_lr(indiv_lr())
-  })
-
-  output$indiv_lr_log <- renderText({
-    format_log_lr(indiv_lr())
-  })
-
-  output$indiv_formula <- renderPrint({
-    LR <- indiv_lr()
-    if (input$indiv_type == "sex") {
-      concordant <- input$indiv_MPs == input$indiv_obsSex
-      cat(trf("Sex Evidence (%s)", tr(if (concordant) "concordant" else "discordant")), "\n", sep = "")
-      cat("----------------------------------------\n")
-      if (concordant) {
-        cat(tr("P(observed | H1) = 1 - eps ="), 1 - input$indiv_eps_sex, "\n")
-      } else {
-        cat(tr("P(observed | H1) = eps ="), input$indiv_eps_sex, "\n")
-      }
-      obs_freq <- if (input$indiv_obsSex == "F") input$indiv_propF else (1 - input$indiv_propF)
-      cat(tr("P(observed | H2) ="), round(obs_freq, 3), "\n")
-
-    } else if (input$indiv_type == "age") {
-      aw <- age_window(input$indiv_MPa, input$indiv_MPr)
-      in_range <- input$indiv_obsAge >= aw$min && input$indiv_obsAge <= aw$max
-      cat(trf("Age Evidence (%s)", tr(if (in_range) "in range" else "out of range")), "\n", sep = "")
-      cat("----------------------------------------\n")
-      cat(tr("MP age:"), input$indiv_MPa, "+/-", input$indiv_MPr, tr("years"), "\n")
-      cat(tr("Range used (ages 1-80):"), aw$min, tr("to"), aw$max,
-          "=", aw$max - aw$min + 1, tr("integer ages"), "\n")
-      cat(tr("Observed:"), input$indiv_obsAge, tr("years"), "\n")
-      if (in_range) {
-        cat(tr("P(in range | H1) = 1 - eps ="), 1 - input$indiv_epa, "\n")
-        cat(tr("P(in range | H2) ="), aw$max - aw$min + 1, "/ 80 =", round(aw$T1p, 4), "\n")
-      } else {
-        cat(tr("P(out of range | H1) = eps ="), input$indiv_epa, "\n")
-        cat(tr("P(out of range | H2) = 1 -"), aw$max - aw$min + 1, "/ 80 =",
-            round(1 - aw$T1p, 4), "\n")
-      }
-
-    } else {
-      concordant <- input$indiv_MPc == input$indiv_obsC
-      cat(trf("Hair Color Evidence (%s)", tr(if (concordant) "concordant" else "discordant")), "\n", sep = "")
-      cat("----------------------------------------\n")
-      cat(tr("MP:"), tr(hair_labels[[input$indiv_MPc]]), "\n")
-      cat(tr("Observed:"), tr(hair_labels[[input$indiv_obsC]]), "\n")
-      if (concordant) {
-        cat(tr("P(observed | H1) = 1 - eps ="), 1 - input$indiv_epc, "\n")
-      } else {
-        cat(tr("P(observed | H1) = eps / 4 ="), input$indiv_epc / 4, "\n")
-      }
-      cat(tr("P(observed | H2) = population frequency ="),
-          DEFAULT_HAIR_FREQ[as.numeric(input$indiv_obsC)], "\n")
-    }
-    cat(if (LR == 0) tr("LR = 0 (exclusion)") else paste("LR =", round(LR, 4)), "\n")
-  })
+  observeEvent(input$goto_performance, go_to("Non-Genetic Evidence", "Profile performance"))
 
   cpt_pop <- reactive({
-    validate(
-      check_num(input$cpt_MPa, "Age", 1, 80, whole = TRUE),
-      check_num(input$cpt_MPr, "Age uncertainty", 1, 20, whole = TRUE),
-      check_num(input$cpt_propF, "Female proportion", 0.3, 0.7)
-    )
-    build_cpt_pop(input$cpt_propF, input$cpt_MPa, input$cpt_MPr, DEFAULT_HAIR_FREQ)
+    p <- ng_profile()
+    build_cpt_pop(p$propF, p$MPa, p$MPr, DEFAULT_HAIR_FREQ)
   })
 
   cpt_mp <- reactive({
-    validate(
-      check_num(input$cpt_eps, "Sex error rate", 0, 0.5),
-      check_num(input$cpt_epa, "Age error rate", 0, 0.5),
-      check_num(input$cpt_epc, "Hair error rate", 0, 0.5)
-    )
-    build_cpt_mp(input$cpt_MPs, as.numeric(input$cpt_MPc),
-                 input$cpt_eps, input$cpt_epa, input$cpt_epc)
+    p <- ng_profile()
+    build_cpt_mp(p$MPs, p$MPc, p$eps, p$epa, p$epc)
+  })
+
+  case_log_lr <- reactive({
+    cp <- case_parts()
+    if (is.null(cp$cell) || cp$LR == 0) NULL else log10(cp$LR)
+  })
+
+  output$cpt_case_note <- renderText({
+    if (is.null(case_parts()$cell)) "" else tr("Outlined cell: the observation entered in Case LR.")
   })
 
   output$cpt_plots <- renderPlot({
-    create_cpt_plots(cpt_pop(), cpt_mp(), narrow = is_narrow("cpt_plots"))
+    create_cpt_plots(cpt_pop(), cpt_mp(), narrow = is_narrow("cpt_plots"),
+                     case_cell = case_parts()$cell)
   }, res = 100, height = function() if (is_narrow("cpt_plots")) 1000 else 380,
   alt = function() tr("Heatmaps of P(D | H2), P(D | H1) and log10(LR) for each sex, age class and hair colour of the missing person profile."))
 
@@ -1823,7 +1716,8 @@ server <- function(input, output, session) {
 
   output$dist_plot <- renderPlot({
     dists <- lr_dists()
-    create_dist_plot(dists$H1, dists$H2, base_size = plot_size("dist_plot", 12))
+    create_dist_plot(dists$H1, dists$H2, base_size = plot_size("dist_plot", 12),
+                     threshold = input$dec_threshold, case_log = case_log_lr())
   }, res = 100, alt = function() one_line(dist_title(lr_dists()$H1, lr_dists()$H2)))
 
   roc_alt <- function() {
@@ -1852,108 +1746,6 @@ server <- function(input, output, session) {
 
   output$dist_stats_h2 <- renderPrint({
     dist_stats(lr_dists()$H2)
-  })
-
-  output$dist_roc <- renderPlot({
-    dists <- lr_dists()
-    roc_obj <- build_roc(dists$H1, dists$H2)
-    df_roc <- roc_obj$data
-    auc_val <- roc_obj$AUC
-
-    if (nrow(df_roc) == 0) {
-      return(ggplot2::ggplot() +
-               ggplot2::annotate("text", x = 0.5, y = 0.5, label = tr("Insufficient data")) +
-               ggplot2::theme_void())
-    }
-
-    ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
-      ggplot2::geom_path(color = "grey35", linewidth = 1) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dotted",
-                           color = COL_REFERENCE_LINE, linewidth = 0.8) +
-      ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-      ggplot2::labs(title = roc_title(auc_val),
-                    x = tr("False Positive Rate (1 - Specificity)"),
-                    y = tr("True Positive Rate\n(Sensitivity)")) +
-      ggplot2::theme_minimal(base_size = plot_size("dist_roc", 12)) +
-      ggplot2::theme(
-        plot.title.position = "plot",
-        plot.title = ggplot2::element_text(face = "bold"),
-        panel.grid.minor = ggplot2::element_blank()
-      )
-  }, res = 100, alt = roc_alt)
-
-  comb_lr_sex_val <- reactive({
-    if (input$comb_use_sex) {
-      validate(
-        check_num(input$comb_eps, "Sex observation error rate", 0, 0.3),
-        check_num(input$comb_propF, "Female proportion in population", 0.3, 0.7)
-      )
-      calc_lr_sex(input$comb_MPs, input$comb_obsSex, input$comb_eps, input$comb_propF)
-    } else {
-      1
-    }
-  })
-
-  comb_lr_age_val <- reactive({
-    if (input$comb_use_age) {
-      validate(
-        check_num(input$comb_MPa, "MP age", 1, 80, whole = TRUE),
-        check_num(input$comb_MPr, "Age uncertainty", 1, 20, whole = TRUE),
-        check_num(input$comb_obsAge, "Observed age", 1, 80, whole = TRUE),
-        check_num(input$comb_epa, "Age observation error rate", 0, 0.3)
-      )
-      calc_lr_age(input$comb_MPa, input$comb_MPr, input$comb_obsAge, input$comb_epa)
-    } else {
-      1
-    }
-  })
-
-  comb_lr_hair_val <- reactive({
-    if (input$comb_use_hair) {
-      validate(check_num(input$comb_epc, "Hair observation error rate", 0, 0.3))
-      calc_lr_hair(as.numeric(input$comb_MPc), as.numeric(input$comb_obsC),
-                   input$comb_epc, DEFAULT_HAIR_FREQ)
-    } else {
-      1
-    }
-  })
-
-  output$comb_lr_sex <- renderText({
-    if (input$comb_use_sex) format_lr(comb_lr_sex_val()) else tr("Not included")
-  })
-
-  output$comb_lr_age <- renderText({
-    if (input$comb_use_age) format_lr(comb_lr_age_val()) else tr("Not included")
-  })
-
-  output$comb_lr_hair <- renderText({
-    if (input$comb_use_hair) format_lr(comb_lr_hair_val()) else tr("Not included")
-  })
-
-  comb_total <- reactive({
-    comb_lr_sex_val() * comb_lr_age_val() * comb_lr_hair_val()
-  })
-
-  output$comb_lr_total <- renderText({
-    format_lr(comb_total())
-  })
-
-  output$comb_lr_log <- renderText({
-    format_log_lr(comb_total())
-  })
-
-  output$comb_formula <- renderPrint({
-    vals <- c()
-    if (input$comb_use_sex) vals <- c(vals, comb_lr_sex_val())
-    if (input$comb_use_age) vals <- c(vals, comb_lr_age_val())
-    if (input$comb_use_hair) vals <- c(vals, comb_lr_hair_val())
-
-    if (length(vals) == 0) {
-      cat(tr("No evidence selected"), "\n")
-    } else {
-      cat(paste(sprintf("%.4g", vals), collapse = " x "), "\n")
-      cat("=", sprintf("%.4g", prod(vals)), "\n")
-    }
   })
 
   output$dec_metrics <- renderPrint({
@@ -2503,15 +2295,9 @@ server <- function(input, output, session) {
   dbs_lr <- reactive({
     cands <- dbs_data()
     validate(need(!is.null(cands), tr("Upload a candidate database or load the example.")))
-    validate(
-      check_num(input$dbs_MPa, "Age", 1, 80, whole = TRUE),
-      check_num(input$dbs_MPr, "Age uncertainty", 1, 20, whole = TRUE),
-      check_num(input$dbs_eps, "Sex error rate", 0, 0.5),
-      check_num(input$dbs_epa, "Age error rate", 0, 0.5),
-      check_num(input$dbs_epc, "Hair error rate", 0, 0.5)
-    )
-    candidate_lrs(cands, input$dbs_MPs, input$dbs_MPa, input$dbs_MPr, as.numeric(input$dbs_MPc),
-                  input$dbs_eps, input$dbs_epa, input$dbs_epc, isTRUE(input$dbs_empirical))
+    p <- ng_profile()
+    candidate_lrs(cands, p$MPs, p$MPa, p$MPr, p$MPc, p$eps, p$epa, p$epc, p$propF,
+                  isTRUE(input$dbs_empirical))
   })
 
   dbs_above_title <- reactive({
