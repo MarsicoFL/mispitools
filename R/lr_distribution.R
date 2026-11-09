@@ -42,6 +42,14 @@
 #'   `"poi"` (the resolved POI; a vector if it differs across models).
 #'
 #' @details
+#' The support of the distribution is the set of genotype configurations
+#' of the members each model declares as typed (see the `typed` argument
+#' of [marker_model()]). With the default `typed = NULL` every member of
+#' the pedigree is treated as typed, so the distribution answers "what if
+#' the whole pedigree were genotyped"; naming the reference samples
+#' instead answers the question a case poses, and lets the engine reach
+#' pedigrees where enumerating every member is not possible.
+#'
 #' Markers are assumed conditionally independent given the hypothesis
 #' (no linkage); linked-marker composition arrives with the F5 linkage
 #' work. `+Inf` / `-Inf` atoms (which arise under `mutation = "none"`

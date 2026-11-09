@@ -64,6 +64,8 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
     rep(NA_real_, K)
   }
 
+  relevant <- typed_relevant(model, poi_id, name_to_idx)
+
   res <- cpt_marker_joint_cpp(
     father = as.integer(father),
     mother = as.integer(mother),
@@ -74,7 +76,8 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
     mutation_range = mut_range,
     mutation_rate2 = 0.0,
     mutation_bias = 0.5,
-    numeric_labels = mut_labels
+    numeric_labels = mut_labels,
+    relevant = relevant
   )
 
   G <- res$n_genotypes
@@ -87,13 +90,14 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
     }
   }
 
+  keep <- if (length(relevant)) relevant else seq_len(n)
   states <- res$states
   n_rows <- nrow(states)
-  out <- data.frame(matrix(NA_character_, nrow = n_rows, ncol = n),
+  out <- data.frame(matrix(NA_character_, nrow = n_rows, ncol = length(keep)),
                     stringsAsFactors = FALSE)
-  names(out) <- members
-  for (mi in seq_len(n)) {
-    out[[mi]] <- geno_labels[states[, mi]]
+  names(out) <- members[keep]
+  for (k in seq_along(keep)) {
+    out[[k]] <- geno_labels[states[, keep[k]]]
   }
   out$P_H1 <- res$P_H1
   out$P_H2 <- res$P_H2
@@ -101,5 +105,14 @@ cpt_marker_joint_cpp_wrap <- function(model, poi = NULL) {
   attr(out, "marker_id") <- model$marker_id
   attr(out, "alleles") <- alleles
   attr(out, "poi") <- poi_id
+  attr(out, "typed") <- model$typed
   out
+}
+
+#' @noRd
+typed_relevant <- function(model, poi_id, name_to_idx) {
+  if (is.null(model$typed)) return(integer(0))
+  members <- names(name_to_idx)
+  keep <- union(model$typed, poi_id)
+  sort(unname(name_to_idx[members %in% keep]) + 1L)
 }

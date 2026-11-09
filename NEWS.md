@@ -1,3 +1,47 @@
+# mispitools (development version)
+
+## Typed members: the engine reaches past the trio
+
+Version 2.0 enumerated the joint genotype configuration of every member of
+the pedigree. That has two consequences, one of cost and one of meaning.
+The cost is that a pedigree of five people is out of reach for a real STR
+marker. The meaning is that the distribution it returns is the one that
+would hold if the whole pedigree were genotyped, which is rarely the case
+a laboratory has: the usual case types one or two relatives and leaves the
+rest latent.
+
+* `marker_model()` gains a `typed` argument naming the members that carry
+  a genotype. Every other relative is summed out by Elston-Stewart
+  variable elimination instead of being enumerated. `typed = NULL`, the
+  default, keeps the 2.0 behaviour exactly: the test suite pins the two
+  paths atom for atom when the keep-set covers the whole pedigree.
+* `lr_distribution()`, `per_marker_kl()` and `per_marker_kl_profile()`
+  read the argument off the model, so the whole exact route follows. The
+  joint table now reports only the members that carry data.
+* The batch KL path forwards the keep-set to the kernel, and falls back to
+  the per-model loop when models declare different typing configurations.
+* Cross-checked against `pedprobr::oneMarkerDistribution()` on a
+  five-member pedigree with one and with two typed references, where no
+  dense computation exists to compare against.
+
+What this buys, measured on a grandparent and grandchild with a single
+typed grandparent, where 2.0 ran out of memory for every marker tried:
+
+    9 alleles    0.2 s        12 alleles   3.0 s
+    10 alleles   0.6 s        19 alleles   173 s
+                              23 alleles   out of memory
+
+The remaining ceiling is the peeling frontier rather than the size of the
+answer: the marginal over two members is small, but reaching it requires
+holding three members jointly, and at 23 alleles that intermediate table
+is what exhausts memory.
+
+* The order in which the peeling introduces the two parents of a deferred
+  member now follows the depth of their ancestry, so the deep branch is
+  resolved and summed out before the shallow one pins its founders in the
+  frontier. This halves the time on the cases that already ran and does
+  not change any result.
+
 # mispitools 2.0.1
 
 Fixes a test failure reported by CRAN on macOS arm64 (r-release and

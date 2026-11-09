@@ -570,7 +570,8 @@ Rcpp::List cpp_per_marker_kl_batch(
         Rcpp::IntegerVector mutation_kind,
         Rcpp::NumericVector mutation_rate,
         Rcpp::NumericVector mutation_range,
-        Rcpp::List numeric_labels_list) {
+        Rcpp::List numeric_labels_list,
+        Rcpp::IntegerVector relevant = Rcpp::IntegerVector::create()) {
     if (father.size() != mother.size()) {
         Rcpp::stop("cpp_per_marker_kl_batch: father and mother must be the same length.");
     }
@@ -621,7 +622,13 @@ Rcpp::List cpp_per_marker_kl_batch(
         mutations.push_back(mut);
     }
 
-    auto r = mc::per_marker_kl_batch(ped, markers, mutations);
+    std::vector<mc::MemberIndex> rel;
+    rel.reserve(static_cast<std::size_t>(relevant.size()));
+    for (int k = 0; k < relevant.size(); ++k) {
+        rel.push_back(static_cast<mc::MemberIndex>(relevant[k] - 1));
+    }
+
+    auto r = mc::per_marker_kl_batch(ped, markers, mutations, rel);
     if (!r.ok()) Rcpp::stop(r.error);
     const mc::PerMarkerKLBatch& batch = *r;
 

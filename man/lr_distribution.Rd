@@ -48,6 +48,14 @@ so \code{\link[=summary.lr_dist]{summary.lr_dist()}}, \code{\link[=plot.lr_dist]
 apply directly.
 }
 \details{
+The support of the distribution is the set of genotype configurations
+of the members each model declares as typed (see the \code{typed} argument
+of \code{\link[=marker_model]{marker_model()}}). With the default \code{typed = NULL} every member of
+the pedigree is treated as typed, so the distribution answers "what if
+the whole pedigree were genotyped"; naming the reference samples
+instead answers the question a case poses, and lets the engine reach
+pedigrees where enumerating every member is not possible.
+
 Markers are assumed conditionally independent given the hypothesis
 (no linkage); linked-marker composition arrives with the F5 linkage
 work. \code{+Inf} / \code{-Inf} atoms (which arise under \code{mutation = "none"}

@@ -104,7 +104,8 @@ struct PerMarkerKLBatch {
 Result<PerMarkerKLBatch> per_marker_kl_batch(
     const Pedigree& ped,
     const std::vector<Marker>& markers,
-    const std::vector<MutationModel>& mutations);
+    const std::vector<MutationModel>& mutations,
+    const std::vector<MemberIndex>& relevant = {});
 
 // Placeholder retained for the F0.5 cpp-bootstrap regression test.
 int kl_engine_placeholder(int x);

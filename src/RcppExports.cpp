@@ -275,8 +275,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_per_marker_kl_batch
-Rcpp::List cpp_per_marker_kl_batch(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::List freqs_list, Rcpp::IntegerVector mutation_kind, Rcpp::NumericVector mutation_rate, Rcpp::NumericVector mutation_range, Rcpp::List numeric_labels_list);
-RcppExport SEXP _mispitools_cpp_per_marker_kl_batch(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqs_listSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labels_listSEXP) {
+Rcpp::List cpp_per_marker_kl_batch(Rcpp::IntegerVector father, Rcpp::IntegerVector mother, int poi, Rcpp::List freqs_list, Rcpp::IntegerVector mutation_kind, Rcpp::NumericVector mutation_rate, Rcpp::NumericVector mutation_range, Rcpp::List numeric_labels_list, Rcpp::IntegerVector relevant);
+RcppExport SEXP _mispitools_cpp_per_marker_kl_batch(SEXP fatherSEXP, SEXP motherSEXP, SEXP poiSEXP, SEXP freqs_listSEXP, SEXP mutation_kindSEXP, SEXP mutation_rateSEXP, SEXP mutation_rangeSEXP, SEXP numeric_labels_listSEXP, SEXP relevantSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -288,7 +288,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mutation_rate(mutation_rateSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type mutation_range(mutation_rangeSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type numeric_labels_list(numeric_labels_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(cpp_per_marker_kl_batch(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list));
+    Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type relevant(relevantSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_per_marker_kl_batch(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list, relevant));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -499,7 +500,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_mispitools_cpp_lr_dist_decision_rates", (DL_FUNC) &_mispitools_cpp_lr_dist_decision_rates, 4},
     {"_mispitools_cpp_lr_dist_roc", (DL_FUNC) &_mispitools_cpp_lr_dist_roc, 3},
     {"_mispitools_cpp_lr_dist_choose_threshold", (DL_FUNC) &_mispitools_cpp_lr_dist_choose_threshold, 4},
-    {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 8},
+    {"_mispitools_cpp_per_marker_kl_batch", (DL_FUNC) &_mispitools_cpp_per_marker_kl_batch, 9},
     {"_mispitools_mutation_matrix_cpp", (DL_FUNC) &_mispitools_mutation_matrix_cpp, 6},
     {"_mispitools_dawid_max_rate_cpp", (DL_FUNC) &_mispitools_dawid_max_rate_cpp, 2},
     {"_mispitools_haldane_cm_to_rho_wrap", (DL_FUNC) &_mispitools_haldane_cm_to_rho_wrap, 1},

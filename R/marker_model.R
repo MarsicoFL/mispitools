@@ -32,6 +32,17 @@
 #'   fields `partner` (character, the marker identifier of the linked
 #'   partner) and `theta` (recombination fraction in `[0, 0.5]`). Linkage
 #'   support is wired in milestone F5; F1 only validates the structure.
+#' @param typed Either `NULL` (default) or a character vector naming the
+#'   pedigree members that carry a genotype, that is, the reference
+#'   samples of the case. `NULL` treats every member as typed, which is
+#'   the behaviour of version 2.0 and the right reading of a trio where
+#'   both parents gave a sample. Naming a subset restricts the joint
+#'   distribution to those members plus the person of interest, and every
+#'   other relative is summed out by Elston-Stewart variable elimination
+#'   instead of being enumerated. That is both the question a case
+#'   actually poses, since an untyped relative carries no data, and what
+#'   makes a pedigree larger than a trio tractable at all. The order of
+#'   the names does not matter; duplicates are dropped.
 #' @param tol Numeric tolerance used when checking that `freqs` sums to 1.
 #'   Defaults to `1e-6`.
 #'
@@ -57,12 +68,14 @@ marker_model <- function(ped,
                          freqs,
                          mutation = list(model = "none", rate = 0),
                          linkage = NULL,
+                         typed = NULL,
                          tol = 1e-6) {
   validate_ped(ped)
   marker_id <- validate_marker_id(marker_id)
   freqs <- validate_freqs(freqs, tol = tol)
   mutation <- validate_mutation(mutation)
   linkage <- validate_linkage(linkage)
+  typed <- validate_typed(typed, ped)
 
   structure(
     list(
@@ -71,10 +84,31 @@ marker_model <- function(ped,
       freqs = freqs,
       alleles = names(freqs),
       mutation = mutation,
-      linkage = linkage
+      linkage = linkage,
+      typed = typed
     ),
     class = "marker_model"
   )
+}
+
+#' @noRd
+validate_typed <- function(typed, ped) {
+  if (is.null(typed)) return(NULL)
+  if (!is.character(typed) || anyNA(typed) || !all(nzchar(typed))) {
+    stop("`typed` must be NULL or a character vector of pedigree member ",
+         "labels.", call. = FALSE)
+  }
+  if (length(typed) == 0L) {
+    stop("`typed` must name at least one member; use NULL to treat every ",
+         "member as typed.", call. = FALSE)
+  }
+  members <- as.character(labels(ped))
+  unknown <- setdiff(typed, members)
+  if (length(unknown)) {
+    stop("`typed` names members absent from the pedigree: ",
+         paste(unknown, collapse = ", "), ".", call. = FALSE)
+  }
+  members[members %in% typed]
 }
 
 #' @noRd
@@ -259,5 +293,14 @@ print.marker_model <- function(x, ...) {
         ", theta=", format(x$linkage$theta, digits = 3), "\n", sep = "")
   }
   cat("  pedigree  : ", pedtools::pedsize(x$ped), " individuals\n", sep = "")
+  if (is.null(x$typed)) {
+    cat("  typed     : every member\n")
+  } else {
+    cat("  typed     : ", length(x$typed), " of ",
+        pedtools::pedsize(x$ped), " (",
+        paste(utils::head(x$typed, 6), collapse = ", "),
+        if (length(x$typed) > 6L) ", ..." else "",
+        ")\n", sep = "")
+  }
   invisible(x)
 }

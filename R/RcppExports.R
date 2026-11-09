@@ -85,8 +85,8 @@ cpp_lr_dist_choose_threshold <- function(log10_lr, p_h1, p_h2, weight = 10.0) {
     .Call(`_mispitools_cpp_lr_dist_choose_threshold`, log10_lr, p_h1, p_h2, weight)
 }
 
-cpp_per_marker_kl_batch <- function(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list) {
-    .Call(`_mispitools_cpp_per_marker_kl_batch`, father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list)
+cpp_per_marker_kl_batch <- function(father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list, relevant = as.integer( c())) {
+    .Call(`_mispitools_cpp_per_marker_kl_batch`, father, mother, poi, freqs_list, mutation_kind, mutation_rate, mutation_range, numeric_labels_list, relevant)
 }
 
 mutation_matrix_cpp <- function(K, mutation_kind = 0L, mutation_rate = 0.0, mutation_range = 0.0, numeric_labels = as.numeric( c()), afreq = as.numeric( c())) {

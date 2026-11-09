@@ -10,6 +10,7 @@ marker_model(
   freqs,
   mutation = list(model = "none", rate = 0),
   linkage = NULL,
+  typed = NULL,
   tol = 1e-06
 )
 }
@@ -39,6 +40,18 @@ Defaults to \code{list(model = "none", rate = 0)}.}
 fields \code{partner} (character, the marker identifier of the linked
 partner) and \code{theta} (recombination fraction in \verb{[0, 0.5]}). Linkage
 support is wired in milestone F5; F1 only validates the structure.}
+
+\item{typed}{Either \code{NULL} (default) or a character vector naming the
+pedigree members that carry a genotype, that is, the reference
+samples of the case. \code{NULL} treats every member as typed, which is
+the behaviour of version 2.0 and the right reading of a trio where
+both parents gave a sample. Naming a subset restricts the joint
+distribution to those members plus the person of interest, and every
+other relative is summed out by Elston-Stewart variable elimination
+instead of being enumerated. That is both the question a case
+actually poses, since an untyped relative carries no data, and what
+makes a pedigree larger than a trio tractable at all. The order of
+the names does not matter; duplicates are dropped.}
 
 \item{tol}{Numeric tolerance used when checking that \code{freqs} sums to 1.
 Defaults to \code{1e-6}.}

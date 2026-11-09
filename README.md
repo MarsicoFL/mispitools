@@ -536,6 +536,18 @@ trios and small pedigrees; for larger pedigrees and full profiles, the
 simulation workflow of Steps 1 to 6 remains the practical one, and the two
 give answers on the same scale.
 
+The development version relaxes that limit through the `typed` argument of
+`marker_model()`, which names the members that actually carry a genotype.
+Every other relative is summed out by the peeling instead of being
+enumerated, which is both cheaper and closer to the question a case poses,
+since an untyped relative carries no data. On a grandparent and grandchild
+with a single typed grandparent, where the released version runs out of
+memory for every marker, the distribution comes back in 0.2 seconds at nine
+alleles, three seconds at twelve, and just under three minutes at nineteen;
+at twenty-three it still exhausts memory. The ceiling that remains is the
+peeling frontier rather than the size of the answer: the marginal over two
+members is small, but reaching it means holding three members jointly.
+
 Within that scope the cost is dominated by the number of alleles. The package
 keeps a reference implementation in R, used as the oracle for the C++ kernel
 and cross-checked against it in the test suite, so the two can be timed

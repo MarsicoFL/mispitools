@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -335,145 +336,210 @@ inline double child_cond_g(const Tables& t,
 // Add member `m` as a fresh column, expanding by its G genotypes and
 // multiplying in its founder / transmission factor. Zero-probability
 // rows are compacted away immediately.
-void introduce_member_g(PeelTable& tb, const Tables& t, const Pedigree& p,
-                        const PeelSpec& sp, MemberIndex m) {
+
+enum class FactorKind : std::uint8_t {
+    Owned,
+    Hwe,
+    OneMissing,
+    ChildDist,
+    Zero
+};
+
+struct Factor {
+    FactorKind kind = FactorKind::Owned;
+    std::vector<MemberIndex> scope;
+    std::vector<double> val;
+    std::size_t i_fa = 0;
+    std::size_t i_mo = 0;
+    std::size_t i_ch = 0;
+    std::size_t i_kn = 0;
+};
+
+constexpr std::size_t kMaxFactorElems = 50000000;
+
+std::size_t pow_g(GenotypeIndex G, std::size_t k) {
+    std::size_t n = 1;
+    for (std::size_t i = 0; i < k; ++i) {
+        if (n > kMaxFactorElems) return kMaxFactorElems + 1;
+        n *= static_cast<std::size_t>(G);
+    }
+    return n;
+}
+
+std::size_t slot_of(const std::vector<MemberIndex>& v, MemberIndex m) {
+    return static_cast<std::size_t>(
+        std::lower_bound(v.begin(), v.end(), m) - v.begin());
+}
+
+std::vector<Factor> build_factors(const Pedigree& p, const Tables& t,
+                                  const PeelSpec& sp,
+                                  const std::vector<char>& in_added) {
+    std::vector<Factor> out;
+    for (MemberIndex m = 0; m < p.n_members; ++m) {
+        const std::size_t mi = static_cast<std::size_t>(m);
+        if (!in_added[mi]) continue;
+
+        Factor f;
+        if (sp.founder_like[mi] != 0) {
+            f.kind = FactorKind::Hwe;
+            f.scope = {m};
+            out.push_back(std::move(f));
+            continue;
+        }
+
+        const MemberIndex fa = p.father[mi];
+        const MemberIndex mo = p.mother[mi];
+        const bool fa_known = (fa != kNoParent)
+            && (sp.excluded[static_cast<std::size_t>(fa)] == 0)
+            && (in_added[static_cast<std::size_t>(fa)] != 0);
+        const bool mo_known = (mo != kNoParent)
+            && (sp.excluded[static_cast<std::size_t>(mo)] == 0)
+            && (in_added[static_cast<std::size_t>(mo)] != 0);
+
+        if (fa_known && mo_known) {
+            f.kind = FactorKind::ChildDist;
+            f.scope = {fa, mo, m};
+            std::sort(f.scope.begin(), f.scope.end());
+            f.i_fa = slot_of(f.scope, fa);
+            f.i_mo = slot_of(f.scope, mo);
+            f.i_ch = slot_of(f.scope, m);
+        } else if (fa_known || mo_known) {
+            const MemberIndex kn = fa_known ? fa : mo;
+            f.kind = FactorKind::OneMissing;
+            f.scope = {kn, m};
+            std::sort(f.scope.begin(), f.scope.end());
+            f.i_kn = slot_of(f.scope, kn);
+            f.i_ch = slot_of(f.scope, m);
+        } else {
+            f.kind = FactorKind::Zero;
+            f.scope = {m};
+        }
+        out.push_back(std::move(f));
+    }
+    return out;
+}
+
+Result<Factor> join_factors(const std::vector<Factor>& fs,
+                            const std::vector<std::size_t>& which,
+                            MemberIndex elim,
+                            const Tables& t) {
     const GenotypeIndex G = t.G;
-    const std::size_t mi = static_cast<std::size_t>(m);
-    const bool fl = sp.founder_like[mi] != 0;
 
-    if (tb.members.empty()) {
-        // First member: ancestor-first introduction guarantees it is
-        // founder-like, so the factor is the HWE genotype prior.
-        tb.members.push_back(m);
-        tb.col_of[mi] = 0;
-        tb.state.assign(static_cast<std::size_t>(G), 0);
-        tb.prob.assign(static_cast<std::size_t>(G), 0.0);
-        for (GenotypeIndex g = 0; g < G; ++g) {
-            tb.state[static_cast<std::size_t>(g)] = g;
-            tb.prob[static_cast<std::size_t>(g)] =
-                t.hwe[static_cast<std::size_t>(g)];
-        }
-        return;
+    std::vector<MemberIndex> U;
+    for (std::size_t i : which) {
+        for (MemberIndex m : fs[i].scope) U.push_back(m);
+    }
+    std::sort(U.begin(), U.end());
+    U.erase(std::unique(U.begin(), U.end()), U.end());
+    const std::size_t u = U.size();
+
+    Factor out;
+    out.kind = FactorKind::Owned;
+    for (MemberIndex m : U) {
+        if (m != elim) out.scope.push_back(m);
     }
 
-    const std::size_t old_w = tb.width();
-    const std::size_t new_w = old_w + 1;
-    const int new_col = static_cast<int>(old_w);
-    tb.members.push_back(m);
-    tb.col_of[mi] = new_col;
+    const std::size_t out_elems = pow_g(G, out.scope.size());
+    if (out_elems > kMaxFactorElems) {
+        return err_result<Factor>(
+            "cpt_marker_joint: the peeled elimination reached a factor over "
+            + std::to_string(out.scope.size()) + " members at "
+            + std::to_string(static_cast<long long>(G))
+            + " genotypes, past the working-memory cap. Name fewer typed "
+              "members, or use a marker with fewer alleles.");
+    }
+    out.val.assign(out_elems, 0.0);
 
-    const MemberIndex fa = fl ? kNoParent : p.father[mi];
-    const MemberIndex mo = fl ? kNoParent : p.mother[mi];
-    const bool fa_known = (!fl) && (fa != kNoParent)
-        && (sp.excluded[static_cast<std::size_t>(fa)] == 0);
-    const bool mo_known = (!fl) && (mo != kNoParent)
-        && (sp.excluded[static_cast<std::size_t>(mo)] == 0);
-    const int col_fa = fa_known
-        ? tb.col_of[static_cast<std::size_t>(fa)] : -1;
-    const int col_mo = mo_known
-        ? tb.col_of[static_cast<std::size_t>(mo)] : -1;
-    // A non-founder with both parents excluded carries no pedigree
-    // information; set to zero, matching build_joint's both-missing
-    // branch (not reached with only the POI excluded; kept for parity).
-    const bool both_excluded = (!fl) && !fa_known && !mo_known;
+    const std::size_t nf = which.size();
+    std::vector<std::vector<std::size_t>> upos(nf);
+    for (std::size_t k = 0; k < nf; ++k) {
+        for (MemberIndex m : fs[which[k]].scope) {
+            upos[k].push_back(slot_of(U, m));
+        }
+    }
+    std::vector<std::vector<std::size_t>> fstride(
+        nf, std::vector<std::size_t>(u, 0));
+    for (std::size_t k = 0; k < nf; ++k) {
+        if (fs[which[k]].kind != FactorKind::Owned) continue;
+        std::size_t st = 1;
+        for (std::size_t j = fs[which[k]].scope.size(); j-- > 0; ) {
+            fstride[k][upos[k][j]] = st;
+            st *= static_cast<std::size_t>(G);
+        }
+    }
+    std::vector<std::size_t> ostride(u, 0);
+    {
+        std::size_t st = 1;
+        for (std::size_t j = out.scope.size(); j-- > 0; ) {
+            ostride[slot_of(U, out.scope[j])] = st;
+            st *= static_cast<std::size_t>(G);
+        }
+    }
 
-    const std::size_t cur_rows = tb.n_rows();
-    const std::size_t cap_rows = cur_rows * static_cast<std::size_t>(G);
-    std::vector<GenotypeIndex> ns(cap_rows * new_w);
-    std::vector<double> np(cap_rows);
+    std::vector<GenotypeIndex> asg(u, 0);
+    std::vector<std::size_t> idxf(nf, 0);
+    std::size_t idxo = 0;
+    const std::size_t gz = static_cast<std::size_t>(G);
 
-    std::size_t keep = 0;
-    for (std::size_t r = 0; r < cur_rows; ++r) {
-        const double base = tb.prob[r];
-        const GenotypeIndex gp = (col_fa >= 0)
-            ? tb.state[r * old_w + static_cast<std::size_t>(col_fa)]
-            : GenotypeIndex(-1);
-        const GenotypeIndex gm = (col_mo >= 0)
-            ? tb.state[r * old_w + static_cast<std::size_t>(col_mo)]
-            : GenotypeIndex(-1);
-        for (GenotypeIndex gc = 0; gc < G; ++gc) {
-            double factor;
-            if (fl) {
-                factor = t.hwe[static_cast<std::size_t>(gc)];
-            } else if (both_excluded) {
-                factor = 0.0;
-            } else {
-                factor = child_cond_g(t, gp, gm, gc);
+    for (;;) {
+        double prod = 1.0;
+        for (std::size_t k = 0; k < nf && prod != 0.0; ++k) {
+            const Factor& f = fs[which[k]];
+            switch (f.kind) {
+                case FactorKind::Owned:
+                    prod *= f.val[idxf[k]];
+                    break;
+                case FactorKind::Hwe:
+                    prod *= t.hwe[static_cast<std::size_t>(
+                        asg[upos[k][0]])];
+                    break;
+                case FactorKind::OneMissing:
+                    prod *= t.child_dist_one_missing[
+                        t.child_dist_one_missing_idx(asg[upos[k][f.i_kn]],
+                                                     asg[upos[k][f.i_ch]])];
+                    break;
+                case FactorKind::ChildDist:
+                    prod *= t.child_dist[
+                        t.child_dist_idx(asg[upos[k][f.i_fa]],
+                                         asg[upos[k][f.i_mo]],
+                                         asg[upos[k][f.i_ch]])];
+                    break;
+                case FactorKind::Zero:
+                    prod = 0.0;
+                    break;
             }
-            const double pr = base * factor;
-            if (pr <= 0.0) continue;
-            std::copy(tb.state.begin() + r * old_w,
-                      tb.state.begin() + (r + 1) * old_w,
-                      ns.begin() + keep * new_w);
-            ns[keep * new_w + old_w] = gc;
-            np[keep] = pr;
-            ++keep;
         }
+        if (prod != 0.0) out.val[idxo] += prod;
+
+        std::size_t d = u;
+        bool carry = true;
+        while (carry && d > 0) {
+            --d;
+            asg[d] = static_cast<GenotypeIndex>(asg[d] + 1);
+            for (std::size_t k = 0; k < nf; ++k) idxf[k] += fstride[k][d];
+            idxo += ostride[d];
+            if (asg[d] < G) {
+                carry = false;
+            } else {
+                asg[d] = 0;
+                for (std::size_t k = 0; k < nf; ++k) {
+                    idxf[k] -= fstride[k][d] * gz;
+                }
+                idxo -= ostride[d] * gz;
+            }
+        }
+        if (carry) break;
     }
-    ns.resize(keep * new_w);
-    np.resize(keep);
-    tb.state = std::move(ns);
-    tb.prob = std::move(np);
+
+    return ok_result(std::move(out));
 }
 
-// Sum member `m` out of the table: drop its column and aggregate rows
-// that become identical on the remaining members.
-void eliminate_member_g(PeelTable& tb, MemberIndex m) {
-    const std::size_t mi = static_cast<std::size_t>(m);
-    const int col = tb.col_of[mi];
-    if (col < 0) return;
-    const std::size_t w = tb.width();
-    const std::size_t nw = w - 1;
-    const std::size_t rows = tb.n_rows();
-
-    std::map<std::vector<GenotypeIndex>, double> agg;
-    std::vector<GenotypeIndex> key(nw);
-    for (std::size_t r = 0; r < rows; ++r) {
-        std::size_t k = 0;
-        for (std::size_t c = 0; c < w; ++c) {
-            if (c == static_cast<std::size_t>(col)) continue;
-            key[k++] = tb.state[r * w + c];
-        }
-        agg[key] += tb.prob[r];
-    }
-
-    tb.members.erase(tb.members.begin() + col);
-    tb.col_of[mi] = -1;
-    for (MemberIndex mm : tb.members) {
-        if (tb.col_of[static_cast<std::size_t>(mm)] > col) {
-            --tb.col_of[static_cast<std::size_t>(mm)];
-        }
-    }
-
-    tb.state.assign(agg.size() * nw, 0);
-    tb.prob.assign(agg.size(), 0.0);
-    std::size_t r = 0;
-    for (const auto& kv : agg) {
-        std::copy(kv.first.begin(), kv.first.end(),
-                  tb.state.begin() + r * nw);
-        tb.prob[r] = kv.second;
-        ++r;
-    }
-}
-
-// Build the joint over `keep` members under `sp`, marginalising every
-// other member as soon as it is no longer needed as a parent.
-PeelTable build_peeled_g(const Pedigree& p, const Tables& t,
-                         const PeelSpec& sp,
-                         const std::vector<char>& keep) {
+Result<PeelTable> build_peeled_factored(const Pedigree& p, const Tables& t,
+                                        const PeelSpec& sp,
+                                        const std::vector<char>& keep) {
     const std::size_t n = static_cast<std::size_t>(p.n_members);
+    const GenotypeIndex G = t.G;
 
-    std::vector<std::vector<MemberIndex>> children(n);
-    for (MemberIndex c = 0; c < p.n_members; ++c) {
-        const MemberIndex f = p.father[static_cast<std::size_t>(c)];
-        const MemberIndex m = p.mother[static_cast<std::size_t>(c)];
-        if (f != kNoParent) children[static_cast<std::size_t>(f)].push_back(c);
-        if (m != kNoParent) children[static_cast<std::size_t>(m)].push_back(c);
-    }
-
-    // added_set = keep U ancestors(keep): exactly the members the
-    // ancestor-first recursion introduces. Children outside it are
-    // uninformative subtrees (integrate to 1) and never pin a parent.
     std::vector<char> in_added(n, 0);
     {
         std::vector<MemberIndex> stack;
@@ -486,11 +552,9 @@ PeelTable build_peeled_g(const Pedigree& p, const Tables& t,
         while (!stack.empty()) {
             const MemberIndex x = stack.back();
             stack.pop_back();
-            if (sp.founder_like[static_cast<std::size_t>(x)]) continue;
-            const MemberIndex par[2] = {
-                p.father[static_cast<std::size_t>(x)],
-                p.mother[static_cast<std::size_t>(x)]
-            };
+            const std::size_t xi = static_cast<std::size_t>(x);
+            if (sp.founder_like[xi]) continue;
+            const MemberIndex par[2] = { p.father[xi], p.mother[xi] };
             for (MemberIndex pp : par) {
                 if (pp == kNoParent) continue;
                 if (sp.excluded[static_cast<std::size_t>(pp)]) continue;
@@ -502,108 +566,85 @@ PeelTable build_peeled_g(const Pedigree& p, const Tables& t,
         }
     }
 
+    std::vector<Factor> fs = build_factors(p, t, sp, in_added);
+    std::vector<char> alive(fs.size(), 1);
+
+    for (;;) {
+        MemberIndex best = kNoParent;
+        std::size_t best_cost = 0;
+        std::vector<std::size_t> best_which;
+        for (MemberIndex x = 0; x < p.n_members; ++x) {
+            const std::size_t xi = static_cast<std::size_t>(x);
+            if (!in_added[xi] || keep[xi]) continue;
+            std::vector<std::size_t> which;
+            std::vector<MemberIndex> U;
+            for (std::size_t i = 0; i < fs.size(); ++i) {
+                if (!alive[i]) continue;
+                if (std::find(fs[i].scope.begin(), fs[i].scope.end(), x)
+                        == fs[i].scope.end()) {
+                    continue;
+                }
+                which.push_back(i);
+                for (MemberIndex m : fs[i].scope) U.push_back(m);
+            }
+            if (which.empty()) continue;
+            std::sort(U.begin(), U.end());
+            U.erase(std::unique(U.begin(), U.end()), U.end());
+            const std::size_t cost = pow_g(G, U.size() - 1);
+            if (best == kNoParent || cost < best_cost) {
+                best = x;
+                best_cost = cost;
+                best_which = std::move(which);
+            }
+        }
+        if (best == kNoParent) break;
+
+        auto joined = join_factors(fs, best_which, best, t);
+        if (!joined.ok()) return err_result<PeelTable>(joined.error);
+        for (std::size_t i : best_which) alive[i] = 0;
+        fs.push_back(std::move(*joined));
+        alive.push_back(1);
+    }
+
+    std::vector<std::size_t> rest;
+    for (std::size_t i = 0; i < fs.size(); ++i) {
+        if (alive[i]) rest.push_back(i);
+    }
+
     PeelTable tb;
     tb.col_of.assign(n, -1);
-    std::vector<char> introduced(n, 0);
+    if (rest.empty()) return ok_result(std::move(tb));
 
-    auto all_informative_children_in =
-        [&](MemberIndex x) -> bool {
-        for (MemberIndex c : children[static_cast<std::size_t>(x)]) {
-            if (!in_added[static_cast<std::size_t>(c)]) continue;
-            if (!introduced[static_cast<std::size_t>(c)]) return false;
-        }
-        return true;
-    };
+    auto product = join_factors(fs, rest, kNoParent, t);
+    if (!product.ok()) return err_result<PeelTable>(product.error);
+    const Factor& f = *product;
 
-    auto eliminate_fixpoint = [&]() {
-        bool changed = true;
-        while (changed) {
-            changed = false;
-            for (std::size_t i = 0; i < tb.members.size(); ++i) {
-                const MemberIndex x = tb.members[i];
-                if (keep[static_cast<std::size_t>(x)]) continue;
-                if (!all_informative_children_in(x)) continue;
-                eliminate_member_g(tb, x);
-                changed = true;
-                break;
-            }
-        }
-    };
-
-    // Iterative ancestor-first introduction (explicit stack: the
-    // recursion depth is the generation count; a stack keeps the kernel
-    // free of deep native recursion).
-    std::vector<MemberIndex> work;
-    for (MemberIndex m = 0; m < p.n_members; ++m) {
-        if (keep[static_cast<std::size_t>(m)]) work.push_back(m);
-    }
-    std::vector<MemberIndex> stack;
-    for (auto it = work.rbegin(); it != work.rend(); ++it) {
-        stack.push_back(*it);
-    }
-    while (!stack.empty()) {
-        const MemberIndex m = stack.back();
-        const std::size_t mi = static_cast<std::size_t>(m);
-        if (introduced[mi]) { stack.pop_back(); continue; }
-        const bool fl = sp.founder_like[mi] != 0;
-        bool deferred = false;
-        if (!fl) {
-            const MemberIndex par[2] = { p.father[mi], p.mother[mi] };
-            for (MemberIndex pp : par) {
-                if (pp == kNoParent) continue;
-                if (sp.excluded[static_cast<std::size_t>(pp)]) continue;
-                if (!introduced[static_cast<std::size_t>(pp)]) {
-                    stack.push_back(pp);
-                    deferred = true;
-                }
-            }
-        }
-        if (deferred) continue;  // parents pushed; revisit m later
-        stack.pop_back();
-        introduced[mi] = 1;
-        introduce_member_g(tb, t, p, sp, m);
-        eliminate_fixpoint();
-    }
-    eliminate_fixpoint();
-    return tb;
-}
-
-// Permute columns into ascending member-id order so the H1 and H2
-// tables align by a plain row-key lookup.
-void canonicalize_g(PeelTable& tb) {
-    const std::size_t w = tb.width();
-    if (w <= 1) return;
-    std::vector<std::size_t> perm(w);
-    for (std::size_t i = 0; i < w; ++i) perm[i] = i;
-    std::sort(perm.begin(), perm.end(),
-              [&](std::size_t a, std::size_t b) {
-                  return tb.members[a] < tb.members[b];
-              });
-    bool sorted = true;
-    for (std::size_t i = 0; i < w; ++i) {
-        if (perm[i] != i) { sorted = false; break; }
-    }
-    if (sorted) return;
-    const std::size_t rows = tb.n_rows();
-    std::vector<GenotypeIndex> ns(rows * w);
-    for (std::size_t r = 0; r < rows; ++r) {
-        for (std::size_t c = 0; c < w; ++c) {
-            ns[r * w + c] = tb.state[r * w + perm[c]];
-        }
-    }
-    std::vector<MemberIndex> nm(w);
-    for (std::size_t c = 0; c < w; ++c) nm[c] = tb.members[perm[c]];
-    tb.state = std::move(ns);
-    tb.members = std::move(nm);
+    const std::size_t w = f.scope.size();
+    tb.members = f.scope;
     for (std::size_t c = 0; c < w; ++c) {
-        tb.col_of[static_cast<std::size_t>(tb.members[c])] =
+        tb.col_of[static_cast<std::size_t>(f.scope[c])] =
             static_cast<int>(c);
     }
+    std::vector<GenotypeIndex> asg(w, 0);
+    for (std::size_t flat = 0; flat < f.val.size(); ++flat) {
+        if (f.val[flat] > 0.0) {
+            tb.state.insert(tb.state.end(), asg.begin(), asg.end());
+            tb.prob.push_back(f.val[flat]);
+        }
+        std::size_t d = w;
+        while (d > 0) {
+            --d;
+            asg[d] = static_cast<GenotypeIndex>(asg[d] + 1);
+            if (asg[d] < G) break;
+            asg[d] = 0;
+        }
+    }
+    return ok_result(std::move(tb));
 }
 
 // F5.6 peeled assembly: marginal joint over the keep-set, H1 / H2 outer
 // joined exactly like the dense merge but over the kept members only.
-JointTable cpt_marker_joint_peeled(
+Result<JointTable> cpt_marker_joint_peeled(
         const Pedigree& p, const Tables& t,
         const std::vector<MemberIndex>& relevant) {
     const std::size_t n_mem = static_cast<std::size_t>(p.n_members);
@@ -622,16 +663,18 @@ JointTable cpt_marker_joint_peeled(
             is_founder(p, m) ? 1 : 0;
     }
 
-    PeelTable h1 = build_peeled_g(p, t, sp_h1, keep);
-    canonicalize_g(h1);
+    auto r_h1 = build_peeled_factored(p, t, sp_h1, keep);
+    if (!r_h1.ok()) return err_result<JointTable>(r_h1.error);
+    PeelTable h1 = std::move(*r_h1);
 
     PeelTable h2;
     if (has_poi) {
         PeelSpec sp_h2 = sp_h1;
         sp_h2.founder_like[static_cast<std::size_t>(poi)] = 1;
         sp_h2.excluded[static_cast<std::size_t>(poi)] = 1;
-        h2 = build_peeled_g(p, t, sp_h2, keep);
-        canonicalize_g(h2);
+        auto r_h2 = build_peeled_factored(p, t, sp_h2, keep);
+        if (!r_h2.ok()) return err_result<JointTable>(r_h2.error);
+        h2 = std::move(*r_h2);
     }
 
     const std::size_t w = h1.width();
@@ -712,7 +755,7 @@ JointTable cpt_marker_joint_peeled(
         out.p_h1.push_back(ph1);
         out.p_h2.push_back(ph2);
     }
-    return out;
+    return ok_result(std::move(out));
 }
 
 }  // namespace
@@ -781,7 +824,7 @@ Result<JointTable> cpt_marker_joint_with_mm(
     // bit-for-bit). A strict subset routes the F5.6 peeled engine, which
     // marginalises every other member by online variable elimination.
     if (!relevant.empty()) {
-        return ok_result(cpt_marker_joint_peeled(p, t, relevant));
+        return cpt_marker_joint_peeled(p, t, relevant);
     }
 
     const std::vector<MemberIndex> all_founders = founders_of(p);

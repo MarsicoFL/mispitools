@@ -157,7 +157,8 @@ std::string make_mutation_matrix_key(
 Result<PerMarkerKLBatch> per_marker_kl_batch(
         const Pedigree& ped,
         const std::vector<Marker>& markers,
-        const std::vector<MutationModel>& mutations) {
+        const std::vector<MutationModel>& mutations,
+        const std::vector<MemberIndex>& relevant) {
     if (markers.size() != mutations.size()) {
         return err_result<PerMarkerKLBatch>(
             "per_marker_kl_batch: markers.size() != mutations.size().");
@@ -204,7 +205,7 @@ Result<PerMarkerKLBatch> per_marker_kl_batch(
             out.mutation_matrix_cache_misses += 1;
         }
 
-        auto joint = cpt_marker_joint_with_mm(ped, m, *mm_ptr);
+        auto joint = cpt_marker_joint_with_mm(ped, m, *mm_ptr, relevant);
         if (!joint.ok()) {
             return err_result<PerMarkerKLBatch>(
                 "per_marker_kl_batch: marker " + std::to_string(i)

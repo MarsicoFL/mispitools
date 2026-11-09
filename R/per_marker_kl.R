@@ -197,6 +197,7 @@ per_marker_kl_profile_batch <- function(models, poi) {
       if (!is.null(m$linkage)) return(NULL)
       if (!m$mutation$model %in% c("none", "equal", "stepwise")) return(NULL)
       if (!identical(m$ped, m1$ped)) return(NULL)
+      if (!identical(m$typed, m1$typed)) return(NULL)
     }
   }
 
@@ -259,7 +260,8 @@ per_marker_kl_profile_batch <- function(models, poi) {
     mutation_kind = kind_vec,
     mutation_rate = rate_vec,
     mutation_range = range_vec,
-    numeric_labels_list = labels_list
+    numeric_labels_list = labels_list,
+    relevant = typed_relevant(m1, poi_id, name_to_idx)
   )
 
   out <- data.frame(
