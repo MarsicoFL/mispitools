@@ -1,6 +1,3 @@
-# mispitools Shiny Application
-# Deployed version for shinyapps.io
-
 library(shiny)
 library(shinythemes)
 library(ggplot2)
@@ -8,12 +5,7 @@ library(patchwork)
 library(reshape2)
 library(dplyr)
 
-# Suppress R CMD check NOTE for ggplot2 aesthetics
-Hypothesis <- logLR <- w <- Var1 <- Var2 <- value <- TPR <- FPR <- NULL
-
-# ============================================================================
-# CONSTANTS
-# ============================================================================
+Hypothesis <- logLR <- w <- Var1 <- Var2 <- value <- label <- TPR <- FPR <- FNR <- NULL
 
 DEFAULT_HAIR_FREQ <- c(
   Black = 0.08,
@@ -26,16 +18,42 @@ DEFAULT_HAIR_FREQ <- c(
 hair_labels <- c("1" = "Black", "2" = "Brown", "3" = "Blonde",
                  "4" = "Red", "5" = "Gray/White")
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
+hair_choices <- c("Black" = 1, "Brown" = 2, "Blonde" = 3, "Red" = 4, "Gray/White" = 5)
 
-build_cpt_pop <- function(propF, MPa, MPr, propC) {
-  Age <- seq(1, 80)
+sex_choices <- c("Female" = "F", "Male" = "M")
+
+hair_error_help <- "Total probability of observing a wrong color, split equally among the other 4 colors."
+
+check_num <- function(x, label, lo, hi, whole = FALSE) {
+  if (is.null(x) || length(x) != 1 || !is.numeric(x) || !is.finite(x)) {
+    return(paste0(label, ": please enter a number."))
+  }
+  if (x < lo || x > hi) {
+    if (is.infinite(hi)) return(sprintf("%s: must be at least %s.", label, lo))
+    return(sprintf("%s: must be between %s and %s.", label, lo, hi))
+  }
+  if (whole && x != round(x)) {
+    return(paste0(label, ": must be a whole number."))
+  }
+  NULL
+}
+
+age_window <- function(MPa, MPr) {
   MPmin <- max(1, MPa - MPr)
   MPmax <- min(80, MPa + MPr)
-  T1p <- (MPmax - MPmin) / length(Age)
-  T1p <- max(0.001, min(0.999, T1p))
+  list(min = MPmin, max = MPmax, T1p = (MPmax - MPmin + 1) / 80)
+}
+
+format_lr <- function(LR, digits = 4) {
+  if (LR == 0) "LR = 0" else paste("LR =", sprintf(paste0("%.", digits, "g"), LR))
+}
+
+format_log_lr <- function(LR) {
+  if (LR == 0) "LR = 0 (exclusion)" else sprintf("log10(LR) = %.3f", log10(LR))
+}
+
+build_cpt_pop <- function(propF, MPa, MPr, propC) {
+  T1p <- age_window(MPa, MPr)$T1p
   T0p <- 1 - T1p
   propS <- c(propF, 1 - propF)
   jointname <- c("F-T1", "F-T0", "M-T1", "M-T0")
@@ -44,7 +62,7 @@ build_cpt_pop <- function(propF, MPa, MPr, propC) {
   CPT_POP <- outer(jointprob, propC)
   rownames(CPT_POP) <- jointname
   colnames(CPT_POP) <- names(propC)
-  return(CPT_POP)
+  CPT_POP
 }
 
 build_cpt_mp <- function(MPs, MPc, eps, epa, epc) {
@@ -58,20 +76,19 @@ build_cpt_mp <- function(MPs, MPc, eps, epa, epc) {
   n_colors <- 5
   errorMat <- matrix(epc / (n_colors - 1), nrow = n_colors, ncol = n_colors)
   diag(errorMat) <- 1 - epc
-  errorMat <- errorMat / rowSums(errorMat)
   probC <- errorMat[MPc, ]
   CPT_MP <- outer(jointprob, probC)
   rownames(CPT_MP) <- jointname
   colnames(CPT_MP) <- names(DEFAULT_HAIR_FREQ)
-  return(CPT_MP)
+  CPT_MP
 }
 
-create_cpt_plots <- function(CPT_POP, CPT_MP) {
+create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
   dfPOP <- reshape2::melt(CPT_POP)
   dfMP <- reshape2::melt(CPT_MP)
-  LR_mat <- CPT_MP / CPT_POP
-  LR_mat[CPT_POP == 0] <- NA
-  dfLR <- reshape2::melt(log10(LR_mat))
+  dfLR <- reshape2::melt(log10(CPT_MP / CPT_POP))
+  dfLR$label <- ifelse(is.finite(dfLR$value), sprintf("%.2f", dfLR$value), "LR = 0")
+  dfLR$value[!is.finite(dfLR$value)] <- NA
 
   base_theme <- ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(
@@ -80,7 +97,8 @@ create_cpt_plots <- function(CPT_POP, CPT_MP) {
       plot.subtitle = ggplot2::element_text(size = 9, color = "gray40"),
       axis.text = ggplot2::element_text(size = 9),
       legend.position = "bottom",
-      legend.key.width = ggplot2::unit(1.5, "cm")
+      legend.key.width = ggplot2::unit(0.9, "cm"),
+      plot.title.position = "plot"
     )
 
   p1 <- ggplot2::ggplot(dfPOP, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
@@ -103,41 +121,31 @@ create_cpt_plots <- function(CPT_POP, CPT_MP) {
                   x = "Hair Color", y = "", fill = "Probability") +
     base_theme
 
-  dfLR$value[is.na(dfLR$value)] <- 0
-  dfLR$value[is.infinite(dfLR$value)] <- max(dfLR$value[is.finite(dfLR$value)], na.rm = TRUE)
-
   p3 <- ggplot2::ggplot(dfLR, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
     ggplot2::scale_fill_gradient2(low = "#d73027", mid = "#ffffbf", high = "#1a9850",
-                                  midpoint = 0, na.value = "gray80") +
-    ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", value)),
+                                  midpoint = 0, na.value = "gray80",
+                                  labels = function(x) sprintf("%.1f", x)) +
+    ggplot2::geom_text(ggplot2::aes(label = label),
                        size = 2.8, color = "black") +
-    ggplot2::labs(title = expression(log[10](LR)), subtitle = "Evidence weight",
+    ggplot2::labs(title = expression(log[10](LR)),
+                  subtitle = "Evidence weight (grey: LR = 0)",
                   x = "Hair Color", y = "", fill = expression(log[10](LR))) +
     base_theme
 
-  (p1 | p2 | p3) + patchwork::plot_layout(ncol = 3)
+  p1 + p2 + p3 + patchwork::plot_layout(ncol = if (narrow) 1 else 3)
 }
 
 build_lr_distributions <- function(CPT_POP, CPT_MP) {
   pop_vec <- as.vector(CPT_POP)
   mp_vec <- as.vector(CPT_MP)
-  lr_vec <- mp_vec / pop_vec
-  lr_vec[pop_vec == 0] <- NA
-  log_lr <- log10(lr_vec)
-
+  log_lr <- round(log10(mp_vec / pop_vec), 10)
   df_H1 <- data.frame(x = log_lr, w = mp_vec)
   df_H2 <- data.frame(x = log_lr, w = pop_vec)
-  df_H1 <- df_H1[!is.na(df_H1$x) & is.finite(df_H1$x), ]
-  df_H2 <- df_H2[!is.na(df_H2$x) & is.finite(df_H2$x), ]
-
-  if (nrow(df_H1) > 0) df_H1$w <- df_H1$w / sum(df_H1$w)
-  if (nrow(df_H2) > 0) df_H2$w <- df_H2$w / sum(df_H2$w)
-
-  list(H1 = df_H1, H2 = df_H2)
+  list(H1 = df_H1[df_H1$w > 0, ], H2 = df_H2[df_H2$w > 0, ])
 }
 
-create_dist_plot <- function(distH1, distH2, binwidth = 0.25) {
+create_dist_plot <- function(distH1, distH2, binwidth = 0.25, base_size = 12) {
   if (nrow(distH1) == 0 || nrow(distH2) == 0) {
     return(ggplot2::ggplot() +
              ggplot2::annotate("text", x = 0.5, y = 0.5, label = "Insufficient data") +
@@ -147,8 +155,10 @@ create_dist_plot <- function(distH1, distH2, binwidth = 0.25) {
   dH1 <- data.frame(logLR = distH1$x, w = distH1$w, Hypothesis = "H1: Person IS the MP")
   dH2 <- data.frame(logLR = distH2$x, w = distH2$w, Hypothesis = "H2: Person is NOT the MP")
   dAll <- rbind(dH1, dH2)
+  dFinite <- dAll[is.finite(dAll$logLR), ]
+  dZero <- dAll[dAll$logLR == -Inf, ]
 
-  ggplot2::ggplot(dAll, ggplot2::aes(x = logLR, weight = w, fill = Hypothesis)) +
+  p <- ggplot2::ggplot(dFinite, ggplot2::aes(x = logLR, weight = w, fill = Hypothesis)) +
     ggplot2::geom_histogram(binwidth = binwidth, position = "identity",
                             alpha = 0.65, color = "white", linewidth = 0.3) +
     ggplot2::scale_fill_manual(values = c("H1: Person IS the MP" = "#2171b5",
@@ -156,14 +166,32 @@ create_dist_plot <- function(distH1, distH2, binwidth = 0.25) {
     ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray30", linewidth = 0.8) +
     ggplot2::labs(title = expression("Distribution of " * log[10](LR)),
                   subtitle = "Vertical line: LR = 1 (uninformative)",
-                  x = expression(log[10](LR)), y = "Density") +
-    ggplot2::theme_minimal(base_size = 12) +
+                  x = expression(log[10](LR)), y = "Probability") +
+    ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
+      plot.title.position = "plot",
       legend.position = "top",
       legend.title = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(face = "bold"),
       panel.grid.minor = ggplot2::element_blank()
     )
+
+  if (nrow(dZero) > 0) {
+    dZero <- stats::aggregate(w ~ Hypothesis, data = dZero, FUN = sum)
+    dZero$logLR <- min(dFinite$logLR) - 3 * binwidth
+    p <- p +
+      ggplot2::geom_col(data = dZero, ggplot2::aes(x = logLR, y = w, fill = Hypothesis),
+                        inherit.aes = FALSE, width = binwidth, alpha = 0.65,
+                        color = "white", linewidth = 0.3) +
+      ggplot2::geom_text(data = dZero,
+                         ggplot2::aes(x = logLR, y = w, label = sprintf("LR = 0\nP = %.3f", w)),
+                         inherit.aes = FALSE, vjust = -0.3, size = 3.2) +
+      ggplot2::geom_vline(xintercept = dZero$logLR[1] + 1.5 * binwidth,
+                          linetype = "dotted", color = "gray50") +
+      ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.2))) +
+      ggplot2::labs(subtitle = "Vertical line: LR = 1 (uninformative). Left bar: LR = 0 (exclusion)")
+  }
+  p
 }
 
 calc_metrics <- function(distH1, distH2, threshold) {
@@ -194,29 +222,11 @@ build_roc <- function(distH1, distH2) {
                 AUC = NA))
   }
 
-  all_vals <- sort(unique(c(distH1$x, distH2$x)))
-  if (length(all_vals) < 2) {
-    return(list(data = data.frame(th = 0, TPR = 1, FPR = 1), AUC = 0.5))
-  }
-
-  minx <- min(all_vals) - 0.1
-  maxx <- max(all_vals) + 0.1
-  thresholds <- seq(minx, maxx, length.out = 100)
-
-  TPR_vec <- numeric(length(thresholds))
-  FPR_vec <- numeric(length(thresholds))
-
-  for (i in seq_along(thresholds)) {
-    m <- calc_metrics(distH1, distH2, thresholds[i])
-    TPR_vec[i] <- m$TPR
-    FPR_vec[i] <- m$FPR
-  }
-
-  ord <- order(FPR_vec)
-  FPR_sorted <- FPR_vec[ord]
-  TPR_sorted <- TPR_vec[ord]
-  AUC_value <- sum(diff(FPR_sorted) * (TPR_sorted[-1] + TPR_sorted[-length(TPR_sorted)]) / 2)
-  AUC_value <- abs(AUC_value)
+  thresholds <- c(Inf, sort(unique(c(distH1$x, distH2$x)), decreasing = TRUE))
+  TPR_vec <- vapply(thresholds, function(t) sum(distH1$w[distH1$x >= t]), numeric(1))
+  FPR_vec <- vapply(thresholds, function(t) sum(distH2$w[distH2$x >= t]), numeric(1))
+  n <- length(thresholds)
+  AUC_value <- sum(diff(FPR_vec) * (TPR_vec[-1] + TPR_vec[-n]) / 2)
 
   list(data = data.frame(th = thresholds, TPR = TPR_vec, FPR = FPR_vec),
        AUC = AUC_value)
@@ -229,22 +239,16 @@ calc_lr_sex <- function(MPs, obsSex, eps, propF) {
   } else {
     LR <- eps / propS[obsSex]
   }
-  LR
+  unname(LR)
 }
 
 calc_lr_age <- function(MPa, MPr, obsAge, epa) {
-  MPmin <- max(1, MPa - MPr)
-  MPmax <- min(80, MPa + MPr)
-  T1p <- (MPmax - MPmin) / 80
-  T1p <- max(0.001, min(0.999, T1p))
-  T0p <- 1 - T1p
-
-  if (obsAge >= MPmin && obsAge <= MPmax) {
-    LR <- (1 - epa) / T1p
+  aw <- age_window(MPa, MPr)
+  if (obsAge >= aw$min && obsAge <= aw$max) {
+    (1 - epa) / aw$T1p
   } else {
-    LR <- epa / T0p
+    epa / (1 - aw$T1p)
   }
-  LR
 }
 
 calc_lr_hair <- function(MPc, obsC, epc, propC) {
@@ -254,13 +258,309 @@ calc_lr_hair <- function(MPc, obsC, epc, propC) {
   } else {
     p_obs_h1 <- epc / (n_colors - 1)
   }
-  LR <- p_obs_h1 / propC[obsC]
-  LR
+  unname(p_obs_h1 / propC[obsC])
 }
 
-# ============================================================================
-# UI DEFINITION
-# ============================================================================
+parse_sim_upload <- function(filepath) {
+  if (is.null(filepath) || !file.exists(filepath)) return(NULL)
+
+  head_bytes <- readBin(filepath, "raw", n = 4096)
+  if (length(head_bytes) < 2 || any(head_bytes == as.raw(0)) ||
+      identical(head_bytes[1:2], charToRaw("PK"))) return(NULL)
+
+  lines <- tryCatch(readLines(filepath, warn = FALSE, encoding = "UTF-8"),
+                    error = function(e) NULL)
+  if (is.null(lines) || length(lines) < 3) return(NULL)
+  if (!all(validUTF8(lines))) lines <- iconv(lines, "latin1", "UTF-8")
+  if (anyNA(lines)) return(NULL)
+
+  lines <- gsub("\r", "", lines, fixed = TRUE)
+  while (length(lines) > 0 && !nzchar(trimws(lines[length(lines)]))) {
+    lines <- lines[-length(lines)]
+  }
+
+  result <- .try_famlink(lines)
+  if (!is.null(result)) return(result)
+
+  result <- .try_familias(lines)
+  if (!is.null(result)) return(result)
+
+  result <- .try_csv_generic(filepath, lines)
+  if (!is.null(result)) return(result)
+
+  NULL
+}
+
+.try_famlink <- function(lines) {
+  head5 <- lines[1:min(5, length(lines))]
+  if (!any(grepl("Raw data LR|Pedigree \\(Numerator\\)", head5, ignore.case = TRUE)))
+    return(NULL)
+
+  num_idx <- grep("^Pedigree \\(Numerator\\)", lines, ignore.case = TRUE)
+  den_idx <- grep("^Versus \\(Den", lines, ignore.case = TRUE)
+  true_idx <- grep("^True:", lines, ignore.case = TRUE)
+
+  if (length(num_idx) == 0 || length(den_idx) == 0 || length(true_idx) == 0) return(NULL)
+  num_idx <- num_idx[1]; den_idx <- den_idx[1]; true_idx <- true_idx[1]
+
+  num_parts <- strsplit(lines[num_idx], "\t")[[1]]
+  den_parts <- strsplit(lines[den_idx], "\t")[[1]]
+  true_parts <- strsplit(lines[true_idx], "\t")[[1]]
+
+  max_len <- max(length(num_parts), length(den_parts), length(true_parts))
+  num_parts  <- c(num_parts,  rep("", max_len - length(num_parts)))
+  den_parts  <- c(den_parts,  rep("", max_len - length(den_parts)))
+  true_parts <- c(true_parts, rep("", max_len - length(true_parts)))
+
+  data_col_indices <- c()
+  for (j in 2:max_len) {
+    nv <- trimws(num_parts[j])
+    if (nzchar(nv) && nv != "|") data_col_indices <- c(data_col_indices, j)
+  }
+  if (length(data_col_indices) < 2) return(NULL)
+
+  groups <- list()
+  current <- c(data_col_indices[1])
+  for (k in 2:length(data_col_indices)) {
+    if (data_col_indices[k] > data_col_indices[k - 1] + 1) {
+      groups <- c(groups, list(current))
+      current <- c()
+    }
+    current <- c(current, data_col_indices[k])
+  }
+  groups <- c(groups, list(current))
+
+  data_start <- true_idx + 1
+  if (data_start > length(lines)) return(NULL)
+  data_lines <- lines[data_start:length(lines)]
+  data_lines <- data_lines[nzchar(trimws(data_lines))]
+  if (length(data_lines) == 0) return(NULL)
+
+  data_split <- strsplit(data_lines, "\t")
+  n_rows <- length(data_split)
+  data_mat <- matrix(NA_real_, nrow = n_rows, ncol = max_len)
+  for (i in seq_along(data_split)) {
+    vals <- data_split[[i]]
+    for (j in seq_along(vals)) {
+      if (j <= max_len) {
+        v <- trimws(vals[j])
+        if (nzchar(v) && v != "|") suppressWarnings(data_mat[i, j] <- as.numeric(v))
+      }
+    }
+  }
+
+  results <- list()
+  for (g_idx in seq_along(groups)) {
+    cols <- groups[[g_idx]]
+    if (length(cols) < 2) next
+
+    related_cols <- c()
+    unrelated_cols <- c()
+    for (col in cols) {
+      true_val <- trimws(true_parts[col])
+      num_val  <- trimws(num_parts[col])
+      if (nzchar(true_val) && true_val == num_val) {
+        related_cols <- c(related_cols, col)
+      } else {
+        unrelated_cols <- c(unrelated_cols, col)
+      }
+    }
+
+    if (length(related_cols) > 0 && length(unrelated_cols) > 0) {
+      rel_data   <- as.vector(data_mat[, related_cols, drop = FALSE])
+      unrel_data <- as.vector(data_mat[, unrelated_cols, drop = FALSE])
+      df <- data.frame(Unrelated = unrel_data, Related = rel_data)
+      df <- df[complete.cases(df), ]
+      if (nrow(df) > 0) {
+        num_name <- trimws(num_parts[cols[1]])
+        den_name <- trimws(den_parts[cols[1]])
+        comp_name <- paste0(num_name, " vs ", den_name)
+        results[[comp_name]] <- df
+      }
+    }
+  }
+
+  if (length(results) == 0) return(NULL)
+  results
+}
+
+.try_familias <- function(lines) {
+  if (length(lines) < 3) return(NULL)
+
+  sep <- "\t"
+  row2_parts_tab <- strsplit(lines[2], "\t")[[1]]
+  row2_parts_comma <- strsplit(lines[2], ",")[[1]]
+  if (length(row2_parts_comma) > length(row2_parts_tab) && length(row2_parts_tab) <= 2) {
+    sep <- ","
+  }
+
+  row2_parts <- strsplit(lines[2], sep)[[1]]
+  row2_clean <- trimws(row2_parts)
+  row2_non_empty <- row2_clean[nzchar(row2_clean)]
+
+  if (length(row2_non_empty) < 2) return(NULL)
+  suppressWarnings(nums <- as.numeric(row2_non_empty))
+  if (!all(is.na(nums))) return(NULL)
+
+  row3_parts <- strsplit(lines[3], sep)[[1]]
+  row3_ne <- trimws(row3_parts)
+  row3_ne <- row3_ne[nzchar(row3_ne)]
+  suppressWarnings(row3_nums <- as.numeric(row3_ne))
+  if (length(row3_nums) < 2 || all(is.na(row3_nums))) return(NULL)
+
+  row1_parts <- trimws(strsplit(lines[1], sep)[[1]])
+
+  n_cols <- max(length(row1_parts), length(row2_clean))
+  row1_parts <- c(row1_parts, rep("", n_cols - length(row1_parts)))
+  row2_clean <- c(row2_clean, rep("", n_cols - length(row2_clean)))
+
+  data_lines <- lines[3:length(lines)]
+  data_lines <- data_lines[nzchar(trimws(data_lines))]
+  if (length(data_lines) == 0) return(NULL)
+
+  data_split <- strsplit(data_lines, sep)
+  n_rows <- length(data_split)
+  max_data_cols <- max(vapply(data_split, length, integer(1)), na.rm = TRUE)
+  n_cols <- max(n_cols, max_data_cols)
+  row1_parts <- c(row1_parts, rep("", n_cols - length(row1_parts)))
+  row2_clean <- c(row2_clean, rep("", n_cols - length(row2_clean)))
+
+  data_mat <- matrix(NA_real_, nrow = n_rows, ncol = n_cols)
+  for (i in seq_along(data_split)) {
+    vals <- trimws(data_split[[i]])
+    for (j in seq_along(vals)) {
+      if (j <= n_cols) suppressWarnings(data_mat[i, j] <- as.numeric(vals[j]))
+    }
+  }
+
+  valid_cols <- which(nzchar(row1_parts) | nzchar(row2_clean))
+  if (length(valid_cols) < 2) return(NULL)
+
+  has_ref <- any(grepl("^Reference pedigree$", row2_clean, ignore.case = TRUE))
+
+  if (has_ref) {
+    families <- list()
+    for (col in valid_cols) {
+      fam_name <- row1_parts[col]
+      col_type <- row2_clean[col]
+      if (!nzchar(fam_name)) next
+      if (is.null(families[[fam_name]]))
+        families[[fam_name]] <- list(ref_col = NULL, rel_col = NULL, rel_label = NULL)
+
+      if (grepl("^Reference pedigree$", col_type, ignore.case = TRUE)) {
+        families[[fam_name]]$ref_col <- col
+      } else if (nzchar(col_type)) {
+        families[[fam_name]]$rel_col <- col
+        families[[fam_name]]$rel_label <- col_type
+      }
+    }
+
+    results <- list()
+    for (fam_name in names(families)) {
+      fam <- families[[fam_name]]
+      if (is.null(fam$ref_col) || is.null(fam$rel_col)) next
+      df <- data.frame(
+        Unrelated = data_mat[, fam$ref_col],
+        Related   = data_mat[, fam$rel_col]
+      )
+      df <- df[complete.cases(df), ]
+      if (nrow(df) > 0) {
+        label <- paste0(fam_name, " (", fam$rel_label, ")")
+        results[[label]] <- df
+      }
+    }
+    if (length(results) > 0) return(results)
+  }
+
+  df <- data.frame(
+    Unrelated = data_mat[, valid_cols[1]],
+    Related   = data_mat[, valid_cols[2]]
+  )
+  df <- df[complete.cases(df), ]
+  if (nrow(df) == 0) return(NULL)
+
+  fam_name  <- row1_parts[valid_cols[1]]
+  rel_label <- row2_clean[valid_cols[2]]
+  if (nzchar(fam_name) && nzchar(rel_label)) {
+    label <- paste0(fam_name, " (", rel_label, ")")
+  } else {
+    label <- "Default"
+  }
+  setNames(list(df), label)
+}
+
+.try_csv_generic <- function(filepath, lines) {
+  first <- lines[1]
+  sep <- if (grepl("\t", first, fixed = TRUE)) "\t" else if (grepl(";", first, fixed = TRUE)) ";" else ","
+  dec <- if (sep == ";") "," else "."
+  header_fields <- trimws(gsub("\"", "", strsplit(first, sep, fixed = TRUE)[[1]]))
+  has_header <- any(is.na(suppressWarnings(as.numeric(sub(",", ".", header_fields, fixed = TRUE)))))
+
+  tryCatch({
+    data <- utils::read.csv(filepath, sep = sep, dec = dec, header = has_header,
+                            stringsAsFactors = FALSE)
+    if (ncol(data) < 2) return(NULL)
+
+    names_lower <- tolower(trimws(names(data)))
+    unrel_col <- NULL; rel_col <- NULL
+
+    unrel_patterns <- c("unrelated", "h2", "rped", "random", "reference",
+                        "x1", "lr_unrelated", "lr.unrelated", "false")
+    for (pat in unrel_patterns) {
+      idx <- which(names_lower == pat)
+      if (length(idx) > 0) { unrel_col <- idx[1]; break }
+    }
+
+    rel_patterns <- c("related", "h1", "tped", "true_ped", "match",
+                      "x2", "lr_related", "lr.related")
+    for (pat in rel_patterns) {
+      idx <- which(names_lower == pat)
+      if (length(idx) > 0) { rel_col <- idx[1]; break }
+    }
+
+    if (is.null(unrel_col) || is.null(rel_col)) {
+      num_cols <- which(vapply(data, function(x) {
+        is.numeric(x) || !all(is.na(suppressWarnings(as.numeric(x))))
+      }, logical(1)))
+      if (length(num_cols) >= 2) {
+        if (is.null(unrel_col)) unrel_col <- num_cols[1]
+        if (is.null(rel_col))   rel_col   <- num_cols[2]
+      }
+    }
+
+    if (is.null(unrel_col)) unrel_col <- 1
+    if (is.null(rel_col))   rel_col   <- 2
+
+    df <- data.frame(
+      Unrelated = suppressWarnings(as.numeric(data[[unrel_col]])),
+      Related   = suppressWarnings(as.numeric(data[[rel_col]]))
+    )
+    df <- df[complete.cases(df), ]
+    if (nrow(df) > 0) list("Default" = df) else NULL
+  }, error = function(e) NULL)
+}
+
+frac_below <- function(x, t) {
+  findInterval(t, sort(x), left.open = TRUE) / length(x)
+}
+
+compute_decision_curve <- function(sim_df, n_points = 1000) {
+  max_lr <- max(1, min(max(c(sim_df$Unrelated, sim_df$Related)), 10000))
+  lr_values <- 10^seq(0, log10(max_lr), length.out = n_points)
+  data.frame(LR = lr_values,
+             FPR = 1 - frac_below(sim_df$Unrelated, lr_values),
+             FNR = frac_below(sim_df$Related, lr_values))
+}
+
+compute_optimal_dt <- function(sim_df, weight = 10) {
+  max_lr <- max(1, min(max(c(sim_df$Unrelated, sim_df$Related)), 10000))
+  observed <- c(sim_df$Unrelated, sim_df$Related)
+  lr_values <- sort(unique(c(1, observed[observed > 1 & observed <= max_lr], max_lr)))
+  FPR <- 1 - frac_below(sim_df$Unrelated, lr_values)
+  FNR <- frac_below(sim_df$Related, lr_values)
+  idx <- which.min(sqrt(FNR^2 + (weight * FPR)^2))
+  list(DT = lr_values[idx], FPR = FPR[idx], FNR = FNR[idx])
+}
 
 ui <- fluidPage(
   theme = shinythemes::shinytheme("flatly"),
@@ -408,6 +708,54 @@ ui <- fluidPage(
         line-height: 1.6;
         color: #2d3748;
       }
+
+      .metric-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        margin-bottom: 15px;
+      }
+
+      .metric-card .metric-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e3a5f;
+        margin: 8px 0;
+      }
+
+      .metric-card .metric-label {
+        font-size: 12px;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .upload-zone {
+        border: 2px dashed #cbd5e0;
+        border-radius: 12px;
+        padding: 25px;
+        background: #f7fafc;
+        transition: border-color 0.3s;
+      }
+
+      .upload-zone:hover {
+        border-color: #2c5282;
+      }
+
+      .sim-subtab .nav-pills > li > a {
+        border-radius: 8px;
+        font-weight: 600;
+        color: #4a5568;
+        margin: 2px;
+      }
+
+      .sim-subtab .nav-pills > li.active > a {
+        background: #2c5282;
+        color: white;
+      }
     "))
   ),
 
@@ -415,7 +763,7 @@ ui <- fluidPage(
     tags$img(src = "MispiIcon.png", alt = "mispitools logo"),
     div(
       h1("mispitools"),
-      p("Likelihood Ratio Analysis for Missing Person Identification")
+      p("Likelihood Ratio Analysis for Kinship in Forensic Science")
     )
   ),
 
@@ -423,17 +771,17 @@ ui <- fluidPage(
     id = "main_tabs",
     type = "tabs",
 
-    # TAB 1: OVERVIEW
     tabPanel(
       "Overview",
       fluidRow(
         column(10, offset = 1,
           br(),
-          h2("Evidence Evaluation in Missing Person Cases"),
+          h2("Evidence Evaluation for Kinship in Forensic Science"),
           p(class = "interpretation-text",
-            "This application implements a Bayesian framework for evaluating non-genetic
-            evidence in missing person identification. It calculates likelihood ratios (LRs)
-            that quantify the weight of evidence."
+            "This application implements a Bayesian framework for evaluating
+            evidence in kinship cases for forensic science. It includes two main sections:
+            non-genetic evidence (sex, age, hair color) with simulation capabilities,
+            and genetic evidence analysis (upload pre-computed simulation results)."
           ),
           hr(),
 
@@ -443,8 +791,8 @@ ui <- fluidPage(
                 h4("The Likelihood Ratio"),
                 p("The LR compares two hypotheses:"),
                 tags$ul(
-                  tags$li(strong("H1:"), " The unidentified person is the missing person"),
-                  tags$li(strong("H2:"), " The unidentified person is not the missing person")
+                  tags$li(strong("H1:"), " The individuals are related as stated in the pedigree"),
+                  tags$li(strong("H2:"), " The individuals are unrelated")
                 ),
                 div(class = "formula-box",
                   "LR = P(Evidence | H1) / P(Evidence | H2)"
@@ -467,30 +815,22 @@ ui <- fluidPage(
             )
           ),
 
-          h4("Available Evidence Types"),
+          h4("Application Sections"),
           fluidRow(
-            column(3,
+            column(6,
               div(class = "well", style = "text-align: center; padding: 20px;",
-                h5("Biological Sex"),
-                p(class = "text-muted", "Male/female classification with observation error")
+                h5("Non-Genetic Evidence"),
+                p(class = "text-muted", "Calculate and simulate LRs from non-genetic evidence:
+                  biological sex, age, and hair color. Includes LR simulation,
+                  evidence combination, and decision analysis.")
               )
             ),
-            column(3,
+            column(6,
               div(class = "well", style = "text-align: center; padding: 20px;",
-                h5("Age"),
-                p(class = "text-muted", "Age range with estimation uncertainty")
-              )
-            ),
-            column(3,
-              div(class = "well", style = "text-align: center; padding: 20px;",
-                h5("Hair Color"),
-                p(class = "text-muted", "Five-category classification with error matrix")
-              )
-            ),
-            column(3,
-              div(class = "well", style = "text-align: center; padding: 20px;",
-                h5("Combined"),
-                p(class = "text-muted", "Multiple evidence sources combined")
+                h5("Genetic Evidence"),
+                p(class = "text-muted", "Analyze pre-computed genetic simulation results
+                  from Familias, forrel, mispitools (R), or FamLink.
+                  Evaluate statistical power and optimize LR decision thresholds.")
               )
             )
           ),
@@ -498,14 +838,29 @@ ui <- fluidPage(
           hr(),
           div(style = "text-align: center; color: #718096; padding: 20px;",
             p(strong("References")),
-            p("Marsico et al. (2023). FSI:Genetics 66:102891 |
-                     Marsico et al. (2021). FSI:Genetics 52:102519")
+            p("Marsico F.L., Caridi I. (2023). Incorporating non-genetic evidence in large scale
+              missing person searches: A general approach beyond filtering.
+              Forensic Science International: Genetics 66:102891"),
+            p("Marsico F.L., Vigeland M.D., et al. (2021). Forensic Science International:
+              Genetics 54:102519")
           )
         )
       )
     ),
 
-    # TAB 2: INDIVIDUAL EVIDENCE
+    tabPanel(
+      "Non-Genetic Evidence",
+      br(),
+      fluidRow(column(10, offset = 1,
+        p(class = "interpretation-text",
+          "Calculate and simulate likelihood ratios from non-genetic evidence types
+          (sex, age, hair color). All analyses in this section can be run directly
+          in the web application.")
+      )),
+      tabsetPanel(
+        id = "nongen_tabs",
+        type = "pills",
+
     tabPanel(
       "Individual Evidence",
       fluidRow(
@@ -527,10 +882,8 @@ ui <- fluidPage(
             conditionalPanel(
               condition = "input.indiv_type == 'sex'",
               h5("Case Parameters"),
-              selectInput("indiv_MPs", "MP reported sex:",
-                c("Female" = "F", "Male" = "M")),
-              selectInput("indiv_obsSex", "Observed sex:",
-                c("Female" = "F", "Male" = "M")),
+              selectInput("indiv_MPs", "MP reported sex:", sex_choices),
+              selectInput("indiv_obsSex", "Observed sex:", sex_choices),
               hr(),
               h5("Model Parameters"),
               sliderInput("indiv_eps_sex", "Observation error rate:",
@@ -542,9 +895,9 @@ ui <- fluidPage(
             conditionalPanel(
               condition = "input.indiv_type == 'age'",
               h5("Case Parameters"),
-              numericInput("indiv_MPa", "MP estimated age (years):", 35, 1, 90),
+              numericInput("indiv_MPa", "MP estimated age (years):", 35, 1, 80),
               numericInput("indiv_MPr", "Estimation uncertainty (years):", 5, 1, 20),
-              numericInput("indiv_obsAge", "Observed age:", 37, 1, 90),
+              numericInput("indiv_obsAge", "Observed age:", 37, 1, 80),
               hr(),
               h5("Model Parameters"),
               sliderInput("indiv_epa", "Age category error rate:",
@@ -554,16 +907,13 @@ ui <- fluidPage(
             conditionalPanel(
               condition = "input.indiv_type == 'hair'",
               h5("Case Parameters"),
-              selectInput("indiv_MPc", "MP hair color:",
-                choices = c("Black" = 1, "Brown" = 2, "Blonde" = 3,
-                            "Red" = 4, "Gray/White" = 5), selected = 2),
-              selectInput("indiv_obsC", "Observed hair color:",
-                choices = c("Black" = 1, "Brown" = 2, "Blonde" = 3,
-                            "Red" = 4, "Gray/White" = 5), selected = 2),
+              selectInput("indiv_MPc", "MP hair color:", hair_choices, selected = 2),
+              selectInput("indiv_obsC", "Observed hair color:", hair_choices, selected = 2),
               hr(),
               h5("Model Parameters"),
-              sliderInput("indiv_epc", "Color misclassification rate:",
+              sliderInput("indiv_epc", "Color misclassification rate (total):",
                 0, 0.3, 0.05, 0.01),
+              p(class = "text-muted small", hair_error_help),
               p(class = "text-muted small",
                 "Black: 8%, Brown: 45%, Blonde: 30%, Red: 7%, Gray: 10%")
             )
@@ -583,7 +933,6 @@ ui <- fluidPage(
       )
     ),
 
-    # TAB 3: CPT ANALYSIS
     tabPanel(
       "Probability Tables",
       fluidRow(
@@ -597,10 +946,10 @@ ui <- fluidPage(
         column(2,
           wellPanel(
             h5("Missing Person"),
-            selectInput("cpt_MPs", "Sex:", c("Female" = "F", "Male" = "M")),
-            numericInput("cpt_MPa", "Age:", 40, 1, 90),
+            selectInput("cpt_MPs", "Sex:", sex_choices),
+            numericInput("cpt_MPa", "Age:", 40, 1, 80),
             numericInput("cpt_MPr", "Age range:", 6, 1, 20),
-            selectInput("cpt_MPc", "Hair color:", 1:5, selected = 2)
+            selectInput("cpt_MPc", "Hair color:", hair_choices, selected = 2)
           )
         ),
         column(2,
@@ -608,7 +957,8 @@ ui <- fluidPage(
             h5("Error Rates"),
             numericInput("cpt_eps", "Sex:", 0.05, 0, 0.5, 0.01),
             numericInput("cpt_epa", "Age:", 0.05, 0, 0.5, 0.01),
-            numericInput("cpt_epc", "Hair:", 0.05, 0, 0.5, 0.01)
+            numericInput("cpt_epc", "Hair (total):", 0.05, 0, 0.5, 0.01),
+            p(class = "text-muted small", hair_error_help)
           ),
           wellPanel(
             h5("Population"),
@@ -616,7 +966,7 @@ ui <- fluidPage(
           )
         ),
         column(8,
-          plotOutput("cpt_plots", height = "380px"),
+          plotOutput("cpt_plots", height = "auto"),
           div(class = "info-box",
             fluidRow(
               column(4,
@@ -636,7 +986,6 @@ ui <- fluidPage(
       )
     ),
 
-    # TAB 4: DISTRIBUTION
     tabPanel(
       "LR Distribution",
       fluidRow(
@@ -670,7 +1019,6 @@ ui <- fluidPage(
       )
     ),
 
-    # TAB 5: COMBINE EVIDENCE
     tabPanel(
       "Combine Evidence",
       fluidRow(
@@ -695,9 +1043,11 @@ ui <- fluidPage(
             checkboxInput("comb_use_sex", "Include", TRUE),
             conditionalPanel(
               condition = "input.comb_use_sex",
-              selectInput("comb_MPs", "MP:", c("F", "M")),
-              selectInput("comb_obsSex", "Observed:", c("F", "M")),
-              numericInput("comb_eps", "Error:", 0.05, 0, 0.3, 0.01)
+              selectInput("comb_MPs", "MP:", sex_choices),
+              selectInput("comb_obsSex", "Observed:", sex_choices),
+              numericInput("comb_eps", "Error:", 0.05, 0, 0.3, 0.01),
+              sliderInput("comb_propF", "Female proportion in population:",
+                0.3, 0.7, 0.51, 0.01)
             ),
             hr(),
             strong(textOutput("comb_lr_sex"))
@@ -709,9 +1059,9 @@ ui <- fluidPage(
             checkboxInput("comb_use_age", "Include", TRUE),
             conditionalPanel(
               condition = "input.comb_use_age",
-              numericInput("comb_MPa", "MP age:", 35, 1, 90),
+              numericInput("comb_MPa", "MP age:", 35, 1, 80),
               numericInput("comb_MPr", "Range:", 5, 1, 20),
-              numericInput("comb_obsAge", "Observed:", 37, 1, 90),
+              numericInput("comb_obsAge", "Observed:", 37, 1, 80),
               numericInput("comb_epa", "Error:", 0.05, 0, 0.3, 0.01)
             ),
             hr(),
@@ -724,9 +1074,10 @@ ui <- fluidPage(
             checkboxInput("comb_use_hair", "Include", TRUE),
             conditionalPanel(
               condition = "input.comb_use_hair",
-              selectInput("comb_MPc", "MP:", 1:5, selected = 2),
-              selectInput("comb_obsC", "Observed:", 1:5, selected = 2),
-              numericInput("comb_epc", "Error:", 0.05, 0, 0.3, 0.01)
+              selectInput("comb_MPc", "MP:", hair_choices, selected = 2),
+              selectInput("comb_obsC", "Observed:", hair_choices, selected = 2),
+              numericInput("comb_epc", "Error (total):", 0.05, 0, 0.3, 0.01),
+              p(class = "text-muted small", hair_error_help)
             ),
             hr(),
             strong(textOutput("comb_lr_hair"))
@@ -744,7 +1095,6 @@ ui <- fluidPage(
       )
     ),
 
-    # TAB 6: DECISION ANALYSIS
     tabPanel(
       "Decision Analysis",
       fluidRow(
@@ -769,7 +1119,8 @@ ui <- fluidPage(
             tags$ul(class = "small",
               tags$li(strong("TPR:"), " True Positive Rate (sensitivity)"),
               tags$li(strong("FPR:"), " False Positive Rate (1 - specificity)"),
-              tags$li(strong("MCC:"), " Matthews Correlation Coefficient")
+              tags$li(strong("Rule:"), " a person is declared a match when log10(LR) >= threshold"),
+              tags$li(strong("MCC:"), " Matthews Correlation Coefficient (assumes balanced classes)")
             )
           )
         ),
@@ -778,41 +1129,328 @@ ui <- fluidPage(
         )
       )
     )
+    )
+    ),
+
+    tabPanel(
+      "Genetic Evidence",
+      br(),
+      fluidRow(column(10, offset = 1,
+        div(class = "info-box",
+          h4("About Genetic Simulations"),
+          p("The web version of mispitools cannot perform genetic simulations
+            due to computational requirements. Simulations must be run using
+            dedicated software and then uploaded here for analysis:"),
+          tags$ul(
+            tags$li(strong("Familias"), " - standalone software for forensic genetics"),
+            tags$li(strong("forrel"), " - R package for forensic pedigree analysis"),
+            tags$li(strong("mispitools"), " - R package (command-line version)"),
+            tags$li(strong("FamLink"), " - software for kinship analysis")
+          ),
+          p("Once you have simulation results, upload them below to analyze
+            statistical power, LR distributions, and optimize decision thresholds.")
+        )
+      )),
+      tabsetPanel(
+        id = "gen_tabs",
+        type = "pills",
+
+    tabPanel(
+      "Simulation Analysis",
+      fluidRow(
+        column(12,
+          br(),
+          h3("Simulation Results Analysis"),
+          p(class = "interpretation-text",
+            "Upload simulation data from forensic genetics software (Familias, Forrel, FamLink, mispitools)
+            to evaluate statistical power and optimize LR decision thresholds."
+          )
+        )
+      ),
+      fluidRow(
+        column(4,
+          wellPanel(
+            div(class = "upload-zone",
+              h5("Upload Simulation Data"),
+              fileInput("sim_file", NULL,
+                accept = c(".csv", ".tsv", ".txt",
+                           "text/csv", "text/tab-separated-values", "text/plain")),
+              p(class = "text-muted small",
+                "Accepted: Familias, FamLink, forrel, mispitools, or any CSV/TSV
+                 with Unrelated & Related columns."),
+              hr(),
+              actionButton("sim_load_example", "Load Example Data",
+                class = "btn-info btn-block",
+                style = "border-radius: 8px; font-weight: 600;"),
+              p(class = "text-muted small", style = "margin-top: 6px;",
+                "Loads a 10,000-simulation Familias example dataset.")
+            ),
+            uiOutput("sim_parse_msg"),
+            uiOutput("sim_family_ui"),
+            hr(),
+            conditionalPanel(
+              condition = "output.sim_has_data",
+              div(class = "success-box", style = "padding: 10px 15px;",
+                textOutput("sim_data_info")
+              ),
+              hr(),
+              h5("LR Threshold"),
+              numericInput("sim_threshold", "LR threshold value (match if LR >= threshold):",
+                value = 100, min = 0, max = 1000000, step = 1),
+              hr(),
+              h5("Optimal Decision Threshold"),
+              sliderInput("sim_weight", "FP/FN cost weight:",
+                min = 1, max = 50, value = 10, step = 1),
+              p(class = "text-muted small",
+                "Weight > 1 penalizes false positives more. Default: 10 (FP is 10x worse than FN)."),
+              actionButton("sim_calc_dt", "Compute Optimal DT",
+                class = "btn-primary btn-block",
+                style = "border-radius: 8px; font-weight: 600;"),
+              br(), br(),
+              verbatimTextOutput("sim_dt_result")
+            )
+          )
+        ),
+        column(8,
+          conditionalPanel(
+            condition = "output.sim_has_data",
+            div(class = "sim-subtab",
+              tabsetPanel(
+                id = "sim_subtabs",
+                type = "pills",
+
+                tabPanel(
+                  "Summary",
+                  br(),
+                  fluidRow(
+                    column(6,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "Simulations"),
+                        div(class = "metric-value", textOutput("sim_n_sims"))
+                      )
+                    ),
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "Inclusion Power (LR >= 10,000)"),
+                        div(class = "metric-value", textOutput("sim_ip"))
+                      )
+                    ),
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "Exclusion Power"),
+                        div(class = "metric-value", textOutput("sim_ep"))
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(6,
+                      div(class = "success-box",
+                        h5("Related (H1) - Summary"),
+                        verbatimTextOutput("sim_summary_rel")
+                      )
+                    ),
+                    column(6,
+                      div(class = "warning-box",
+                        h5("Unrelated (H2) - Summary"),
+                        verbatimTextOutput("sim_summary_unrel")
+                      )
+                    )
+                  ),
+                  plotOutput("sim_violin", height = "350px")
+                ),
+
+                tabPanel(
+                  "Distributions",
+                  br(),
+                  plotOutput("sim_density_plot", height = "400px"),
+                  fluidRow(
+                    column(6,
+                      div(class = "success-box",
+                        h5("Related (H1) - log10(LR)"),
+                        verbatimTextOutput("sim_dist_stats_rel")
+                      )
+                    ),
+                    column(6,
+                      div(class = "warning-box",
+                        h5("Unrelated (H2) - log10(LR)"),
+                        verbatimTextOutput("sim_dist_stats_unrel")
+                      )
+                    )
+                  )
+                ),
+
+                tabPanel(
+                  "Decision Plot",
+                  br(),
+                  div(class = "info-box",
+                    p("Each point represents a different LR threshold. The curve shows
+                      the trade-off between false negative rate (missing a true match) and
+                      false positive rate (incorrectly flagging a non-match).
+                      Points closer to the origin (0,0) indicate better thresholds.
+                      Grey labels show the LR value at selected points.")
+                  ),
+                  plotOutput("sim_decision_plot", height = "450px")
+                ),
+
+                tabPanel(
+                  "Rates at Threshold",
+                  br(),
+                  div(class = "info-box",
+                    p("Classification metrics at the selected LR threshold. A comparison is
+                      declared a match when LR >= threshold. Expected false positives and PPV
+                      assume one true match and N unrelated candidates in the search.
+                      Adjust the threshold in the left panel to see how error rates change.")
+                  ),
+                  br(),
+                  fluidRow(
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "True Positive Rate"),
+                        div(class = "metric-value", textOutput("sim_rate_tpr"))
+                      )
+                    ),
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "False Positive Rate"),
+                        div(class = "metric-value", textOutput("sim_rate_fpr"))
+                      )
+                    ),
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "False Negative Rate"),
+                        div(class = "metric-value", textOutput("sim_rate_fnr"))
+                      )
+                    ),
+                    column(3,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "True Negative Rate"),
+                        div(class = "metric-value", textOutput("sim_rate_tnr"))
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(4,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "PPV (1 true match among N candidates)"),
+                        div(class = "metric-value", textOutput("sim_rate_ppv"))
+                      )
+                    ),
+                    column(4,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "Accuracy (balanced classes)"),
+                        div(class = "metric-value", textOutput("sim_rate_acc"))
+                      )
+                    ),
+                    column(4,
+                      div(class = "metric-card",
+                        span(class = "metric-label", "Expected false positives (FPR x N)"),
+                        div(style = "margin-top: 8px;",
+                          numericInput("sim_db_size", "N = number of unrelated candidates compared:",
+                            value = 10000, min = 1, step = 100),
+                          div(class = "metric-value", style = "font-size: 22px;",
+                            textOutput("sim_expected_fp"))
+                        )
+                      )
+                    )
+                  ),
+                  br(),
+                  tableOutput("sim_rates_table")
+                )
+              )
+            )
+          ),
+          conditionalPanel(
+            condition = "!output.sim_has_data",
+            div(style = "text-align: center; padding: 40px 30px; color: #a0aec0;",
+              tags$i(class = "fa fa-cloud-upload-alt", style = "font-size: 48px;"),
+              h4("Upload simulation data to begin analysis")
+            ),
+            div(class = "info-box", style = "text-align: left; margin: 0 20px;",
+              h5("Accepted file formats:"),
+              tags$ol(
+                tags$li(tags$b("Familias (single family):"),
+                  " Tab-separated .txt file with 2 header rows (case name + pedigree label), then numeric LR data. ",
+                  "First column = Unrelated (Reference Pedigree), second = Related."),
+                tags$li(tags$b("Familias (multi-family):"),
+                  " Same structure but with column pairs per family. Row 1 repeats the family name, ",
+                  "row 2 has 'Reference pedigree' for H2 and a relationship label (Father, Brother, etc.) for H1. ",
+                  "Can contain one or more families."),
+                tags$li(tags$b("FamLink:"),
+                  " Starts with 'Raw data LR:s...', then 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows. ",
+                  "Groups are separated by '|'. The 'True' row indicates which column is Related (H1). ",
+                  "Can contain one or more pedigree comparisons."),
+                tags$li(tags$b("Generic CSV/TSV:"),
+                  " Any .csv, .tsv, or .txt file with columns named 'Unrelated' and 'Related', ",
+                  "or two numeric columns (first = Unrelated, second = Related). ",
+                  "Supports comma, tab, or semicolon separators.")
+              ),
+              hr(),
+              h5("Example format (Familias, tab-separated):"),
+              tags$pre(style = "background: #f1f5f9; padding: 10px; font-size: 12px; overflow-x: auto;",
+                "FamilyName\\tFamilyName\nReference pedigree\\tFather\n3.33333\\t5\n2.5\\t3.33333\n1.25\\t2.08333"
+              ),
+              h5("Example format (Generic CSV):"),
+              tags$pre(style = "background: #f1f5f9; padding: 10px; font-size: 12px; overflow-x: auto;",
+                "Unrelated,Related\n0.5,3.2\n0.8,5.1\n0.3,2.7"
+              ),
+              p(class = "text-muted small",
+                "Note: Files must be text-based (.txt, .csv, .tsv). Excel files (.xlsx) are not supported. ",
+                "Simulations can be generated using Familias, forrel, mispitools (R version), or FamLink.")
+            )
+          )
+        )
+      )
+    )
+    )
+    )
   )
 )
 
-# ============================================================================
-# SERVER LOGIC
-# ============================================================================
-
 server <- function(input, output, session) {
 
-  # INDIVIDUAL EVIDENCE TAB
+  is_narrow <- function(id) {
+    w <- session$clientData[[paste0("output_", id, "_width")]]
+    !is.null(w) && w < 600
+  }
+
+  plot_size <- function(id, wide) {
+    if (is_narrow(id)) 10 else wide
+  }
+
   indiv_lr <- reactive({
     if (input$indiv_type == "sex") {
+      validate(
+        check_num(input$indiv_eps_sex, "Observation error rate", 0, 0.3),
+        check_num(input$indiv_propF, "Female proportion in population", 0.3, 0.7)
+      )
       calc_lr_sex(input$indiv_MPs, input$indiv_obsSex,
                   input$indiv_eps_sex, input$indiv_propF)
     } else if (input$indiv_type == "age") {
+      validate(
+        check_num(input$indiv_MPa, "MP estimated age", 1, 80, whole = TRUE),
+        check_num(input$indiv_MPr, "Estimation uncertainty", 1, 20, whole = TRUE),
+        check_num(input$indiv_obsAge, "Observed age", 1, 80, whole = TRUE),
+        check_num(input$indiv_epa, "Age category error rate", 0, 0.3)
+      )
       calc_lr_age(input$indiv_MPa, input$indiv_MPr,
                   input$indiv_obsAge, input$indiv_epa)
-    } else if (input$indiv_type == "hair") {
-      propC <- DEFAULT_HAIR_FREQ
-      calc_lr_hair(as.numeric(input$indiv_MPc), as.numeric(input$indiv_obsC),
-                   input$indiv_epc, propC)
     } else {
-      1
+      validate(check_num(input$indiv_epc, "Color misclassification rate", 0, 0.3))
+      calc_lr_hair(as.numeric(input$indiv_MPc), as.numeric(input$indiv_obsC),
+                   input$indiv_epc, DEFAULT_HAIR_FREQ)
     }
   })
 
   output$indiv_lr_value <- renderText({
-    sprintf("LR = %.3f", indiv_lr())
+    format_lr(indiv_lr())
   })
 
   output$indiv_lr_log <- renderText({
-    sprintf("log10(LR) = %.3f", log10(indiv_lr()))
+    format_log_lr(indiv_lr())
   })
 
   output$indiv_formula <- renderPrint({
+    LR <- indiv_lr()
     if (input$indiv_type == "sex") {
       match_status <- if (input$indiv_MPs == input$indiv_obsSex) "concordant" else "discordant"
       cat("Sex Evidence (", match_status, ")\n", sep = "")
@@ -824,82 +1462,96 @@ server <- function(input, output, session) {
       }
       obs_freq <- if (input$indiv_obsSex == "F") input$indiv_propF else (1 - input$indiv_propF)
       cat("P(observed | H2) =", round(obs_freq, 3), "\n")
-      cat("LR =", round(indiv_lr(), 4), "\n")
 
     } else if (input$indiv_type == "age") {
-      in_range <- input$indiv_obsAge >= (input$indiv_MPa - input$indiv_MPr) &&
-                  input$indiv_obsAge <= (input$indiv_MPa + input$indiv_MPr)
+      aw <- age_window(input$indiv_MPa, input$indiv_MPr)
+      in_range <- input$indiv_obsAge >= aw$min && input$indiv_obsAge <= aw$max
       cat("Age Evidence (", if (in_range) "in range" else "out of range", ")\n", sep = "")
       cat("----------------------------------------\n")
       cat("MP age:", input$indiv_MPa, "+/-", input$indiv_MPr, "years\n")
+      cat("Range used (ages 1-80):", aw$min, "to", aw$max,
+          "=", aw$max - aw$min + 1, "integer ages\n")
       cat("Observed:", input$indiv_obsAge, "years\n")
-      range_prob <- (2 * input$indiv_MPr) / 80
       if (in_range) {
         cat("P(in range | H1) = 1 - eps =", 1 - input$indiv_epa, "\n")
-        cat("P(in range | H2) =", round(range_prob, 4), "\n")
+        cat("P(in range | H2) =", aw$max - aw$min + 1, "/ 80 =", round(aw$T1p, 4), "\n")
       } else {
         cat("P(out of range | H1) = eps =", input$indiv_epa, "\n")
-        cat("P(out of range | H2) =", round(1 - range_prob, 4), "\n")
+        cat("P(out of range | H2) = 1 -", aw$max - aw$min + 1, "/ 80 =",
+            round(1 - aw$T1p, 4), "\n")
       }
-      cat("LR =", round(indiv_lr(), 4), "\n")
 
-    } else if (input$indiv_type == "hair") {
+    } else {
       match_status <- if (input$indiv_MPc == input$indiv_obsC) "concordant" else "discordant"
       cat("Hair Color Evidence (", match_status, ")\n", sep = "")
       cat("----------------------------------------\n")
       cat("MP:", hair_labels[input$indiv_MPc], "\n")
       cat("Observed:", hair_labels[input$indiv_obsC], "\n")
-      cat("Population frequency:", DEFAULT_HAIR_FREQ[as.numeric(input$indiv_obsC)], "\n")
-      cat("LR =", round(indiv_lr(), 4), "\n")
+      if (match_status == "concordant") {
+        cat("P(observed | H1) = 1 - eps =", 1 - input$indiv_epc, "\n")
+      } else {
+        cat("P(observed | H1) = eps / 4 =", input$indiv_epc / 4, "\n")
+      }
+      cat("P(observed | H2) = population frequency =",
+          DEFAULT_HAIR_FREQ[as.numeric(input$indiv_obsC)], "\n")
     }
+    cat(if (LR == 0) "LR = 0 (exclusion)" else paste("LR =", round(LR, 4)), "\n")
   })
 
-  # CPT ANALYSIS TAB
   cpt_pop <- reactive({
+    validate(
+      check_num(input$cpt_MPa, "Age", 1, 80, whole = TRUE),
+      check_num(input$cpt_MPr, "Age range", 1, 20, whole = TRUE),
+      check_num(input$cpt_propF, "Female proportion", 0.3, 0.7)
+    )
     build_cpt_pop(input$cpt_propF, input$cpt_MPa, input$cpt_MPr, DEFAULT_HAIR_FREQ)
   })
 
   cpt_mp <- reactive({
+    validate(
+      check_num(input$cpt_eps, "Sex error rate", 0, 0.5),
+      check_num(input$cpt_epa, "Age error rate", 0, 0.5),
+      check_num(input$cpt_epc, "Hair error rate", 0, 0.5)
+    )
     build_cpt_mp(input$cpt_MPs, as.numeric(input$cpt_MPc),
                  input$cpt_eps, input$cpt_epa, input$cpt_epc)
   })
 
   output$cpt_plots <- renderPlot({
-    create_cpt_plots(cpt_pop(), cpt_mp())
-  }, res = 100)
+    create_cpt_plots(cpt_pop(), cpt_mp(), narrow = is_narrow("cpt_plots"))
+  }, res = 100, height = function() if (is_narrow("cpt_plots")) 1000 else 380)
 
-  # DISTRIBUTION TAB
   lr_dists <- reactive({
     build_lr_distributions(cpt_pop(), cpt_mp())
   })
 
   output$dist_plot <- renderPlot({
     dists <- lr_dists()
-    create_dist_plot(dists$H1, dists$H2)
+    create_dist_plot(dists$H1, dists$H2, base_size = plot_size("dist_plot", 12))
   }, res = 100)
 
-  output$dist_stats_h1 <- renderPrint({
-    dists <- lr_dists()
-    if (nrow(dists$H1) == 0) {
+  dist_stats <- function(d) {
+    if (nrow(d) == 0) {
       cat("No data available\n")
-      return()
+    } else {
+      p0 <- sum(d$w[d$x == -Inf])
+      xf <- d$x[is.finite(d$x)]
+      if (p0 > 0) {
+        cat("Weighted mean log10(LR): undefined, P(LR = 0) =", sprintf("%.3f", p0), "\n")
+        cat("Range: LR = 0 to log10(LR) =", sprintf("%.3f", max(xf)), "\n")
+      } else {
+        cat("Weighted mean log10(LR):", sprintf("%.3f", sum(d$x * d$w)), "\n")
+        cat("Range: [", sprintf("%.3f", min(xf)), ",", sprintf("%.3f", max(xf)), "]\n")
+      }
     }
-    x <- dists$H1$x
-    w <- dists$H1$w
-    cat("Weighted mean log10(LR):", sprintf("%.3f", sum(x * w)), "\n")
-    cat("Range: [", sprintf("%.3f", min(x)), ",", sprintf("%.3f", max(x)), "]\n")
+  }
+
+  output$dist_stats_h1 <- renderPrint({
+    dist_stats(lr_dists()$H1)
   })
 
   output$dist_stats_h2 <- renderPrint({
-    dists <- lr_dists()
-    if (nrow(dists$H2) == 0) {
-      cat("No data available\n")
-      return()
-    }
-    x <- dists$H2$x
-    w <- dists$H2$w
-    cat("Weighted mean log10(LR):", sprintf("%.3f", sum(x * w)), "\n")
-    cat("Range: [", sprintf("%.3f", min(x)), ",", sprintf("%.3f", max(x)), "]\n")
+    dist_stats(lr_dists()$H2)
   })
 
   output$dist_roc <- renderPlot({
@@ -915,7 +1567,7 @@ server <- function(input, output, session) {
     }
 
     ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
-      ggplot2::geom_line(color = "#2c5282", linewidth = 1.2) +
+      ggplot2::geom_path(color = "#2c5282", linewidth = 1.2) +
       ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed",
                            color = "gray50", linewidth = 0.8) +
       ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
@@ -923,17 +1575,21 @@ server <- function(input, output, session) {
                     subtitle = "Discrimination between H1 and H2",
                     x = "False Positive Rate (1 - Specificity)",
                     y = "True Positive Rate (Sensitivity)") +
-      ggplot2::theme_minimal(base_size = 12) +
+      ggplot2::theme_minimal(base_size = plot_size("dist_roc", 12)) +
       ggplot2::theme(
+        plot.title.position = "plot",
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.minor = ggplot2::element_blank()
       )
   }, res = 100)
 
-  # COMBINE EVIDENCE TAB
   comb_lr_sex_val <- reactive({
     if (input$comb_use_sex) {
-      calc_lr_sex(input$comb_MPs, input$comb_obsSex, input$comb_eps, 0.51)
+      validate(
+        check_num(input$comb_eps, "Sex error", 0, 0.3),
+        check_num(input$comb_propF, "Female proportion in population", 0.3, 0.7)
+      )
+      calc_lr_sex(input$comb_MPs, input$comb_obsSex, input$comb_eps, input$comb_propF)
     } else {
       1
     }
@@ -941,6 +1597,12 @@ server <- function(input, output, session) {
 
   comb_lr_age_val <- reactive({
     if (input$comb_use_age) {
+      validate(
+        check_num(input$comb_MPa, "MP age", 1, 80, whole = TRUE),
+        check_num(input$comb_MPr, "Age range", 1, 20, whole = TRUE),
+        check_num(input$comb_obsAge, "Observed age", 1, 80, whole = TRUE),
+        check_num(input$comb_epa, "Age error", 0, 0.3)
+      )
       calc_lr_age(input$comb_MPa, input$comb_MPr, input$comb_obsAge, input$comb_epa)
     } else {
       1
@@ -949,6 +1611,7 @@ server <- function(input, output, session) {
 
   comb_lr_hair_val <- reactive({
     if (input$comb_use_hair) {
+      validate(check_num(input$comb_epc, "Hair error", 0, 0.3))
       calc_lr_hair(as.numeric(input$comb_MPc), as.numeric(input$comb_obsC),
                    input$comb_epc, DEFAULT_HAIR_FREQ)
     } else {
@@ -957,15 +1620,15 @@ server <- function(input, output, session) {
   })
 
   output$comb_lr_sex <- renderText({
-    if (input$comb_use_sex) sprintf("LR = %.2f", comb_lr_sex_val()) else "Not included"
+    if (input$comb_use_sex) format_lr(comb_lr_sex_val()) else "Not included"
   })
 
   output$comb_lr_age <- renderText({
-    if (input$comb_use_age) sprintf("LR = %.2f", comb_lr_age_val()) else "Not included"
+    if (input$comb_use_age) format_lr(comb_lr_age_val()) else "Not included"
   })
 
   output$comb_lr_hair <- renderText({
-    if (input$comb_use_hair) sprintf("LR = %.2f", comb_lr_hair_val()) else "Not included"
+    if (input$comb_use_hair) format_lr(comb_lr_hair_val()) else "Not included"
   })
 
   comb_total <- reactive({
@@ -973,41 +1636,39 @@ server <- function(input, output, session) {
   })
 
   output$comb_lr_total <- renderText({
-    sprintf("LR = %.2f", comb_total())
+    format_lr(comb_total())
   })
 
   output$comb_lr_log <- renderText({
-    sprintf("log10(LR) = %.3f", log10(comb_total()))
+    format_log_lr(comb_total())
   })
 
   output$comb_formula <- renderPrint({
-    parts <- c()
     vals <- c()
-    if (input$comb_use_sex) { parts <- c(parts, "Sex"); vals <- c(vals, comb_lr_sex_val()) }
-    if (input$comb_use_age) { parts <- c(parts, "Age"); vals <- c(vals, comb_lr_age_val()) }
-    if (input$comb_use_hair) { parts <- c(parts, "Hair"); vals <- c(vals, comb_lr_hair_val()) }
+    if (input$comb_use_sex) vals <- c(vals, comb_lr_sex_val())
+    if (input$comb_use_age) vals <- c(vals, comb_lr_age_val())
+    if (input$comb_use_hair) vals <- c(vals, comb_lr_hair_val())
 
-    if (length(parts) == 0) {
+    if (length(vals) == 0) {
       cat("No evidence selected\n")
-      return()
+    } else {
+      cat(paste(sprintf("%.4g", vals), collapse = " x "), "\n")
+      cat("=", sprintf("%.4g", prod(vals)), "\n")
     }
-
-    cat(paste(sprintf("%.2f", vals), collapse = " x "), "\n")
-    cat("=", sprintf("%.2f", prod(vals)), "\n")
   })
 
-  # DECISION ANALYSIS TAB
   output$dec_metrics <- renderPrint({
     dists <- lr_dists()
     m <- calc_metrics(dists$H1, dists$H2, input$dec_threshold)
 
     cat("At threshold log10(LR) =", input$dec_threshold, "\n")
+    cat("Match declared when log10(LR) >= threshold\n")
     cat("========================================\n\n")
     cat("True Positive Rate:  ", sprintf("%.3f", m$TPR), "\n")
     cat("False Positive Rate: ", sprintf("%.3f", m$FPR), "\n")
     cat("False Negative Rate: ", sprintf("%.3f", m$FNR), "\n")
     cat("True Negative Rate:  ", sprintf("%.3f", m$TNR), "\n")
-    cat("\nMCC: ", sprintf("%.3f", m$MCC), "\n")
+    cat("\nMCC (balanced classes): ", sprintf("%.3f", m$MCC), "\n")
   })
 
   output$dec_roc_plot <- renderPlot({
@@ -1022,11 +1683,11 @@ server <- function(input, output, session) {
                ggplot2::theme_void())
     }
 
-    th_idx <- which.min(abs(df_roc$th - input$dec_threshold))
-    current_point <- df_roc[th_idx, ]
+    m <- calc_metrics(dists$H1, dists$H2, input$dec_threshold)
+    current_point <- data.frame(FPR = m$FPR, TPR = m$TPR)
 
     ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
-      ggplot2::geom_line(color = "#2c5282", linewidth = 1.5) +
+      ggplot2::geom_path(color = "#2c5282", linewidth = 1.5) +
       ggplot2::geom_point(data = current_point, ggplot2::aes(x = FPR, y = TPR),
                          color = "#e53e3e", size = 6, shape = 16) +
       ggplot2::geom_point(data = current_point, ggplot2::aes(x = FPR, y = TPR),
@@ -1035,16 +1696,463 @@ server <- function(input, output, session) {
                            color = "gray50", linewidth = 0.8) +
       ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
       ggplot2::labs(title = sprintf("ROC Curve (AUC = %.3f)", auc_val),
-                    subtitle = sprintf("Red point: current threshold (log10(LR) = %.1f)",
+                    subtitle = sprintf("Red point: current threshold (log10(LR) >= %.1f)",
                                       input$dec_threshold),
                     x = "False Positive Rate", y = "True Positive Rate") +
-      ggplot2::theme_minimal(base_size = 14) +
+      ggplot2::theme_minimal(base_size = plot_size("dec_roc_plot", 14)) +
       ggplot2::theme(
+        plot.title.position = "plot",
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.minor = ggplot2::element_blank()
       )
   }, res = 100)
+
+  sim_families_val <- reactiveVal(NULL)
+  sim_parse_error  <- reactiveVal(NULL)
+
+  observeEvent(input$sim_file, {
+    result <- tryCatch(parse_sim_upload(input$sim_file$datapath), error = function(e) NULL)
+    if (is.null(result)) {
+      sim_families_val(NULL)
+      sim_parse_error(paste0(
+        "Could not parse the uploaded file ('", input$sim_file$name, "'). ",
+        "Please check the accepted formats below.\n\n",
+        "Common issues:\n",
+        "- The file must be a text file (.txt, .csv, .tsv), not Excel (.xlsx)\n",
+        "- For Familias format: Row 1 = family names, Row 2 = pedigree labels ",
+        "(e.g., 'Reference pedigree', 'Father'), then numeric LR values\n",
+        "- For FamLink format: must start with 'Raw data LR' and have ",
+        "'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows\n",
+        "- For generic CSV/TSV: need at least 2 numeric columns\n",
+        "- Check that the separator is tab, comma, or semicolon"
+      ))
+    } else {
+      sim_families_val(result)
+      sim_parse_error(NULL)
+    }
+  })
+
+  observeEvent(input$sim_load_example, {
+    candidates <- c(
+      "familias_example.csv",
+      system.file("extdata", "familias_example.csv", package = "mispitools"),
+      normalizePath(file.path("..", "extdata", "familias_example.csv"), mustWork = FALSE)
+    )
+    example_path <- ""
+    for (p in candidates) {
+      if (nzchar(p) && file.exists(p)) { example_path <- p; break }
+    }
+    if (nzchar(example_path)) {
+      sim_families_val(parse_sim_upload(example_path))
+      sim_parse_error(NULL)
+    } else {
+      sim_parse_error("The example dataset could not be found on the server.")
+    }
+  })
+
+  output$sim_family_ui <- renderUI({
+    fams <- sim_families_val()
+    if (is.null(fams) || length(fams) <= 1) return(NULL)
+    div(style = "margin-top: 10px;",
+      hr(),
+      h5("Select Comparison"),
+      selectInput("sim_family", NULL, choices = names(fams), selected = names(fams)[1]),
+      p(class = "text-muted small",
+        sprintf("%d comparisons detected in this file.", length(fams)))
+    )
+  })
+
+  output$sim_parse_msg <- renderUI({
+    err <- sim_parse_error()
+    if (!is.null(err)) {
+      err_lines <- strsplit(err, "\n")[[1]]
+      return(div(class = "warning-box", style = "margin-top: 10px; padding: 10px;",
+        tags$i(class = "fa fa-exclamation-triangle"),
+        tags$b(" File format error"),
+        tags$pre(style = "white-space: pre-wrap; margin-top: 8px; font-size: 12px;
+                         background: transparent; border: none; padding: 0;",
+          paste(err_lines, collapse = "\n")
+        )
+      ))
+    }
+    NULL
+  })
+
+  sim_data <- reactive({
+    fams <- sim_families_val()
+    if (is.null(fams) || length(fams) == 0) return(NULL)
+    if (length(fams) == 1) return(fams[[1]])
+    sel <- input$sim_family
+    if (is.null(sel) || !(sel %in% names(fams))) return(fams[[1]])
+    fams[[sel]]
+  })
+
+  output$sim_has_data <- reactive({
+    !is.null(sim_data())
+  })
+  outputOptions(output, "sim_has_data", suspendWhenHidden = FALSE)
+
+  output$sim_data_info <- renderText({
+    df <- sim_data()
+    req(df)
+    fams <- sim_families_val()
+    n_fams <- if (!is.null(fams)) length(fams) else 1
+    if (n_fams > 1) {
+      sprintf("Data loaded: %s simulations (%d comparisons available)",
+              format(nrow(df), big.mark = ","), n_fams)
+    } else {
+      sprintf("Data loaded: %s simulations", format(nrow(df), big.mark = ","))
+    }
+  })
+
+  output$sim_n_sims <- renderText({
+    df <- sim_data()
+    req(df)
+    format(nrow(df), big.mark = ",")
+  })
+
+  output$sim_ip <- renderText({
+    df <- sim_data()
+    req(df)
+    sprintf("%.3f", mean(df$Related >= 10000))
+  })
+
+  output$sim_ep <- renderText({
+    df <- sim_data()
+    req(df)
+    ep <- sum(df$Unrelated == 0 | df$Unrelated < 1e-10) / nrow(df)
+    sprintf("%.3f", ep)
+  })
+
+  sim_summary <- function(x) {
+    cat("Raw LR values:\n")
+    print(summary(x))
+    cat("\nlog10(LR) values (LR > 0 only):\n")
+    valid <- x[x > 0]
+    if (length(valid) > 0) print(summary(log10(valid)))
+    if (any(x == 0)) {
+      cat("\nLR = 0 in", sum(x == 0), "of", length(x), "simulations\n")
+    }
+  }
+
+  output$sim_summary_rel <- renderPrint({
+    df <- sim_data()
+    req(df)
+    sim_summary(df$Related)
+  })
+
+  output$sim_summary_unrel <- renderPrint({
+    df <- sim_data()
+    req(df)
+    sim_summary(df$Unrelated)
+  })
+
+  zero_caption <- function(df) {
+    if (any(df$Related == 0) || any(df$Unrelated == 0)) {
+      sprintf("Not shown (LR = 0): %d related and %d unrelated simulations",
+              sum(df$Related == 0), sum(df$Unrelated == 0))
+    } else {
+      NULL
+    }
+  }
+
+  output$sim_violin <- renderPlot({
+    df <- sim_data()
+    req(df)
+
+    rel_valid <- df$Related[df$Related > 0]
+    unrel_valid <- df$Unrelated[df$Unrelated > 0]
+
+    df_long <- data.frame(
+      Hypothesis = c(
+        rep("Related (H1)", length(rel_valid)),
+        rep("Unrelated (H2)", length(unrel_valid))
+      ),
+      log10LR = c(log10(rel_valid), log10(unrel_valid))
+    )
+
+    ggplot2::ggplot(df_long, ggplot2::aes(x = Hypothesis, y = log10LR, fill = Hypothesis)) +
+      ggplot2::geom_violin(alpha = 0.7, color = "white", linewidth = 0.3) +
+      ggplot2::geom_boxplot(width = 0.15, fill = "white", alpha = 0.8,
+                            outlier.size = 0.5, outlier.alpha = 0.3) +
+      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#2171b5",
+                                            "Unrelated (H2)" = "#cb181d")) +
+      ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+      ggplot2::labs(title = "LR Distribution Comparison",
+                    subtitle = "Dashed line: LR = 1 (neutral evidence)",
+                    caption = zero_caption(df),
+                    x = "", y = expression(log[10](LR))) +
+      ggplot2::coord_flip() +
+      ggplot2::theme_minimal(base_size = plot_size("sim_violin", 13)) +
+      ggplot2::theme(
+        plot.title.position = "plot",
+        plot.title = ggplot2::element_text(face = "bold"),
+        legend.position = "none",
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  }, res = 100)
+
+  output$sim_density_plot <- renderPlot({
+    df <- sim_data()
+    req(df)
+
+    rel_valid <- df$Related[df$Related > 0]
+    unrel_valid <- df$Unrelated[df$Unrelated > 0]
+
+    if (length(rel_valid) < 2 || length(unrel_valid) < 2) {
+      return(ggplot2::ggplot() +
+               ggplot2::annotate("text", x = 0.5, y = 0.5, label = "Insufficient positive LR values") +
+               ggplot2::theme_void())
+    }
+
+    dens_rel <- stats::density(log10(rel_valid))
+    dens_unrel <- stats::density(log10(unrel_valid))
+
+    df_dens <- rbind(
+      data.frame(x = dens_rel$x, y = dens_rel$y, Hypothesis = "Related (H1)"),
+      data.frame(x = dens_unrel$x, y = dens_unrel$y, Hypothesis = "Unrelated (H2)")
+    )
+
+    ggplot2::ggplot(df_dens, ggplot2::aes(x = x, y = y, fill = Hypothesis)) +
+      ggplot2::geom_area(alpha = 0.55, position = "identity", color = "white", linewidth = 0.5) +
+      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#2171b5",
+                                            "Unrelated (H2)" = "#cb181d")) +
+      ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray30", linewidth = 0.8) +
+      ggplot2::labs(title = "LR Distribution Density",
+                    subtitle = "Vertical dashed line: LR = 1 (neutral). Less overlap = better discrimination.",
+                    caption = zero_caption(df),
+                    x = expression(log[10](LR)), y = "Density") +
+      ggplot2::theme_minimal(base_size = plot_size("sim_density_plot", 13)) +
+      ggplot2::theme(
+        plot.title.position = "plot",
+        plot.title = ggplot2::element_text(face = "bold"),
+        legend.position = "top",
+        legend.title = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  }, res = 100)
+
+  sim_log_stats <- function(x) {
+    valid <- x[x > 0]
+    if (length(valid) == 0) {
+      cat("No positive values\n")
+    } else {
+      lv <- log10(valid)
+      cat("Mean:   ", sprintf("%.3f", mean(lv)), "\n")
+      cat("Median: ", sprintf("%.3f", stats::median(lv)), "\n")
+      cat("SD:     ", sprintf("%.3f", stats::sd(lv)), "\n")
+      cat("Range:  [", sprintf("%.3f", min(lv)), ",", sprintf("%.3f", max(lv)), "]\n")
+    }
+    if (any(x == 0)) {
+      cat("Excluded (LR = 0):", sum(x == 0), "of", length(x), "\n")
+    }
+  }
+
+  output$sim_dist_stats_rel <- renderPrint({
+    df <- sim_data()
+    req(df)
+    sim_log_stats(df$Related)
+  })
+
+  output$sim_dist_stats_unrel <- renderPrint({
+    df <- sim_data()
+    req(df)
+    sim_log_stats(df$Unrelated)
+  })
+
+  output$sim_decision_plot <- renderPlot({
+    df <- sim_data()
+    req(df)
+    validate(check_num(input$sim_threshold, "LR threshold", 0, 1e6))
+
+    curve_data <- compute_decision_curve(df, n_points = 500)
+
+    opt <- sim_opt()
+    opt_point <- data.frame(LR = opt$DT, FPR = opt$FPR, FNR = opt$FNR)
+
+    sel_point <- data.frame(FPR = mean(df$Unrelated >= input$sim_threshold),
+                            FNR = mean(df$Related < input$sim_threshold))
+
+    label_indices <- unique(c(1,
+                              round(nrow(curve_data) * 0.25),
+                              round(nrow(curve_data) * 0.5),
+                              round(nrow(curve_data) * 0.75),
+                              nrow(curve_data)))
+    label_data <- curve_data[label_indices, ]
+
+    ggplot2::ggplot(curve_data, ggplot2::aes(x = FNR, y = FPR, color = log10(LR))) +
+      ggplot2::geom_point(size = 2, alpha = 0.8) +
+      ggplot2::scale_color_gradient2(
+        low = "#2171b5", mid = "#feb24c", high = "#e31a1c",
+        midpoint = stats::median(log10(curve_data$LR)),
+        name = expression(log[10](LR~threshold))
+      ) +
+      ggplot2::geom_point(data = opt_point, ggplot2::aes(x = FNR, y = FPR),
+                         color = "#38a169", size = 6, shape = 18, inherit.aes = FALSE) +
+      ggplot2::annotate("text",
+        x = opt_point$FNR, y = opt_point$FPR,
+        label = sprintf("Optimal DT\nLR = %.2f", opt_point$LR),
+        hjust = 0.5, vjust = -0.6, size = 3.5, fontface = "bold", color = "#38a169") +
+      ggplot2::geom_point(data = sel_point, ggplot2::aes(x = FNR, y = FPR),
+                         color = "#e53e3e", size = 5, shape = 16, inherit.aes = FALSE) +
+      ggplot2::geom_point(data = sel_point, ggplot2::aes(x = FNR, y = FPR),
+                         color = "white", size = 2.5, shape = 16, inherit.aes = FALSE) +
+      ggplot2::annotate("text",
+        x = sel_point$FNR, y = sel_point$FPR,
+        label = sprintf("Selected\nLR = %g", input$sim_threshold),
+        hjust = 0.5, vjust = 1.5, size = 3.2, color = "#e53e3e") +
+      ggplot2::geom_text(data = label_data,
+        ggplot2::aes(x = FNR, y = FPR, label = round(LR)),
+        size = 2.8, vjust = -1, color = "gray40", inherit.aes = FALSE,
+        check_overlap = TRUE) +
+      ggplot2::scale_x_continuous(n.breaks = if (is_narrow("sim_decision_plot")) 4 else 6) +
+      ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0.12, 0.15))) +
+      ggplot2::coord_cartesian(clip = "off") +
+      ggplot2::labs(
+        title = "LR Decision Threshold Plot",
+        subtitle = if (is_narrow("sim_decision_plot")) {
+          "Green diamond: optimal DT\nRed dot: selected threshold\n(match if LR >= threshold)"
+        } else {
+          "Green diamond: optimal DT | Red dot: selected threshold\n(match if LR >= threshold)"
+        },
+        x = "False Negative Rate (FNR)",
+        y = "False Positive Rate (FPR)"
+      ) +
+      ggplot2::theme_minimal(base_size = plot_size("sim_decision_plot", 13)) +
+      ggplot2::theme(
+        plot.title.position = "plot",
+        plot.title = ggplot2::element_text(face = "bold"),
+        legend.position = if (is_narrow("sim_decision_plot")) "bottom" else "right",
+        panel.grid.minor = ggplot2::element_blank()
+      )
+  }, res = 100)
+
+  sim_rates <- reactive({
+    df <- sim_data()
+    req(df)
+    threshold <- input$sim_threshold
+    validate(check_num(threshold, "LR threshold", 0, 1e6))
+
+    n <- nrow(df)
+    TP <- sum(df$Related >= threshold)
+    FN <- sum(df$Related < threshold)
+    FP <- sum(df$Unrelated >= threshold)
+    TN <- sum(df$Unrelated < threshold)
+
+    TPR <- TP / n
+    TNR <- TN / n
+    FPR_val <- FP / n
+    FNR_val <- FN / n
+    Accuracy <- (TP + TN) / (TP + TN + FP + FN)
+
+    denom <- sqrt(as.numeric(TP + FP) * as.numeric(TP + FN) *
+                  as.numeric(TN + FP) * as.numeric(TN + FN))
+    MCC <- if (denom == 0) 0 else (TP * TN - FP * FN) / denom
+
+    list(TPR = TPR, TNR = TNR, FPR = FPR_val, FNR = FNR_val,
+         MCC = MCC, Accuracy = Accuracy, FP_count = FP, FN_count = FN,
+         TP_count = TP, TN_count = TN)
+  })
+
+  sim_n_message <- reactive({
+    check_num(input$sim_db_size, "Number of unrelated candidates (N)", 1, Inf, whole = TRUE)
+  })
+
+  sim_n_candidates <- reactive({
+    req(is.null(sim_n_message()))
+    input$sim_db_size
+  })
+
+  sim_ppv <- reactive({
+    r <- sim_rates()
+    denom <- r$TPR + r$FPR * sim_n_candidates()
+    if (denom == 0) NA else r$TPR / denom
+  })
+
+  output$sim_rate_tpr <- renderText({
+    sprintf("%.4f", sim_rates()$TPR)
+  })
+
+  output$sim_rate_fpr <- renderText({
+    sprintf("%.4f", sim_rates()$FPR)
+  })
+
+  output$sim_rate_fnr <- renderText({
+    sprintf("%.4f", sim_rates()$FNR)
+  })
+
+  output$sim_rate_tnr <- renderText({
+    sprintf("%.4f", sim_rates()$TNR)
+  })
+
+  output$sim_rate_ppv <- renderText({
+    if (is.na(sim_ppv())) "undefined" else sprintf("%.4f", sim_ppv())
+  })
+
+  output$sim_rate_acc <- renderText({
+    sprintf("%.4f", sim_rates()$Accuracy)
+  })
+
+  output$sim_expected_fp <- renderText({
+    validate(sim_n_message())
+    sprintf("%.1f", sim_rates()$FPR * sim_n_candidates())
+  })
+
+  output$sim_rates_table <- renderTable({
+    r <- sim_rates()
+    data.frame(
+      Metric = c("True Positive Rate (TPR)",
+                 "False Positive Rate (FPR)",
+                 "True Negative Rate (TNR)",
+                 "False Negative Rate (FNR)",
+                 sprintf("Expected false positives (FPR x N, N = %s)",
+                         format(sim_n_candidates(), big.mark = ",")),
+                 "PPV (1 true match among N candidates)",
+                 "Accuracy (balanced classes)",
+                 "Matthews Correlation Coefficient (MCC, balanced classes)"),
+      Value = c(sprintf("%.6f", r$TPR),
+                sprintf("%.6f", r$FPR),
+                sprintf("%.6f", r$TNR),
+                sprintf("%.6f", r$FNR),
+                sprintf("%.1f", r$FPR * sim_n_candidates()),
+                if (is.na(sim_ppv())) "undefined" else sprintf("%.6f", sim_ppv()),
+                sprintf("%.6f", r$Accuracy),
+                sprintf("%.6f", r$MCC))
+    )
+  }, striped = TRUE, hover = TRUE, bordered = TRUE)
+
+  sim_opt <- reactive({
+    df <- sim_data()
+    req(df)
+    compute_optimal_dt(df, weight = input$sim_weight)
+  })
+
+  sim_dt_shown <- reactiveVal(FALSE)
+
+  observeEvent(sim_data(), {
+    sim_dt_shown(FALSE)
+  })
+
+  observeEvent(input$sim_calc_dt, {
+    req(sim_data())
+    sim_dt_shown(TRUE)
+  })
+
+  output$sim_dt_result <- renderPrint({
+    if (!sim_dt_shown()) {
+      cat("Click 'Compute Optimal DT' to calculate.\n")
+    } else {
+      result <- sim_opt()
+      cat("Optimal Decision Threshold\n")
+      cat("========================================\n\n")
+      cat("  LR threshold: ", sprintf("%.2f", result$DT), "\n")
+      cat("  FPR at DT:    ", sprintf("%.6f", result$FPR), "\n")
+      cat("  FNR at DT:    ", sprintf("%.6f", result$FNR), "\n")
+      cat("  Weight used:  ", input$sim_weight, "\n")
+      cat("\n  Formula: D = sqrt(FNR^2 + (w*FPR)^2)\n")
+      cat("  Match declared when LR >= threshold\n")
+    }
+  })
 }
 
-# Launch the app
 shinyApp(ui = ui, server = server)

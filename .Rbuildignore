@@ -27,3 +27,4 @@
 ^COPYRIGHTS$
 ^man/figures/mispitools_tutorial\.mp4$
 ^cran-comments\.md$
+^inst/shinyapp$
