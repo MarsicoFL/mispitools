@@ -188,43 +188,59 @@ Result<DecisionRates> decision_rates(const LrDist& d, double threshold) {
     return ok_result(r);
 }
 
+struct AtomGroups {
+    std::vector<double> thr;
+    std::vector<double> h1;
+    std::vector<double> h2;
+    std::vector<double> h1_below;
+    std::vector<double> h2_below;
+    std::vector<double> h1_above;
+    std::vector<double> h2_above;
+};
+
+AtomGroups group_atoms(const LrDist& d) {
+    AtomGroups g;
+    g.thr = distinct_sorted(d.log10_lr);
+    const std::size_t n = g.thr.size();
+    g.h1.assign(n, 0.0);
+    g.h2.assign(n, 0.0);
+    for (std::size_t i = 0; i < d.log10_lr.size(); ++i) {
+        const std::size_t k = static_cast<std::size_t>(
+            std::lower_bound(g.thr.begin(), g.thr.end(), d.log10_lr[i])
+            - g.thr.begin());
+        g.h1[k] += d.p_h1[i];
+        g.h2[k] += d.p_h2[i];
+    }
+    g.h1_below.assign(n, 0.0);
+    g.h2_below.assign(n, 0.0);
+    g.h1_above.assign(n, 0.0);
+    g.h2_above.assign(n, 0.0);
+    for (std::size_t k = 1; k < n; ++k) {
+        g.h1_below[k] = g.h1_below[k - 1] + g.h1[k - 1];
+        g.h2_below[k] = g.h2_below[k - 1] + g.h2[k - 1];
+    }
+    for (std::size_t k = n; k-- > 1;) {
+        g.h1_above[k - 1] = g.h1_above[k] + g.h1[k];
+        g.h2_above[k - 1] = g.h2_above[k] + g.h2[k];
+    }
+    return g;
+}
+
 Result<RocCurve> roc_curve(const LrDist& d) {
     const std::string e = validate(d);
     if (!e.empty()) return err_result<RocCurve>(e);
 
+    const AtomGroups g = group_atoms(d);
     RocCurve c;
-    const std::vector<double> thr = distinct_sorted(d.log10_lr);
-    c.threshold = thr;
-    c.fpr.resize(thr.size());
-    c.tpr.resize(thr.size());
-    c.fnr.resize(thr.size());
-    c.tnr.resize(thr.size());
-    for (std::size_t t = 0; t < thr.size(); ++t) {
-        double fpr = 0.0, tpr = 0.0, fnr = 0.0, tnr = 0.0;
-        for (std::size_t i = 0; i < d.log10_lr.size(); ++i) {
-            const double lr = d.log10_lr[i];
-            if (lr < thr[t]) { fnr += d.p_h1[i]; tnr += d.p_h2[i]; }
-            else if (lr > thr[t]) { tpr += d.p_h1[i]; fpr += d.p_h2[i]; }
-        }
-        c.fpr[t] = fpr;
-        c.tpr[t] = tpr;
-        c.fnr[t] = fnr;
-        c.tnr[t] = tnr;
-    }
+    c.threshold = g.thr;
+    c.fpr = g.h2_above;
+    c.tpr = g.h1_above;
+    c.fnr = g.h1_below;
+    c.tnr = g.h2_below;
 
-    // Concordance AUC: P(LR_H1 > LR_H2) + ½ P(LR_H1 = LR_H2), the i
-    // (outer) / j (inner) nesting matching roc_curve_R.
     double auc = 0.0;
-    for (std::size_t i = 0; i < d.log10_lr.size(); ++i) {
-        if (d.p_h1[i] <= 0.0) continue;
-        for (std::size_t j = 0; j < d.log10_lr.size(); ++j) {
-            if (d.p_h2[j] <= 0.0) continue;
-            double ind;
-            if (d.log10_lr[i] > d.log10_lr[j]) ind = 1.0;
-            else if (d.log10_lr[i] == d.log10_lr[j]) ind = 0.5;
-            else ind = 0.0;
-            auc += d.p_h1[i] * d.p_h2[j] * ind;
-        }
+    for (std::size_t k = 0; k < g.thr.size(); ++k) {
+        auc += g.h1[k] * (g.h2_below[k] + 0.5 * g.h2[k]);
     }
     c.auc = auc;
     return ok_result(c);
@@ -238,21 +254,17 @@ Result<ThresholdChoice> choose_threshold_weighted(const LrDist& d,
         return err_result<ThresholdChoice>("weight must be positive.");
     }
 
-    const std::vector<double> thr = distinct_sorted(d.log10_lr);
+    const AtomGroups g = group_atoms(d);
     ThresholdChoice best;
     bool have = false;
-    for (double t : thr) {
-        double fnr = 0.0, fpr = 0.0;
-        for (std::size_t i = 0; i < d.log10_lr.size(); ++i) {
-            const double lr = d.log10_lr[i];
-            if (lr < t) fnr += d.p_h1[i];
-            else if (lr > t) fpr += d.p_h2[i];
-        }
+    for (std::size_t k = 0; k < g.thr.size(); ++k) {
+        const double fnr = g.h1_below[k];
+        const double fpr = g.h2_above[k];
         const double wf = weight * fpr;
         const double dist = std::sqrt(fnr * fnr + wf * wf);
         if (!have || dist < best.distance) {
             have = true;
-            best.threshold = t;
+            best.threshold = g.thr[k];
             best.fpr = fpr;
             best.fnr = fnr;
             best.distance = dist;

@@ -117,7 +117,6 @@ struct RocCurve {
 /// @param d sparse LR distribution.
 /// @return `RocCurve` with one row per distinct atom value; errors on a
 ///         length mismatch or a negative probability.
-/// @complexity O(n_atoms²) for the concordance AUC (sparse n is small).
 Result<RocCurve> roc_curve(const LrDist& d);
 
 /// @brief Weighted-Euclidean optimal threshold.
@@ -138,7 +137,6 @@ struct ThresholdChoice {
 /// @param weight relative cost of a false positive (must be > 0).
 /// @return `ThresholdChoice`; errors on a length mismatch, a negative
 ///         probability, or `weight <= 0`.
-/// @complexity O(n_atoms²) (rates at each candidate threshold).
 Result<ThresholdChoice> choose_threshold_weighted(const LrDist& d,
                                                    double weight);
 
