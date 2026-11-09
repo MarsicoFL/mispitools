@@ -5,7 +5,7 @@
  ],
  "translation": [
   {
-   "en": "%s: please enter a number.",
+   "en": "%s: enter a number.",
    "es": "%s: ingrese un número."
   },
   {
@@ -73,12 +73,12 @@
    "es": "Línea gris: LR = 1 (no informativa).\nBarra izquierda: LR = 0 (exclusión)"
   },
   {
-   "en": "Familias example dataset, 10,000 simulations.",
-   "es": "Conjunto de datos de ejemplo de Familias, 10 000 simulaciones."
+   "en": "Familias example, 10,000 simulations.",
+   "es": "Ejemplo de Familias, 10,000 simulaciones."
   },
   {
-   "en": "Simulated with forrel 1.9.1: 10,000 replicates under H1 (the person of interest is the missing person) and H2 (unrelated), 24 autosomal STRs, Argentina allele frequencies, no mutation model. References are genotyped relatives of the missing person.",
-   "es": "Simulado con forrel 1.9.1: 10 000 réplicas bajo H1 (la persona de interés es la persona desaparecida) y H2 (no emparentada), 24 STR autosómicos, frecuencias alélicas de Argentina, sin modelo de mutación. Las referencias son familiares genotipados de la persona desaparecida."
+   "en": "forrel 1.9.1: 10,000 simulations per hypothesis, 24 autosomal STRs, Argentina allele frequencies, no mutation. Ref = genotyped relative.",
+   "es": "forrel 1.9.1: 10,000 simulaciones por hipótesis, 24 STR autosómicos, frecuencias alélicas de Argentina, sin mutación. Ref = familiar genotipado."
   },
   {
    "en": "Only one sex is present in the database: the default female proportion (0.51) is used.",
@@ -101,112 +101,64 @@
    "es": "Introducción"
   },
   {
-   "en": "Evidence Evaluation for Kinship in Forensic Science",
-   "es": "Evaluación de la evidencia en casos de parentesco en ciencias forenses"
+   "en": "Evidence evaluation in kinship cases",
+   "es": "Evaluación de la evidencia en casos de parentesco"
   },
   {
-   "en": "This application implements a Bayesian framework for evaluating evidence in kinship cases for forensic science. It includes two main sections: non-genetic evidence (sex, age, hair color) with simulation capabilities, and genetic evidence analysis (upload pre-computed simulation results).",
-   "es": "Esta aplicación implementa un marco bayesiano para evaluar la evidencia en casos de parentesco en ciencias forenses. Incluye dos secciones principales: evidencia no genética (sexo, edad, color de cabello) con capacidad de simulación, y análisis de evidencia genética (carga de resultados de simulaciones calculados previamente)."
+   "en": "Likelihood ratios for missing-person identification from non-genetic evidence (sex, age, hair colour) and from genetic simulation results. Non-genetic analyses run in the browser; genetic simulations are run elsewhere and uploaded.",
+   "es": "Razones de verosimilitud (LR) para la identificación de personas desaparecidas a partir de evidencia no genética (sexo, edad, color de cabello) y de resultados de simulaciones genéticas. Los análisis no genéticos se ejecutan en el navegador; las simulaciones genéticas se ejecutan en otro software y se cargan aquí."
   },
   {
-   "en": "The Likelihood Ratio",
-   "es": "La razón de verosimilitud"
+   "en": "the person is the missing person (MP)",
+   "es": "la persona es la persona desaparecida (PD)"
   },
   {
-   "en": "The LR compares two hypotheses:",
-   "es": "La razón de verosimilitud (LR) compara dos hipótesis:"
-  },
-  {
-   "en": "the person is the missing person (MP), related as stated in the pedigree",
-   "es": "la persona es la persona desaparecida (PD), emparentada según el pedigrí planteado"
-  },
-  {
-   "en": "unrelated person",
-   "es": "persona no emparentada"
+   "en": "the person is unrelated to the MP",
+   "es": "la persona no está emparentada con la PD"
   },
   {
    "en": "LR = P(Evidence | H1) / P(Evidence | H2)",
    "es": "LR = P(Evidencia | H1) / P(Evidencia | H2)"
   },
   {
-   "en": "Example: LR = 100 means the evidence is 100 times more probable if related than if unrelated.",
-   "es": "Ejemplo: LR = 100 significa que la evidencia es 100 veces más probable si las personas están emparentadas que si no lo están."
+   "en": "The LR is not the probability that the person is the MP.",
+   "es": "La LR no es la probabilidad de que la persona sea la PD."
   },
   {
-   "en": "The LR does ",
-   "es": "La LR "
+   "en": "Single-observation LR",
+   "es": "LR de una observación"
   },
   {
-   "en": "not",
-   "es": "no"
+   "en": "Individual evidence",
+   "es": "Evidencia individual"
   },
   {
-   "en": " provide a probability of identity. It quantifies how much the evidence changes the odds.",
-   "es": " proporciona una probabilidad de identidad. Cuantifica cuánto modifica la evidencia la razón de probabilidades (odds) de H1 frente a H2."
+   "en": "Combined evidence",
+   "es": "Evidencia combinada"
   },
   {
-   "en": "Using the LR",
-   "es": "Uso de la LR"
+   "en": "Expected false positives",
+   "es": "Falsos positivos esperados"
   },
   {
-   "en": "The LR quantifies how many times more likely the evidence is under H1 vs H2.",
-   "es": "La LR cuantifica cuántas veces más probable es la evidencia bajo H1 que bajo H2."
+   "en": "Genetic: rates at threshold",
+   "es": "Genética: tasas en el umbral"
   },
   {
-   "en": "LR > 1: Evidence more probable under H1",
-   "es": "LR > 1: la evidencia es más probable bajo H1"
+   "en": "Non-genetic: database search",
+   "es": "No genética: búsqueda en base de datos"
   },
   {
-   "en": "LR < 1: Evidence more probable under H2",
-   "es": "LR < 1: la evidencia es más probable bajo H2"
-  },
-  {
-   "en": "LR = 1: Evidence equally probable under both hypotheses",
-   "es": "LR = 1: la evidencia es igualmente probable bajo ambas hipótesis"
-  },
-  {
-   "en": "The numeric LR value should be reported without verbal qualifiers.",
-   "es": "El valor numérico de la LR debe informarse sin calificativos verbales."
-  },
-  {
-   "en": "Where to start",
-   "es": "Por dónde empezar"
-  },
-  {
-   "en": "How strong is an observed sex/age/hair match?",
-   "es": "¿Qué peso tiene una coincidencia observada de sexo, edad o color de cabello?"
-  },
-  {
-   "en": "Non-genetic: Individual Evidence",
-   "es": "No genética: Evidencia individual"
-  },
-  {
-   "en": "Non-genetic: Combine Evidence",
-   "es": "No genética: Combinar evidencias"
-  },
-  {
-   "en": "How many false matches will a database search give?",
-   "es": "¿Cuántas coincidencias falsas dará una búsqueda en base de datos?"
-  },
-  {
-   "en": "Genetic: Rates at Threshold",
-   "es": "Genética: Tasas en el umbral"
-  },
-  {
-   "en": "Non-genetic: Database Search",
-   "es": "No genética: Búsqueda en base de datos"
-  },
-  {
-   "en": "Which LR decision threshold should I use?",
-   "es": "¿Qué umbral de decisión de LR conviene usar?"
+   "en": "Choosing a threshold",
+   "es": "Elección del umbral"
   },
   {
    "en": "Non-genetic: 3. Choose threshold",
    "es": "No genética: 3. Elegir el umbral"
   },
   {
-   "en": "Genetic: optimal decision threshold",
-   "es": "Genética: umbral de decisión óptimo"
+   "en": "Genetic: optimal threshold",
+   "es": "Genética: umbral óptimo"
   },
   {
    "en": "References",
@@ -217,28 +169,16 @@
    "es": "Evidencia no genética"
   },
   {
-   "en": "Calculate and simulate likelihood ratios from non-genetic evidence types (sex, age, hair color). All analyses in this section can be run directly in the web application.",
-   "es": "Calcule y simule razones de verosimilitud a partir de evidencia no genética (sexo, edad, color de cabello). Todos los análisis de esta sección pueden ejecutarse directamente en la aplicación web."
-  },
-  {
    "en": "Individual Evidence",
    "es": "Evidencia individual"
-  },
-  {
-   "en": "Single Evidence Type Analysis",
-   "es": "Análisis de un tipo de evidencia"
-  },
-  {
-   "en": "Calculate the likelihood ratio for one type of evidence about the missing person (MP).",
-   "es": "Calcule la razón de verosimilitud para un tipo de evidencia sobre la persona desaparecida (PD)."
   },
   {
    "en": "Evidence Type:",
    "es": "Tipo de evidencia:"
   },
   {
-   "en": "Case Parameters",
-   "es": "Parámetros del caso"
+   "en": "Case",
+   "es": "Caso"
   },
   {
    "en": "MP reported sex:",
@@ -249,8 +189,8 @@
    "es": "Sexo observado:"
   },
   {
-   "en": "Model Parameters",
-   "es": "Parámetros del modelo"
+   "en": "Model",
+   "es": "Modelo"
   },
   {
    "en": "Observation error rate:",
@@ -293,32 +233,24 @@
    "es": "Razón de verosimilitud"
   },
   {
-   "en": "Calculation Details",
-   "es": "Detalle del cálculo"
+   "en": "Calculation",
+   "es": "Cálculo"
   },
   {
    "en": "Combine Evidence",
    "es": "Combinar evidencias"
   },
   {
-   "en": "Evidence Combination",
-   "es": "Combinación de evidencias"
+   "en": "Assumption: ",
+   "es": "Supuesto: "
   },
   {
-   "en": "Under conditional independence, individual LRs for the missing person (MP) multiply to give a combined LR.",
-   "es": "Bajo el supuesto de independencia condicional, las LR individuales referidas a la persona desaparecida (PD) se multiplican para obtener una LR combinada."
+   "en": "sex, age and hair colour are conditionally independent, so their LRs multiply.",
+   "es": "el sexo, la edad y el color de cabello son condicionalmente independientes; sus LR se multiplican."
   },
   {
-   "en": "Independence Assumption: ",
-   "es": "Supuesto de independencia: "
-  },
-  {
-   "en": "LR multiplication assumes conditional independence of evidence sources.",
-   "es": "La multiplicación de las LR supone independencia condicional entre las fuentes de evidencia."
-  },
-  {
-   "en": "Sex Evidence",
-   "es": "Evidencia de sexo"
+   "en": "Sex",
+   "es": "Sexo"
   },
   {
    "en": "Include",
@@ -337,36 +269,28 @@
    "es": "Tasa de error de observación (0–1):"
   },
   {
-   "en": "Age Evidence",
-   "es": "Evidencia de edad"
+   "en": "Age",
+   "es": "Edad"
   },
   {
    "en": "MP age (years):",
    "es": "Edad de la PD (años):"
   },
   {
-   "en": "Hair Color Evidence",
-   "es": "Evidencia de color de cabello"
+   "en": "Hair colour",
+   "es": "Color de cabello"
   },
   {
    "en": "Observation error rate, total (0–1):",
    "es": "Tasa de error de observación, total (0–1):"
   },
   {
-   "en": "Combined Result",
-   "es": "Resultado combinado"
+   "en": "Combined LR",
+   "es": "LR combinada"
   },
   {
    "en": "1. Define profile",
    "es": "1. Definir el perfil"
-  },
-  {
-   "en": "Conditional Probability Tables",
-   "es": "Tablas de probabilidad condicional"
-  },
-  {
-   "en": "Define the missing person (MP) profile and error rates. 2. LR distribution and 3. Choose threshold use these settings.",
-   "es": "Defina el perfil de la persona desaparecida (PD) y las tasas de error. Las pestañas 2. Distribución de la LR y 3. Elegir el umbral usan esta configuración."
   },
   {
    "en": "Missing person (MP)",
@@ -405,96 +329,40 @@
    "es": "Proporción femenina (0–1):"
   },
   {
-   "en": "Phenotype probability in reference population",
-   "es": "Probabilidad del fenotipo en la población de referencia"
-  },
-  {
-   "en": "Probability under H1: the person is the MP (related)",
-   "es": "Probabilidad bajo H1: la persona es la PD (emparentada)"
-  },
-  {
-   "en": "Blue = supports H1, orange = supports H2, white cell = LR = 0",
-   "es": "Azul = apoya H1, naranja = apoya H2, celda blanca = LR = 0"
-  },
-  {
-   "en": "Rows: F/M = sex; T1 = age inside the missing person's range, T0 = outside.",
-   "es": "Filas: F/M = sexo; T1 = edad dentro del rango de la persona desaparecida, T0 = fuera del rango."
+   "en": "log10(LR): blue supports H1, orange supports H2. Rows: F/M = sex; T1/T0 = age inside/outside the MP range.",
+   "es": "log10(LR): azul apoya H1, naranja apoya H2. Filas: F/M = sexo; T1/T0 = edad dentro/fuera del rango de la PD."
   },
   {
    "en": "2. LR distribution",
    "es": "2. Distribución de la LR"
   },
   {
-   "en": "Likelihood Ratio Distributions",
-   "es": "Distribuciones de la razón de verosimilitud"
-  },
-  {
-   "en": "Comparison of LR distributions under H1 and H2.",
-   "es": "Comparación de las distribuciones de la LR bajo H1 y H2."
-  },
-  {
    "en": "3. Choose threshold",
    "es": "3. Elegir el umbral"
-  },
-  {
-   "en": "Decision Threshold Selection",
-   "es": "Selección del umbral de decisión"
-  },
-  {
-   "en": "Evaluate the trade-off between false positive and false negative rates.",
-   "es": "Evalúe el compromiso entre las tasas de falsos positivos y de falsos negativos."
-  },
-  {
-   "en": "Decision threshold",
-   "es": "Umbral de decisión"
   },
   {
    "en": "log10(LR) decision threshold:",
    "es": "Umbral de decisión de log10(LR):"
   },
   {
-   "en": "Performance Metrics",
-   "es": "Métricas de desempeño"
-  },
-  {
    "en": "Advanced metrics",
    "es": "Métricas avanzadas"
-  },
-  {
-   "en": "Metric Definitions",
-   "es": "Definición de las métricas"
-  },
-  {
-   "en": "True Positive Rate (sensitivity)",
-   "es": "Tasa de verdaderos positivos (sensibilidad)"
-  },
-  {
-   "en": "False Positive Rate (1 - specificity)",
-   "es": "Tasa de falsos positivos (1 - especificidad)"
-  },
-  {
-   "en": "Rule:",
-   "es": "Regla:"
-  },
-  {
-   "en": "a person is declared a match when log10(LR) >= threshold",
-   "es": "se declara una coincidencia cuando log10(LR) >= umbral"
   },
   {
    "en": "Database Search",
    "es": "Búsqueda en base de datos"
   },
   {
-   "en": "Compute the non-genetic LR of every candidate in a database against the missing person (MP) profile, and count candidates at or above a decision threshold (expected false positives in a database search, Marsico & Caridi 2023).",
-   "es": "Calcule la LR no genética de cada candidato de una base de datos frente al perfil de la persona desaparecida (PD) y cuente los candidatos con valores iguales o superiores a un umbral de decisión (falsos positivos esperados en una búsqueda en base de datos, Marsico y Caridi 2023)."
+   "en": "Non-genetic LR of each candidate against the MP profile (Marsico & Caridi 2023).",
+   "es": "LR no genética de cada candidato frente al perfil de la PD (Marsico y Caridi 2023)."
   },
   {
-   "en": "For genetic false-positive rates, use Genetic Evidence > Rates at Threshold.",
-   "es": "Para tasas de falsos positivos genéticas, use Evidencia genética > Tasas en el umbral."
+   "en": "Genetic false-positive rates:",
+   "es": "Tasas de falsos positivos genéticas:"
   },
   {
-   "en": "Go there.",
-   "es": "Ir allí."
+   "en": "Genetic Evidence > Rates at Threshold",
+   "es": "Evidencia genética > Tasas en el umbral"
   },
   {
    "en": "Candidate Database",
@@ -505,8 +373,8 @@
    "es": "Examinar..."
   },
   {
-   "en": "CSV with columns ID, Sex (F/M), Age (whole number 1-80) and HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab separated.",
-   "es": "Archivo CSV con las columnas ID, Sex (F/M), Age (número entero de 1 a 80) y HairColor (Black, Brown, Blonde, Red, Gray). Nombres de columna y valores en inglés. Separado por comas, punto y coma o tabulaciones."
+   "en": "CSV columns: ID, Sex (F/M), Age (1-80), HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab.",
+   "es": "Columnas del CSV, en inglés: ID, Sex (F/M), Age (1-80), HairColor (Black, Brown, Blonde, Red, Gray). Coma, punto y coma o tabulación."
   },
   {
    "en": "Load example",
@@ -517,16 +385,16 @@
    "es": "Descargar ejemplo"
   },
   {
-   "en": "Synthetic example: 2,001 candidates. C0001 matches the default MP profile, but every candidate in the same sex, age-range and hair-colour class gets the same LR: non-genetic evidence ranks classes, it does not identify individuals.",
-   "es": "Ejemplo sintético: 2001 candidatos. C0001 coincide con el perfil predeterminado de la PD, pero todos los candidatos de la misma clase de sexo, rango de edad y color de cabello obtienen la misma LR: la evidencia no genética ordena clases, no identifica individuos."
+   "en": "Synthetic example: 2,001 candidates; C0001 matches the default MP profile.",
+   "es": "Ejemplo sintético: 2,001 candidatos; C0001 coincide con el perfil predeterminado de la PD."
   },
   {
    "en": "Estimate population frequencies from the database",
    "es": "Estimar las frecuencias poblacionales a partir de la base de datos"
   },
   {
-   "en": "Unchecked: female proportion 0.51, default hair color frequencies and the uniform 1-80 age model.",
-   "es": "Si no se marca: proporción femenina 0.51, frecuencias predeterminadas de color de cabello y modelo uniforme de edad de 1 a 80 años."
+   "en": "Unchecked: female proportion 0.51, default hair colour frequencies, uniform age 1-80.",
+   "es": "Sin marcar: proporción femenina 0.51, frecuencias predeterminadas de color de cabello, edad uniforme 1-80."
   },
   {
    "en": "Top candidates shown:",
@@ -541,76 +409,40 @@
    "es": "Evidencia genética"
   },
   {
-   "en": "About Genetic Simulations",
-   "es": "Acerca de las simulaciones genéticas"
+   "en": "About",
+   "es": "Acerca de"
   },
   {
-   "en": "The web version of mispitools cannot perform genetic simulations due to computational requirements. Simulations must be run using dedicated software and then uploaded here for analysis:",
-   "es": "La versión web de mispitools no puede realizar simulaciones genéticas por sus requisitos computacionales. Las simulaciones deben ejecutarse con software específico y luego cargarse aquí para su análisis:"
+   "en": "Genetic simulations are not run in the web version. Run them in Familias, forrel, mispitools (R) or FamLink and upload the results here.",
+   "es": "La versión web no ejecuta simulaciones genéticas. Ejecútelas en Familias, forrel, mispitools (R) o FamLink y cargue aquí los resultados."
   },
   {
-   "en": "standalone software for forensic genetics",
-   "es": "software independiente de genética forense"
-  },
-  {
-   "en": "R package for forensic pedigree analysis",
-   "es": "paquete de R para el análisis forense de pedigríes"
-  },
-  {
-   "en": "R package (command-line version)",
-   "es": "paquete de R (versión de línea de comandos)"
-  },
-  {
-   "en": "software for kinship analysis",
-   "es": "software de análisis de parentesco"
-  },
-  {
-   "en": "Once you have simulation results, upload them below to analyze statistical power, LR distributions, and optimize decision thresholds.",
-   "es": "Cuando disponga de resultados de simulación, cárguelos a continuación para analizar la potencia estadística y las distribuciones de la LR, y optimizar los umbrales de decisión."
-  },
-  {
-   "en": "Simulation Results Analysis",
-   "es": "Análisis de resultados de simulación"
-  },
-  {
-   "en": "Upload simulation data from forensic genetics software (Familias, Forrel, FamLink, mispitools) to evaluate statistical power and optimize LR decision thresholds.",
-   "es": "Cargue datos de simulación de software de genética forense (Familias, forrel, FamLink, mispitools) para evaluar la potencia estadística y optimizar los umbrales de decisión de la LR."
-  },
-  {
-   "en": "Upload Simulation Data",
-   "es": "Cargar datos de simulación"
-  },
-  {
-   "en": "Accepted: Familias, FamLink, forrel, mispitools, or any CSV/TSV with Unrelated & Related columns.",
-   "es": "Formatos aceptados: Familias, FamLink, forrel, mispitools o cualquier CSV/TSV con columnas Unrelated y Related."
+   "en": "Simulation results",
+   "es": "Resultados de simulación"
   },
   {
    "en": "Example dataset",
    "es": "Conjunto de datos de ejemplo"
   },
   {
-   "en": "LR decision threshold",
-   "es": "Umbral de decisión de LR"
+   "en": "Decision threshold",
+   "es": "Umbral de decisión"
   },
   {
-   "en": "LR threshold value (match if LR >= threshold):",
-   "es": "Valor del umbral de LR (coincidencia si LR >= umbral):"
+   "en": "LR threshold (match if LR ≥ threshold):",
+   "es": "Umbral de LR (coincidencia si LR ≥ umbral):"
   },
   {
-   "en": "N = number of unrelated candidates compared:",
-   "es": "N = número de candidatos no emparentados comparados:"
+   "en": "Unrelated candidates compared (N):",
+   "es": "Candidatos no emparentados comparados (N):"
   },
   {
-   "en": "Optimal decision threshold",
-   "es": "Umbral de decisión óptimo"
+   "en": "Optimal threshold",
+   "es": "Umbral óptimo"
   },
   {
-   "en": "How much worse is a false match than a missed relative? (×)",
-   "es": "¿Cuántas veces más grave es una coincidencia falsa que un familiar no detectado? (×)"
-  },
-  {
-   "en": "Weight > 1 penalizes false positives more. Default: 10 (FP is 10x worse than FN).",
-   "es": "Un peso > 1 penaliza más los falsos positivos. Valor predeterminado: 10 (un falso positivo es 10 veces más grave que un falso negativo)."
+   "en": "FP/FN cost ratio (×):",
+   "es": "Razón de costos FP/FN (×):"
   },
   {
    "en": "Compute optimal threshold",
@@ -625,16 +457,16 @@
    "es": "Simulaciones"
   },
   {
-   "en": "Proportion of relatives with LR ≥ 10,000 (fixed reference)",
-   "es": "Proporción de familiares con LR ≥ 10 000 (referencia fija)"
+   "en": "Relatives with LR ≥ 10,000",
+   "es": "Familiares con LR ≥ 10,000"
   },
   {
    "en": "Exclusion power: ",
    "es": "Potencia de exclusión: "
   },
   {
-   "en": "Proportion of unrelated simulations with LR = 0, i.e. excluded with certainty.",
-   "es": "Proporción de simulaciones de no emparentados con LR = 0, es decir, excluidos con certeza."
+   "en": "Share of unrelated simulations with LR = 0.",
+   "es": "Proporción de simulaciones de no emparentados con LR = 0."
   },
   {
    "en": "Distributions",
@@ -645,16 +477,12 @@
    "es": "Gráfico de decisión"
   },
   {
-   "en": "Each point represents a different LR threshold. The curve shows the trade-off between false negative rate (missing a true match) and false positive rate (incorrectly flagging a non-match). Points closer to the origin (0,0) indicate better thresholds. Grey labels show the LR value at selected points.",
-   "es": "Cada punto representa un umbral de LR distinto. La curva muestra el compromiso entre la tasa de falsos negativos (no detectar una coincidencia verdadera) y la tasa de falsos positivos (señalar erróneamente una no coincidencia). Los puntos más cercanos al origen (0,0) indican mejores umbrales. Las etiquetas grises muestran el valor de LR en puntos seleccionados."
+   "en": "Each point is an LR threshold; grey labels give its value. Points nearer (0, 0) are better.",
+   "es": "Cada punto es un umbral de LR; las etiquetas grises indican su valor. Los puntos más cercanos a (0, 0) son mejores."
   },
   {
    "en": "Rates at Threshold",
    "es": "Tasas en el umbral"
-  },
-  {
-   "en": "A comparison is declared a match when LR >= threshold. Set the decision threshold and N in the left panel.",
-   "es": "Una comparación se declara coincidencia cuando LR >= umbral. Ajuste el umbral de decisión y N en el panel izquierdo."
   },
   {
    "en": "True Positive Rate",
@@ -673,80 +501,64 @@
    "es": "Tasa de verdaderos negativos"
   },
   {
-   "en": "Expected false positives (FPR x N)",
-   "es": "Falsos positivos esperados (FPR x N)"
+   "en": "Accepted formats",
+   "es": "Formatos aceptados"
   },
   {
-   "en": "Upload simulation data to begin analysis",
-   "es": "Cargue datos de simulación para comenzar el análisis"
+   "en": "Familias, one family:",
+   "es": "Familias, una familia:"
   },
   {
-   "en": "Accepted file formats:",
-   "es": "Formatos de archivo aceptados:"
+   "en": "tab-separated; two header rows (case, pedigree label); column 1 Unrelated, column 2 Related.",
+   "es": "separado por tabulaciones; dos filas de encabezado (caso, etiqueta del pedigrí); columna 1 no emparentados, columna 2 emparentados."
   },
   {
-   "en": "Familias (single family):",
-   "es": "Familias (una familia):"
+   "en": "Familias, several families:",
+   "es": "Familias, varias familias:"
   },
   {
-   "en": "Tab-separated .txt file with 2 header rows (case name + pedigree label), then numeric LR data. First column = Unrelated (Reference Pedigree), second = Related.",
-   "es": "Archivo .txt separado por tabulaciones con 2 filas de encabezado (nombre del caso + etiqueta del pedigrí) seguidas de los valores numéricos de LR. Primera columna = no emparentados (Reference Pedigree), segunda = emparentados."
+   "en": "one column pair per family; row 2 holds 'Reference pedigree' (H2) and a relationship label (H1).",
+   "es": "un par de columnas por familia; la fila 2 contiene 'Reference pedigree' (H2) y una etiqueta de parentesco (H1)."
   },
   {
-   "en": "Familias (multi-family):",
-   "es": "Familias (varias familias):"
-  },
-  {
-   "en": "Same structure but with column pairs per family. Row 1 repeats the family name, row 2 has 'Reference pedigree' for H2 and a relationship label (Father, Brother, etc.) for H1. Can contain one or more families.",
-   "es": "Misma estructura, con un par de columnas por familia. La fila 1 repite el nombre de la familia y la fila 2 contiene 'Reference pedigree' para H2 y una etiqueta de parentesco (Father, Brother, etc.) para H1. Puede contener una o más familias."
-  },
-  {
-   "en": "Starts with 'Raw data LR:s...', then 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows. Groups are separated by '|'. The 'True' row indicates which column is Related (H1). Can contain one or more pedigree comparisons.",
-   "es": "Comienza con 'Raw data LR:s...', seguido de las filas de encabezado 'Pedigree (Numerator)', 'Versus (Denominator)' y 'True:'. Los grupos se separan con '|'. La fila 'True' indica qué columna corresponde a emparentados (H1). Puede contener una o más comparaciones de pedigríes."
+   "en": "'Raw data LR' export with 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' rows; groups separated by '|'.",
+   "es": "exportación 'Raw data LR' con las filas 'Pedigree (Numerator)', 'Versus (Denominator)' y 'True:'; grupos separados por '|'."
   },
   {
    "en": "Generic CSV/TSV:",
    "es": "CSV/TSV genérico:"
   },
   {
-   "en": "Any .csv, .tsv, or .txt file with columns named 'Unrelated' and 'Related', or two numeric columns (first = Unrelated, second = Related). Supports comma, tab, or semicolon separators.",
-   "es": "Cualquier archivo .csv, .tsv o .txt con columnas denominadas 'Unrelated' y 'Related', o con dos columnas numéricas (primera = no emparentados, segunda = emparentados). Admite separadores de coma, tabulación o punto y coma."
+   "en": "columns 'Unrelated' and 'Related', or the first two numeric columns; comma, tab or semicolon.",
+   "es": "columnas 'Unrelated' y 'Related', o las dos primeras columnas numéricas; coma, tabulación o punto y coma."
   },
   {
-   "en": "Example format (Familias, tab-separated):",
-   "es": "Formato de ejemplo (Familias, separado por tabulaciones):"
-  },
-  {
-   "en": "Example format (Generic CSV):",
-   "es": "Formato de ejemplo (CSV genérico):"
-  },
-  {
-   "en": "Note: Files must be text-based (.txt, .csv, .tsv). Excel files (.xlsx) are not supported. Simulations can be generated using Familias, forrel, mispitools (R version), or FamLink.",
-   "es": "Nota: los archivos deben ser de texto (.txt, .csv, .tsv). No se admiten archivos de Excel (.xlsx). Las simulaciones pueden generarse con Familias, forrel, mispitools (versión de R) o FamLink."
+   "en": "Text files only (.txt, .csv, .tsv); Excel is not supported.",
+   "es": "Solo archivos de texto (.txt, .csv, .tsv); no se admite Excel."
   },
   {
    "en": "No file selected",
    "es": "Ningún archivo seleccionado"
   },
   {
-   "en": "These results use the missing-person profile and error rates set in 1. Define profile (Sex: %s, Age %s ± %s, Hair: %s).",
-   "es": "Estos resultados usan el perfil de la persona desaparecida y las tasas de error definidos en 1. Definir el perfil (Sexo: %s, Edad %s ± %s, Cabello: %s)."
+   "en": "Profile from 1. Define profile: %s, %s ± %s, %s.",
+   "es": "Perfil de 1. Definir el perfil: %s, %s ± %s, %s."
   },
   {
-   "en": "Change them there.",
-   "es": "Modifíquelos allí."
+   "en": "Edit",
+   "es": "Editar"
   },
   {
-   "en": "The observation is impossible under the stated model (exclusion).",
-   "es": "La observación es imposible bajo el modelo planteado (exclusión)."
+   "en": "Impossible under H1 (exclusion).",
+   "es": "Imposible bajo H1 (exclusión)."
   },
   {
-   "en": "The observation is equally probable under both hypotheses.",
-   "es": "La observación es igualmente probable bajo ambas hipótesis."
+   "en": "Equally probable under H1 and H2.",
+   "es": "Igualmente probable bajo H1 y H2."
   },
   {
-   "en": "This is not the probability that they are the missing person.",
-   "es": "Este valor no es la probabilidad de que sea la persona desaparecida."
+   "en": "Match if %s",
+   "es": "Coincidencia si %s"
   },
   {
    "en": "Observation error rate",
@@ -861,10 +673,6 @@
    "es": "P(observado | H2) = frecuencia poblacional ="
   },
   {
-   "en": "Age",
-   "es": "Edad"
-  },
-  {
    "en": "Female proportion",
    "es": "Proporción femenina"
   },
@@ -953,20 +761,16 @@
    "es": "Tasa de verdaderos negativos (TNR):"
   },
   {
-   "en": "At decision threshold log10(LR) =",
-   "es": "Con umbral de decisión log10(LR) ="
-  },
-  {
-   "en": "Match declared when log10(LR) >= threshold",
-   "es": "Se declara coincidencia cuando log10(LR) >= umbral"
-  },
-  {
-   "en": "Black point: selected decision threshold (log10(LR) >= %.1f)",
-   "es": "Punto negro: umbral de decisión seleccionado (log10(LR) >= %.1f)"
+   "en": "Black point: selected threshold (log10(LR) ≥ %.1f)",
+   "es": "Punto negro: umbral seleccionado (log10(LR) ≥ %.1f)"
   },
   {
    "en": "Genotyped reference (Ref)",
    "es": "Referencia genotipada (Ref)"
+  },
+  {
+   "en": "Missing person (labelled MP)",
+   "es": "Persona desaparecida (rotulada MP)"
   },
   {
    "en": "Not genotyped",
@@ -1025,8 +829,8 @@
    "es": "Valores positivos de LR insuficientes"
   },
   {
-   "en": "Vertical grey line: LR = 1 (neutral). Less overlap = better discrimination.",
-   "es": "Línea vertical gris: LR = 1 (neutra). Menor superposición = mejor discriminación."
+   "en": "Grey line: LR = 1.",
+   "es": "Línea gris: LR = 1."
   },
   {
    "en": "Density",
@@ -1069,12 +873,12 @@
    "es": "Seleccionado\nLR = %g"
   },
   {
-   "en": "Green diamond: optimal decision threshold\nBlack dot: selected decision threshold\n(match if LR >= threshold)",
-   "es": "Rombo verde: umbral de decisión óptimo\nPunto negro: umbral de decisión seleccionado\n(coincidencia si LR >= umbral)"
+   "en": "Green diamond: optimal threshold\nBlack dot: selected threshold",
+   "es": "Rombo verde: umbral óptimo\nPunto negro: umbral seleccionado"
   },
   {
-   "en": "Green diamond: optimal decision threshold | Black dot: selected decision threshold\n(match if LR >= threshold)",
-   "es": "Rombo verde: umbral de decisión óptimo | Punto negro: umbral de decisión seleccionado\n(coincidencia si LR >= umbral)"
+   "en": "Green diamond: optimal threshold. Black dot: selected threshold.",
+   "es": "Rombo verde: umbral óptimo. Punto negro: umbral seleccionado."
   },
   {
    "en": "False Negative Rate (FNR)",
@@ -1097,92 +901,32 @@
    "es": "%s (%s de %s simulaciones)"
   },
   {
-   "en": "With LR ≥ %s, searching %s unrelated people you would expect about %s false matches, and you would detect the true relative %s of the time.",
-   "es": "Con LR ≥ %s, al comparar %s personas no emparentadas se esperan alrededor de %s coincidencias falsas, y el familiar verdadero se detectaría el %s de las veces."
-  },
-  {
-   "en": "If one true relative is among them, a reported match is the true one %s of the time.",
-   "es": "Si entre ellas hay un familiar verdadero, una coincidencia informada corresponde a ese familiar el %s de las veces."
-  },
-  {
-   "en": "PPV (1 true match among N candidates)",
-   "es": "VPP (1 coincidencia verdadera entre N candidatos)"
-  },
-  {
    "en": "undefined",
    "es": "no definido"
   },
   {
-   "en": "Probability that a reported match is the true relative, assuming one true relative among N unrelated candidates.",
-   "es": "Probabilidad de que una coincidencia informada sea el familiar verdadero, suponiendo un familiar verdadero entre N candidatos no emparentados."
+   "en": "LR ≥ %s, N = %s: %s expected false positives; true relative detected in %s; PPV %s.",
+   "es": "LR ≥ %s, N = %s: %s falsos positivos esperados; familiar verdadero detectado en el %s; VPP %s."
   },
   {
-   "en": "Accuracy (balanced classes)",
-   "es": "Exactitud (clases balanceadas)"
+   "en": "Share of reported matches that are the true relative, with one true relative among N.",
+   "es": "Proporción de coincidencias informadas que corresponden al familiar verdadero, con un familiar verdadero entre N."
   },
   {
-   "en": "Proportion of correct decisions when related and unrelated comparisons are equally frequent.",
-   "es": "Proporción de decisiones correctas cuando las comparaciones de emparentados y no emparentados son igualmente frecuentes."
+   "en": "Accuracy:",
+   "es": "Exactitud:"
   },
   {
-   "en": "Matthews Correlation Coefficient (MCC, balanced classes)",
-   "es": "Coeficiente de correlación de Matthews (MCC, clases balanceadas)"
+   "en": "Share of correct decisions; balanced classes.",
+   "es": "Proporción de decisiones correctas; clases balanceadas."
   },
   {
-   "en": "True Positive Rate (TPR)",
-   "es": "Tasa de verdaderos positivos (TPR)"
-  },
-  {
-   "en": "True Negative Rate (TNR)",
-   "es": "Tasa de verdaderos negativos (TNR)"
-  },
-  {
-   "en": "Expected false positives (FPR x N, N = %s)",
-   "es": "Falsos positivos esperados (FPR x N, N = %s)"
-  },
-  {
-   "en": "Metric",
-   "es": "Métrica"
-  },
-  {
-   "en": "Value",
-   "es": "Valor"
-  },
-  {
-   "en": "With weight w = %s, the best threshold is LR ≥ %.2f: about %s false matches per %s people compared, and %s of true relatives detected.",
-   "es": "Con peso w = %s, el mejor umbral es LR ≥ %.2f: alrededor de %s coincidencias falsas por cada %s personas comparadas, y el %s de los familiares verdaderos detectados."
+   "en": "Optimal: LR ≥ %.2f; FPR %s, FNR %s; %s expected false positives per %s.",
+   "es": "Óptimo: LR ≥ %.2f; FPR %s, FNR %s; %s falsos positivos esperados por cada %s."
   },
   {
    "en": "Use this threshold",
    "es": "Usar este umbral"
-  },
-  {
-   "en": "Click 'Compute optimal threshold' to calculate.",
-   "es": "Presione 'Calcular umbral óptimo' para obtener el resultado."
-  },
-  {
-   "en": "LR threshold:",
-   "es": "Umbral de LR:"
-  },
-  {
-   "en": "FPR at optimal threshold:",
-   "es": "FPR en el umbral óptimo:"
-  },
-  {
-   "en": "FNR at optimal threshold:",
-   "es": "FNR en el umbral óptimo:"
-  },
-  {
-   "en": "Weight used:",
-   "es": "Peso utilizado:"
-  },
-  {
-   "en": "Formula:",
-   "es": "Fórmula:"
-  },
-  {
-   "en": "Match declared when LR >= threshold",
-   "es": "Se declara coincidencia cuando LR >= umbral"
   },
   {
    "en": "File error: ",
@@ -1205,16 +949,12 @@
    "es": "%s de %s candidatos (%s) alcanzan LR ≥ %s."
   },
   {
-   "en": "All candidates in the same sex, age and hair class get the same LR, so non-genetic evidence narrows the list but cannot single out one person.",
-   "es": "Todos los candidatos de la misma clase de sexo, edad y color de cabello obtienen la misma LR: la evidencia no genética acota la lista, pero no permite señalar a una única persona."
+   "en": "Candidates in the same sex, age and hair class share one LR.",
+   "es": "Los candidatos de la misma clase de sexo, edad y cabello comparten una misma LR."
   },
   {
    "en": "Candidates:",
    "es": "Candidatos:"
-  },
-  {
-   "en": "LR >= %s (log10(LR) >= %.1f): %d (%.4f of candidates)",
-   "es": "LR >= %s (log10(LR) >= %.1f): %d (%.4f de los candidatos)"
   },
   {
    "en": "LR = 0 (exclusions):",
@@ -1237,12 +977,12 @@
    "es": "Cabello:"
   },
   {
-   "en": "Note:",
-   "es": "Nota:"
-  },
-  {
    "en": "All candidates have LR = 0.",
    "es": "Todos los candidatos tienen LR = 0."
+  },
+  {
+   "en": "Candidate log10(LR)",
+   "es": "log10(LR) de los candidatos"
   },
   {
    "en": "Black dashed line: decision threshold",
@@ -1259,10 +999,6 @@
   {
    "en": "Rank",
    "es": "Posición"
-  },
-  {
-   "en": "Sex",
-   "es": "Sexo"
   },
   {
    "en": "Hair color",
@@ -1301,12 +1037,12 @@
    "es": "Masculino"
   },
   {
-   "en": "Total probability of observing a wrong color, split equally among the other 4 colors.",
-   "es": "Probabilidad total de observar un color incorrecto, repartida en partes iguales entre los otros 4 colores."
+   "en": "Total error, split equally among the other four colours.",
+   "es": "Error total, repartido por igual entre los otros cuatro colores."
   },
   {
-   "en": "Black: 8%, Brown: 45%, Blonde: 30%, Red: 7%, Gray: 10%",
-   "es": "Negro: 8%, Castaño: 45%, Rubio: 30%, Pelirrojo: 7%, Canoso: 10%"
+   "en": "Population frequencies: Black 0.08, Brown 0.45, Blonde 0.30, Red 0.07, Gray 0.10.",
+   "es": "Frecuencias poblacionales: negro 0.08, castaño 0.45, rubio 0.30, pelirrojo 0.07, canoso 0.10."
   },
   {
    "en": "Full sibling",
@@ -1345,48 +1081,28 @@
    "es": "Árbol familiar (ejemplo de Familias)"
   },
   {
-   "en": "Defaults from Marsico & Caridi 2023; change only if your lab has its own estimates.",
-   "es": "Valores predeterminados de Marsico y Caridi 2023; modifíquelos solo si su laboratorio cuenta con estimaciones propias."
+   "en": "Defaults: Marsico & Caridi 2023.",
+   "es": "Valores predeterminados: Marsico y Caridi 2023."
   },
   {
-   "en": "Probability that the recorded value is wrong, e.g. 0.05 = 1 in 20 records.",
-   "es": "Probabilidad de que el valor registrado sea incorrecto; p. ej., 0.05 = 1 de cada 20 registros."
+   "en": "Matthews correlation between decision and truth, from -1 to 1; balanced classes.",
+   "es": "Correlación de Matthews entre decisión y realidad, de -1 a 1; clases balanceadas."
   },
   {
-   "en": "Matthews correlation coefficient: agreement between decisions and truth, from -1 to 1, assuming balanced classes.",
-   "es": "Coeficiente de correlación de Matthews: concordancia entre las decisiones y la realidad, de -1 a 1, suponiendo clases balanceadas."
+   "en": "The observation is %s times more probable under H1 than under H2.",
+   "es": "La observación es %s veces más probable bajo H1 que bajo H2."
   },
   {
-   "en": "The observed sex is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-   "es": "El sexo observado es %s veces más probable si esta persona es la persona desaparecida que si es una persona no emparentada de la población."
+   "en": "The observation is %s times more probable under H2 than under H1.",
+   "es": "La observación es %s veces más probable bajo H2 que bajo H1."
   },
   {
-   "en": "The observed sex is %s times more probable if they are an unrelated person from the population than if this person is the missing person.",
-   "es": "El sexo observado es %s veces más probable si es una persona no emparentada de la población que si es la persona desaparecida."
+   "en": "The observations are %s times more probable under H1 than under H2.",
+   "es": "Las observaciones son %s veces más probables bajo H1 que bajo H2."
   },
   {
-   "en": "The observed age is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-   "es": "La edad observada es %s veces más probable si esta persona es la persona desaparecida que si es una persona no emparentada de la población."
-  },
-  {
-   "en": "The observed age is %s times more probable if they are an unrelated person from the population than if this person is the missing person.",
-   "es": "La edad observada es %s veces más probable si es una persona no emparentada de la población que si es la persona desaparecida."
-  },
-  {
-   "en": "The observed hair colour is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-   "es": "El color de cabello observado es %s veces más probable si esta persona es la persona desaparecida que si es una persona no emparentada de la población."
-  },
-  {
-   "en": "The observed hair colour is %s times more probable if they are an unrelated person from the population than if this person is the missing person.",
-   "es": "El color de cabello observado es %s veces más probable si es una persona no emparentada de la población que si es la persona desaparecida."
-  },
-  {
-   "en": "The combined observations are %s times more probable if this person is the missing person than if they are an unrelated person from the population, assuming sex, age and hair colour are independent.",
-   "es": "El conjunto de observaciones es %s veces más probable si esta persona es la persona desaparecida que si es una persona no emparentada de la población, suponiendo que el sexo, la edad y el color de cabello son independientes."
-  },
-  {
-   "en": "The combined observations are %s times more probable if they are an unrelated person from the population than if this person is the missing person, assuming sex, age and hair colour are independent.",
-   "es": "El conjunto de observaciones es %s veces más probable si es una persona no emparentada de la población que si es la persona desaparecida, suponiendo que el sexo, la edad y el color de cabello son independientes."
+   "en": "The observations are %s times more probable under H2 than under H1.",
+   "es": "Las observaciones son %s veces más probables bajo H2 que bajo H1."
   },
   {
    "en": "Biological Sex",
@@ -1441,12 +1157,12 @@
    "es": "No se encontró el conjunto de datos de ejemplo en el servidor."
   },
   {
-   "en": "Could not parse the uploaded file ('%s'). Please check the accepted formats below.\n\nCommon issues:\n- The file must be a text file (.txt, .csv, .tsv), not Excel (.xlsx)\n- For Familias format: Row 1 = family names, Row 2 = pedigree labels (e.g., 'Reference pedigree', 'Father'), then numeric LR values\n- For FamLink format: must start with 'Raw data LR' and have 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows\n- For generic CSV/TSV: need at least 2 numeric columns\n- Check that the separator is tab, comma, or semicolon",
-   "es": "No se pudo interpretar el archivo cargado ('%s'). Revise los formatos aceptados que se indican más abajo.\n\nProblemas frecuentes:\n- El archivo debe ser de texto (.txt, .csv, .tsv), no de Excel (.xlsx)\n- Formato Familias: fila 1 = nombres de las familias, fila 2 = etiquetas de pedigrí (p. ej., 'Reference pedigree', 'Father'), seguidas de los valores numéricos de LR\n- Formato FamLink: debe comenzar con 'Raw data LR' y tener las filas de encabezado 'Pedigree (Numerator)', 'Versus (Denominator)' y 'True:'\n- CSV/TSV genérico: se necesitan al menos 2 columnas numéricas\n- Verifique que el separador sea tabulación, coma o punto y coma"
+   "en": "Could not read '%s'. See the accepted formats below.",
+   "es": "No se pudo leer '%s'. Consulte los formatos aceptados más abajo."
   },
   {
-   "en": "Missing person (labelled MP)",
-   "es": "Persona desaparecida (rotulada MP)"
+   "en": "PPV:",
+   "es": "VPP:"
   }
  ]
 }

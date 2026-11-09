@@ -51,30 +51,24 @@ hair_choices <- c("Black" = 1, "Brown" = 2, "Blonde" = 3, "Red" = 4, "Gray/White
 
 sex_choices <- c("Female" = "F", "Male" = "M")
 
-hair_error_help <- "Total probability of observing a wrong color, split equally among the other 4 colors."
+hair_error_help <- "Total error, split equally among the other four colours."
 
-hair_freq_help <- "Black: 8%, Brown: 45%, Blonde: 30%, Red: 7%, Gray: 10%"
+hair_freq_help <- "Population frequencies: Black 0.08, Brown 0.45, Blonde 0.30, Red 0.07, Gray 0.10."
 
-defaults_help <- "Defaults from Marsico & Caridi 2023; change only if your lab has its own estimates."
-
-error_help <- "Probability that the recorded value is wrong, e.g. 0.05 = 1 in 20 records."
+defaults_help <- "Defaults: Marsico & Caridi 2023."
 
 interpretation_templates <- list(
-  sex = c("The observed sex is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-          "The observed sex is %s times more probable if they are an unrelated person from the population than if this person is the missing person."),
-  age = c("The observed age is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-          "The observed age is %s times more probable if they are an unrelated person from the population than if this person is the missing person."),
-  hair = c("The observed hair colour is %s times more probable if this person is the missing person than if they are an unrelated person from the population.",
-           "The observed hair colour is %s times more probable if they are an unrelated person from the population than if this person is the missing person."),
-  combined = c("The combined observations are %s times more probable if this person is the missing person than if they are an unrelated person from the population, assuming sex, age and hair colour are independent.",
-               "The combined observations are %s times more probable if they are an unrelated person from the population than if this person is the missing person, assuming sex, age and hair colour are independent.")
+  single = c("The observation is %s times more probable under H1 than under H2.",
+             "The observation is %s times more probable under H2 than under H1."),
+  combined = c("The observations are %s times more probable under H1 than under H2.",
+               "The observations are %s times more probable under H2 than under H1.")
 )
 
-mcc_help <- "Matthews correlation coefficient: agreement between decisions and truth, from -1 to 1, assuming balanced classes."
+mcc_help <- "Matthews correlation between decision and truth, from -1 to 1; balanced classes."
 
 check_num <- function(x, label, lo, hi, whole = FALSE) {
   if (is.null(x) || length(x) != 1 || !is.numeric(x) || !is.finite(x)) {
-    return(trf("%s: please enter a number.", tr(label)))
+    return(trf("%s: enter a number.", tr(label)))
   }
   if (x < lo || x > hi) {
     if (is.infinite(hi)) return(trf("%s: must be at least %s.", tr(label), lo))
@@ -644,9 +638,9 @@ genetic_examples <- c(
 
 genetic_example_help <- function(file) {
   if (identical(file, "family_tree.txt")) {
-    tr("Familias example dataset, 10,000 simulations.")
+    tr("Familias example, 10,000 simulations.")
   } else {
-    tr("Simulated with forrel 1.9.1: 10,000 replicates under H1 (the person of interest is the missing person) and H2 (unrelated), 24 autosomal STRs, Argentina allele frequencies, no mutation model. References are genotyped relatives of the missing person.")
+    tr("forrel 1.9.1: 10,000 simulations per hypothesis, 24 autosomal STRs, Argentina allele frequencies, no mutation. Ref = genotyped relative.")
   }
 }
 
@@ -1117,67 +1111,43 @@ ui <- fluidPage(
       fluidRow(
         column(10, offset = 1,
           br(),
-          h2(tr("Evidence Evaluation for Kinship in Forensic Science")),
+          h2(tr("Evidence evaluation in kinship cases")),
           p(class = "interpretation-text",
-            tr("This application implements a Bayesian framework for evaluating evidence in kinship cases for forensic science. It includes two main sections: non-genetic evidence (sex, age, hair color) with simulation capabilities, and genetic evidence analysis (upload pre-computed simulation results).")
+            tr("Likelihood ratios for missing-person identification from non-genetic evidence (sex, age, hair colour) and from genetic simulation results. Non-genetic analyses run in the browser; genetic simulations are run elsewhere and uploaded.")
           ),
-          hr(),
-
-          fluidRow(
-            column(6,
-              div(class = "info-box",
-                h4(tr("The Likelihood Ratio")),
-                p(tr("The LR compares two hypotheses:")),
-                tags$ul(
-                  tags$li(strong("H1:"), " ", tr("the person is the missing person (MP), related as stated in the pedigree")),
-                  tags$li(strong("H2:"), " ", tr("unrelated person"))
-                ),
-                div(class = "formula-box",
-                  tr("LR = P(Evidence | H1) / P(Evidence | H2)")
-                ),
-                p(tr("Example: LR = 100 means the evidence is 100 times more probable if related than if unrelated.")),
-                p(tr("The LR does "), strong(tr("not")), tr(" provide a probability of identity. It quantifies how much the evidence changes the odds."))
-              )
+          div(class = "info-box",
+            tags$ul(
+              tags$li(strong("H1:"), " ", tr("the person is the missing person (MP)")),
+              tags$li(strong("H2:"), " ", tr("the person is unrelated to the MP"))
             ),
-            column(6,
-              div(class = "info-box",
-                h4(tr("Using the LR")),
-                p(tr("The LR quantifies how many times more likely the evidence is under H1 vs H2.")),
-                tags$ul(
-                  tags$li(tr("LR > 1: Evidence more probable under H1")),
-                  tags$li(tr("LR < 1: Evidence more probable under H2")),
-                  tags$li(tr("LR = 1: Evidence equally probable under both hypotheses"))
-                ),
-                p(tr("The numeric LR value should be reported without verbal qualifiers."))
-              )
-            )
+            div(class = "formula-box",
+              tr("LR = P(Evidence | H1) / P(Evidence | H2)")
+            ),
+            p(style = "margin: 0;", tr("The LR is not the probability that the person is the MP."))
           ),
-
-          h4(tr("Where to start")),
           fluidRow(
             column(4,
               div(class = "well entry-card",
-                h5(tr("How strong is an observed sex/age/hair match?")),
-                actionLink("go_individual", tr("Non-genetic: Individual Evidence")),
-                actionLink("go_combine", tr("Non-genetic: Combine Evidence"))
+                h5(tr("Single-observation LR")),
+                actionLink("go_individual", tr("Individual evidence")),
+                actionLink("go_combine", tr("Combined evidence"))
               )
             ),
             column(4,
               div(class = "well entry-card",
-                h5(tr("How many false matches will a database search give?")),
-                actionLink("go_gen_rates", tr("Genetic: Rates at Threshold")),
-                actionLink("go_dbs", tr("Non-genetic: Database Search"))
+                h5(tr("Expected false positives")),
+                actionLink("go_gen_rates", tr("Genetic: rates at threshold")),
+                actionLink("go_dbs", tr("Non-genetic: database search"))
               )
             ),
             column(4,
               div(class = "well entry-card",
-                h5(tr("Which LR decision threshold should I use?")),
+                h5(tr("Choosing a threshold")),
                 actionLink("go_choose", tr("Non-genetic: 3. Choose threshold")),
-                actionLink("go_gen_optimal", tr("Genetic: optimal decision threshold"))
+                actionLink("go_gen_optimal", tr("Genetic: optimal threshold"))
               )
             )
           ),
-
           hr(),
           div(style = "color: #444; padding: 10px 0;",
             p(strong(tr("References"))),
@@ -1188,8 +1158,9 @@ ui <- fluidPage(
             p("Marsico F.L., Caridi I. (2023). Incorporating non-genetic evidence in large scale
               missing person searches: A general approach beyond filtering.
               Forensic Science International: Genetics 66:102891"),
-            p("Marsico F.L., Vigeland M.D., et al. (2021). Forensic Science International:
-              Genetics 54:102519")
+            p("Marsico F.L., Vigeland M.D., Egeland T., Piñero M.H. (2021). Making decisions in
+              missing person identification cases with low statistical power.
+              Forensic Science International: Genetics 54:102519")
           )
         )
       )
@@ -1198,23 +1169,13 @@ ui <- fluidPage(
     tabPanel(
       tr("Non-Genetic Evidence"), value = "Non-Genetic Evidence",
       br(),
-      fluidRow(column(10, offset = 1,
-        p(class = "interpretation-text",
-          tr("Calculate and simulate likelihood ratios from non-genetic evidence types (sex, age, hair color). All analyses in this section can be run directly in the web application."))
-      )),
       tabsetPanel(
         id = "nongen_tabs",
         type = "pills",
 
     tabPanel(
       tr("Individual Evidence"), value = "Individual Evidence",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Single Evidence Type Analysis")),
-          p(tr("Calculate the likelihood ratio for one type of evidence about the missing person (MP)."))
-        )
-      ),
+      br(),
       fluidRow(
         column(3,
           wellPanel(
@@ -1226,12 +1187,12 @@ ui <- fluidPage(
 
             conditionalPanel(
               condition = "input.indiv_type == 'sex'",
-              h5(tr("Case Parameters")),
+              h5(tr("Case")),
               selectInput("indiv_MPs", tr("MP reported sex:"), sex_choices, selectize = FALSE),
               selectInput("indiv_obsSex", tr("Observed sex:"), sex_choices, selectize = FALSE),
               hr(),
+              h5(tr("Model")),
               p(class = "text-muted small", tr(defaults_help)),
-              h5(tr("Model Parameters")),
               sliderInput("indiv_eps_sex", tr("Observation error rate:"),
                 0, 0.3, 0.05, 0.01),
               sliderInput("indiv_propF", tr("Female proportion in population:"),
@@ -1240,25 +1201,25 @@ ui <- fluidPage(
 
             conditionalPanel(
               condition = "input.indiv_type == 'age'",
-              h5(tr("Case Parameters")),
+              h5(tr("Case")),
               numericInput("indiv_MPa", tr("MP estimated age (years):"), 35, 1, 80),
-              numericInput("indiv_MPr", tr("Age uncertainty (\u00b1 years):"), 5, 1, 20),
+              numericInput("indiv_MPr", tr("Age uncertainty (± years):"), 5, 1, 20),
               numericInput("indiv_obsAge", tr("Observed age (years):"), 37, 1, 80),
               hr(),
+              h5(tr("Model")),
               p(class = "text-muted small", tr(defaults_help)),
-              h5(tr("Model Parameters")),
               sliderInput("indiv_epa", tr("Age category error rate:"),
                 0, 0.3, 0.05, 0.01)
             ),
 
             conditionalPanel(
               condition = "input.indiv_type == 'hair'",
-              h5(tr("Case Parameters")),
+              h5(tr("Case")),
               selectInput("indiv_MPc", tr("MP hair color:"), hair_choices, selected = 2, selectize = FALSE),
               selectInput("indiv_obsC", tr("Observed hair color:"), hair_choices, selected = 2, selectize = FALSE),
               hr(),
+              h5(tr("Model")),
               p(class = "text-muted small", tr(defaults_help)),
-              h5(tr("Model Parameters")),
               sliderInput("indiv_epc", tr("Color misclassification rate (total):"),
                 0, 0.3, 0.05, 0.01),
               p(class = "text-muted small", tr(hair_error_help)),
@@ -1274,7 +1235,7 @@ ui <- fluidPage(
             p(class = "plain-sentence", textOutput("indiv_interp", inline = TRUE))
           ),
           div(class = "formula-box",
-            h5(style = "margin-top: 0;", tr("Calculation Details")),
+            h5(style = "margin-top: 0;", tr("Calculation")),
             verbatimTextOutput("indiv_formula")
           )
         )
@@ -1283,32 +1244,21 @@ ui <- fluidPage(
 
     tabPanel(
       tr("Combine Evidence"), value = "Combine Evidence",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Evidence Combination")),
-          p(tr("Under conditional independence, individual LRs for the missing person (MP) multiply to give a combined LR."))
-        )
-      ),
-      fluidRow(
-        column(12,
-          div(class = "warning-box",
-            strong(tr("Independence Assumption: ")),
-            tr("LR multiplication assumes conditional independence of evidence sources.")
-          )
-        )
+      br(),
+      div(class = "warning-box",
+        strong(tr("Assumption: ")),
+        tr("sex, age and hair colour are conditionally independent, so their LRs multiply.")
       ),
       fluidRow(
         column(3,
           wellPanel(
-            h5(tr("Sex Evidence")),
+            h5(tr("Sex")),
             checkboxInput("comb_use_sex", tr("Include"), TRUE),
             conditionalPanel(
               condition = "input.comb_use_sex",
               selectInput("comb_MPs", tr("MP:"), sex_choices, selectize = FALSE),
               selectInput("comb_obsSex", tr("Observed:"), sex_choices, selectize = FALSE),
-              numericInput("comb_eps", tr("Observation error rate (0\u20131):"), 0.05, 0, 0.3, 0.01),
-              p(class = "text-muted small", tr(error_help)),
+              numericInput("comb_eps", tr("Observation error rate (0–1):"), 0.05, 0, 0.3, 0.01),
               sliderInput("comb_propF", tr("Female proportion in population:"),
                 0.3, 0.7, 0.51, 0.01)
             ),
@@ -1318,15 +1268,14 @@ ui <- fluidPage(
         ),
         column(3,
           wellPanel(
-            h5(tr("Age Evidence")),
+            h5(tr("Age")),
             checkboxInput("comb_use_age", tr("Include"), TRUE),
             conditionalPanel(
               condition = "input.comb_use_age",
               numericInput("comb_MPa", tr("MP age (years):"), 35, 1, 80),
-              numericInput("comb_MPr", tr("Age uncertainty (\u00b1 years):"), 5, 1, 20),
+              numericInput("comb_MPr", tr("Age uncertainty (± years):"), 5, 1, 20),
               numericInput("comb_obsAge", tr("Observed age (years):"), 37, 1, 80),
-              numericInput("comb_epa", tr("Observation error rate (0\u20131):"), 0.05, 0, 0.3, 0.01),
-              p(class = "text-muted small", tr(error_help))
+              numericInput("comb_epa", tr("Observation error rate (0–1):"), 0.05, 0, 0.3, 0.01)
             ),
             hr(),
             strong(textOutput("comb_lr_age"))
@@ -1334,13 +1283,13 @@ ui <- fluidPage(
         ),
         column(3,
           wellPanel(
-            h5(tr("Hair Color Evidence")),
+            h5(tr("Hair colour")),
             checkboxInput("comb_use_hair", tr("Include"), TRUE),
             conditionalPanel(
               condition = "input.comb_use_hair",
               selectInput("comb_MPc", tr("MP:"), hair_choices, selected = 2, selectize = FALSE),
               selectInput("comb_obsC", tr("Observed:"), hair_choices, selected = 2, selectize = FALSE),
-              numericInput("comb_epc", tr("Observation error rate, total (0\u20131):"), 0.05, 0, 0.3, 0.01),
+              numericInput("comb_epc", tr("Observation error rate, total (0–1):"), 0.05, 0, 0.3, 0.01),
               p(class = "text-muted small", tr(hair_error_help))
             ),
             hr(),
@@ -1349,7 +1298,7 @@ ui <- fluidPage(
         ),
         column(3,
           div(class = "result-box",
-            h4(tr("Combined Result")),
+            h4(tr("Combined LR")),
             h2(textOutput("comb_lr_total")),
             p(textOutput("comb_lr_log")),
             p(class = "plain-sentence", style = "text-align: left;", textOutput("comb_interp", inline = TRUE)),
@@ -1362,27 +1311,20 @@ ui <- fluidPage(
 
     tabPanel(
       tr("1. Define profile"), value = "Probability Tables",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Conditional Probability Tables")),
-          p(tr("Define the missing person (MP) profile and error rates. 2. LR distribution and 3. Choose threshold use these settings."))
-        )
-      ),
+      br(),
       fluidRow(
         column(2,
           wellPanel(
             h5(tr("Missing person (MP)")),
             selectInput("cpt_MPs", tr("Sex:"), sex_choices, selectize = FALSE),
             numericInput("cpt_MPa", tr("Age (years):"), 40, 1, 80),
-            numericInput("cpt_MPr", tr("Age uncertainty (\u00b1 years):"), 6, 1, 20),
+            numericInput("cpt_MPr", tr("Age uncertainty (± years):"), 6, 1, 20),
             selectInput("cpt_MPc", tr("Hair color:"), hair_choices, selected = 2, selectize = FALSE)
           )
         ),
         column(2,
           wellPanel(
-            h5(tr("Observation error rates (0\u20131)")),
-            p(class = "text-muted small", tr(error_help)),
+            h5(tr("Observation error rates (0–1)")),
             numericInput("cpt_eps", tr("Sex:"), 0.05, 0, 0.5, 0.01),
             numericInput("cpt_epa", tr("Age:"), 0.05, 0, 0.5, 0.01),
             numericInput("cpt_epc", tr("Hair (total):"), 0.05, 0, 0.5, 0.01),
@@ -1390,41 +1332,20 @@ ui <- fluidPage(
           ),
           wellPanel(
             h5(tr("Population")),
-            sliderInput("cpt_propF", tr("Female proportion (0\u20131):"), 0.3, 0.7, 0.51, 0.01)
+            sliderInput("cpt_propF", tr("Female proportion (0–1):"), 0.3, 0.7, 0.51, 0.01)
           )
         ),
         column(8,
           plotOutput("cpt_plots", height = "auto"),
-          div(class = "info-box",
-            fluidRow(
-              column(4,
-                strong("P(D|H2):"), " ", tr("Phenotype probability in reference population")
-              ),
-              column(4,
-                strong("P(D|H1):"), " ", tr("Probability under H1: the person is the MP (related)")
-              ),
-              column(4,
-                strong("log10(LR):"), " ",
-                tr("Blue = supports H1, orange = supports H2, white cell = LR = 0")
-              )
-            ),
-            p(class = "text-muted small", style = "margin: 8px 0 0 0;",
-              tr("Rows: F/M = sex; T1 = age inside the missing person's range, T0 = outside."))
-          )
+          p(class = "text-muted small",
+            tr("log10(LR): blue supports H1, orange supports H2. Rows: F/M = sex; T1/T0 = age inside/outside the MP range."))
         )
       )
     ),
 
     tabPanel(
       tr("2. LR distribution"), value = "LR Distribution",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Likelihood Ratio Distributions")),
-          p(tr("Comparison of LR distributions under H1 and H2.")),
-          uiOutput("profile_banner_dist")
-        )
-      ),
+      uiOutput("profile_banner_dist"),
       fluidRow(
         column(6,
           plotOutput("dist_plot", height = "350px")
@@ -1451,36 +1372,19 @@ ui <- fluidPage(
 
     tabPanel(
       tr("3. Choose threshold"), value = "Decision Analysis",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Decision Threshold Selection")),
-          p(tr("Evaluate the trade-off between false positive and false negative rates.")),
-          uiOutput("profile_banner_dec")
-        )
-      ),
+      uiOutput("profile_banner_dec"),
       fluidRow(
         column(4,
           wellPanel(
-            h5(tr("Decision threshold")),
             sliderInput("dec_threshold", tr("log10(LR) decision threshold:"),
                                min = -3, max = 3, value = 0, step = 0.1),
             p(class = "text-muted small", textOutput("dec_threshold_lr", inline = TRUE)),
             hr(),
-            h5(tr("Performance Metrics")),
             verbatimTextOutput("dec_metrics"),
             tags$details(
               tags$summary(tr("Advanced metrics")),
               p(class = "small", strong("MCC: "), textOutput("dec_mcc", inline = TRUE)),
               p(class = "text-muted small", tr(mcc_help))
-            )
-          ),
-          div(class = "info-box",
-            h6(tr("Metric Definitions")),
-            tags$ul(class = "small",
-              tags$li(strong("TPR:"), " ", tr("True Positive Rate (sensitivity)")),
-              tags$li(strong("FPR:"), " ", tr("False Positive Rate (1 - specificity)")),
-              tags$li(strong(tr("Rule:")), " ", tr("a person is declared a match when log10(LR) >= threshold"))
             )
           )
         ),
@@ -1492,16 +1396,10 @@ ui <- fluidPage(
 
     tabPanel(
       tr("Database Search"), value = "Database Search",
-      fluidRow(
-        column(12,
-          br(),
-          h3(tr("Database Search")),
-          p(tr("Compute the non-genetic LR of every candidate in a database against the missing person (MP) profile, and count candidates at or above a decision threshold (expected false positives in a database search, Marsico & Caridi 2023).")),
-          div(class = "profile-banner",
-            tr("For genetic false-positive rates, use Genetic Evidence > Rates at Threshold."), " ",
-            actionLink("go_gen_rates_dbs", tr("Go there.")))
-        )
-      ),
+      br(),
+      p(tr("Non-genetic LR of each candidate against the MP profile (Marsico & Caridi 2023)."), " ",
+        tr("Genetic false-positive rates:"), " ",
+        actionLink("go_gen_rates_dbs", tr("Genetic Evidence > Rates at Threshold"))),
       fluidRow(
         column(3,
           wellPanel(
@@ -1509,22 +1407,21 @@ ui <- fluidPage(
             fileInput("dbs_file", NULL, accept = c(".csv", ".tsv", ".txt", "text/csv", "text/plain"),
               buttonLabel = tr("Browse...")),
             p(class = "text-muted small",
-              tr("CSV with columns ID, Sex (F/M), Age (whole number 1-80) and HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab separated.")),
+              tr("CSV columns: ID, Sex (F/M), Age (1-80), HairColor (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab.")),
             actionButton("dbs_load_example", tr("Load example"), class = "btn-primary btn-block"),
             downloadButton("dbs_download_example", tr("Download example"),
               class = "btn-default btn-block", style = "margin-top: 6px;"),
             p(class = "text-muted small", style = "margin-top: 6px;",
-              tr("Synthetic example: 2,001 candidates. C0001 matches the default MP profile, but every candidate in the same sex, age-range and hair-colour class gets the same LR: non-genetic evidence ranks classes, it does not identify individuals.")),
+              tr("Synthetic example: 2,001 candidates; C0001 matches the default MP profile.")),
             uiOutput("dbs_msg"),
             hr(),
             h5(tr("Missing person (MP)")),
             selectInput("dbs_MPs", tr("Sex:"), sex_choices, selectize = FALSE),
             numericInput("dbs_MPa", tr("Age (years):"), 40, 1, 80),
-            numericInput("dbs_MPr", tr("Age uncertainty (\u00b1 years):"), 6, 1, 20),
+            numericInput("dbs_MPr", tr("Age uncertainty (± years):"), 6, 1, 20),
             selectInput("dbs_MPc", tr("Hair color:"), hair_choices, selected = 2, selectize = FALSE),
             hr(),
-            h5(tr("Observation error rates (0\u20131)")),
-            p(class = "text-muted small", tr(error_help)),
+            h5(tr("Observation error rates (0–1)")),
             numericInput("dbs_eps", tr("Sex:"), 0.05, 0, 0.5, 0.01),
             numericInput("dbs_epa", tr("Age:"), 0.05, 0, 0.5, 0.01),
             numericInput("dbs_epc", tr("Hair (total):"), 0.05, 0, 0.5, 0.01),
@@ -1532,7 +1429,7 @@ ui <- fluidPage(
             hr(),
             checkboxInput("dbs_empirical", tr("Estimate population frequencies from the database"), TRUE),
             p(class = "text-muted small",
-              tr("Unchecked: female proportion 0.51, default hair color frequencies and the uniform 1-80 age model."))
+              tr("Unchecked: female proportion 0.51, default hair colour frequencies, uniform age 1-80."))
           )
         ),
         column(9,
@@ -1559,38 +1456,19 @@ ui <- fluidPage(
     tabPanel(
       tr("Genetic Evidence"), value = "Genetic Evidence",
       br(),
-      fluidRow(column(12,
-        tags$details(class = "info-box",
-          tags$summary(tr("About Genetic Simulations")),
-          p(tr("The web version of mispitools cannot perform genetic simulations due to computational requirements. Simulations must be run using dedicated software and then uploaded here for analysis:")),
-          tags$ul(
-            tags$li(strong("Familias"), " - ", tr("standalone software for forensic genetics")),
-            tags$li(strong("forrel"), " - ", tr("R package for forensic pedigree analysis")),
-            tags$li(strong("mispitools"), " - ", tr("R package (command-line version)")),
-            tags$li(strong("FamLink"), " - ", tr("software for kinship analysis"))
-          ),
-          p(tr("Once you have simulation results, upload them below to analyze statistical power, LR distributions, and optimize decision thresholds."))
-        )
-      )),
-      fluidRow(
-        column(12,
-          h3(tr("Simulation Results Analysis")),
-          p(class = "interpretation-text",
-            tr("Upload simulation data from forensic genetics software (Familias, Forrel, FamLink, mispitools) to evaluate statistical power and optimize LR decision thresholds.")
-          )
-        )
+      tags$details(class = "info-box",
+        tags$summary(tr("About")),
+        p(style = "margin: 0;", tr("Genetic simulations are not run in the web version. Run them in Familias, forrel, mispitools (R) or FamLink and upload the results here."))
       ),
       fluidRow(
         column(4,
           wellPanel(
             div(class = "upload-zone",
-              h5(tr("Upload Simulation Data")),
+              h5(tr("Simulation results")),
               fileInput("sim_file", NULL,
                 accept = c(".csv", ".tsv", ".txt",
                            "text/csv", "text/tab-separated-values", "text/plain"),
                 buttonLabel = tr("Browse...")),
-              p(class = "text-muted small",
-                tr("Accepted: Familias, FamLink, forrel, mispitools, or any CSV/TSV with Unrelated & Related columns.")),
               hr(),
               selectInput("sim_example", tr("Example dataset"), genetic_examples, selectize = FALSE),
               actionButton("sim_load_example", tr("Load example"),
@@ -1610,22 +1488,18 @@ ui <- fluidPage(
                 textOutput("sim_data_info")
               ),
               hr(),
-              h5(tr("LR decision threshold")),
-              numericInput("sim_threshold", tr("LR threshold value (match if LR >= threshold):"),
+              h5(tr("Decision threshold")),
+              numericInput("sim_threshold", tr("LR threshold (match if LR ≥ threshold):"),
                 value = 100, min = 0, max = 1000000, step = 1),
-              numericInput("sim_db_size", tr("N = number of unrelated candidates compared:"),
+              numericInput("sim_db_size", tr("Unrelated candidates compared (N):"),
                 value = 10000, min = 1, step = 100),
               hr(),
-              h5(tr("Optimal decision threshold")),
-              sliderInput("sim_weight", tr("How much worse is a false match than a missed relative? (\u00d7)"),
+              h5(tr("Optimal threshold")),
+              sliderInput("sim_weight", tr("FP/FN cost ratio (×):"),
                 min = 1, max = 50, value = 10, step = 1),
-              p(class = "text-muted small",
-                tr("Weight > 1 penalizes false positives more. Default: 10 (FP is 10x worse than FN).")),
               actionButton("sim_calc_dt", tr("Compute optimal threshold"),
                 class = "btn-primary btn-block"),
-              uiOutput("sim_dt_sentence"),
-              br(),
-              verbatimTextOutput("sim_dt_result")
+              uiOutput("sim_dt_sentence")
             )
           )
         ),
@@ -1649,7 +1523,7 @@ ui <- fluidPage(
                     ),
                     column(6,
                       div(class = "metric-card",
-                        span(class = "metric-label", tr("Proportion of relatives with LR \u2265 10,000 (fixed reference)")),
+                        span(class = "metric-label", tr("Relatives with LR ≥ 10,000")),
                         div(class = "metric-value", textOutput("sim_ip"))
                       )
                     )
@@ -1658,7 +1532,7 @@ ui <- fluidPage(
                   tags$details(
                     tags$summary(tr("Advanced metrics")),
                     p(class = "small", strong(tr("Exclusion power: ")), textOutput("sim_ep", inline = TRUE)),
-                    p(class = "text-muted small", tr("Proportion of unrelated simulations with LR = 0, i.e. excluded with certainty."))
+                    p(class = "text-muted small", tr("Share of unrelated simulations with LR = 0."))
                   ),
                   plotOutput("sim_violin", height = "350px")
                 ),
@@ -1686,9 +1560,8 @@ ui <- fluidPage(
                 tabPanel(
                   tr("Decision Plot"), value = "Decision Plot",
                   br(),
-                  div(class = "info-box",
-                    p(tr("Each point represents a different LR threshold. The curve shows the trade-off between false negative rate (missing a true match) and false positive rate (incorrectly flagging a non-match). Points closer to the origin (0,0) indicate better thresholds. Grey labels show the LR value at selected points."))
-                  ),
+                  p(class = "text-muted small",
+                    tr("Each point is an LR threshold; grey labels give its value. Points nearer (0, 0) are better.")),
                   plotOutput("sim_decision_plot", height = "450px")
                 ),
 
@@ -1698,8 +1571,6 @@ ui <- fluidPage(
                   div(class = "info-box",
                     p(class = "plain-sentence", style = "margin: 0;", textOutput("sim_rates_sentence", inline = TRUE))
                   ),
-                  p(class = "text-muted small",
-                    tr("A comparison is declared a match when LR >= threshold. Set the decision threshold and N in the left panel.")),
                   fluidRow(
                     column(3,
                       div(class = "metric-card",
@@ -1726,15 +1597,6 @@ ui <- fluidPage(
                       )
                     )
                   ),
-                  fluidRow(
-                    column(4, offset = 4,
-                      div(class = "metric-card",
-                        span(class = "metric-label", tr("Expected false positives (FPR x N)")),
-                        div(class = "metric-value", textOutput("sim_expected_fp"))
-                      )
-                    )
-                  ),
-                  tableOutput("sim_rates_table"),
                   tags$details(
                     tags$summary(tr("Advanced metrics")),
                     uiOutput("sim_advanced")
@@ -1745,32 +1607,20 @@ ui <- fluidPage(
           ),
           conditionalPanel(
             condition = "!output.sim_has_data",
-            div(style = "padding: 10px 0; color: #555;",
-              h4(tr("Upload simulation data to begin analysis"))
-            ),
             div(class = "info-box",
-              h5(tr("Accepted file formats:")),
-              tags$ol(
-                tags$li(tags$b(tr("Familias (single family):")), " ",
-                  tr("Tab-separated .txt file with 2 header rows (case name + pedigree label), then numeric LR data. First column = Unrelated (Reference Pedigree), second = Related.")),
-                tags$li(tags$b(tr("Familias (multi-family):")), " ",
-                  tr("Same structure but with column pairs per family. Row 1 repeats the family name, row 2 has 'Reference pedigree' for H2 and a relationship label (Father, Brother, etc.) for H1. Can contain one or more families.")),
+              h5(tr("Accepted formats")),
+              tags$ul(
+                tags$li(tags$b(tr("Familias, one family:")), " ",
+                  tr("tab-separated; two header rows (case, pedigree label); column 1 Unrelated, column 2 Related.")),
+                tags$li(tags$b(tr("Familias, several families:")), " ",
+                  tr("one column pair per family; row 2 holds 'Reference pedigree' (H2) and a relationship label (H1).")),
                 tags$li(tags$b("FamLink:"), " ",
-                  tr("Starts with 'Raw data LR:s...', then 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows. Groups are separated by '|'. The 'True' row indicates which column is Related (H1). Can contain one or more pedigree comparisons.")),
+                  tr("'Raw data LR' export with 'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' rows; groups separated by '|'.")),
                 tags$li(tags$b(tr("Generic CSV/TSV:")), " ",
-                  tr("Any .csv, .tsv, or .txt file with columns named 'Unrelated' and 'Related', or two numeric columns (first = Unrelated, second = Related). Supports comma, tab, or semicolon separators."))
+                  tr("columns 'Unrelated' and 'Related', or the first two numeric columns; comma, tab or semicolon."))
               ),
-              hr(),
-              h5(tr("Example format (Familias, tab-separated):")),
-              tags$pre(style = "background: #f7f7f7; padding: 10px; font-size: 12px; overflow-x: auto;",
-                "FamilyName\\tFamilyName\nReference pedigree\\tFather\n3.33333\\t5\n2.5\\t3.33333\n1.25\\t2.08333"
-              ),
-              h5(tr("Example format (Generic CSV):")),
-              tags$pre(style = "background: #f7f7f7; padding: 10px; font-size: 12px; overflow-x: auto;",
-                "Unrelated,Related\n0.5,3.2\n0.8,5.1\n0.3,2.7"
-              ),
-              p(class = "text-muted small",
-                tr("Note: Files must be text-based (.txt, .csv, .tsv). Excel files (.xlsx) are not supported. Simulations can be generated using Familias, forrel, mispitools (R version), or FamLink."))
+              p(class = "text-muted small", style = "margin: 0;",
+                tr("Text files only (.txt, .csv, .tsv); Excel is not supported."))
             )
           )
         )
@@ -1820,27 +1670,25 @@ server <- function(input, output, session) {
 
   profile_banner <- function(link_id) {
     div(class = "profile-banner",
-      trf("These results use the missing-person profile and error rates set in 1. Define profile (Sex: %s, Age %s \u00b1 %s, Hair: %s).",
-          tr(names(sex_choices)[sex_choices == input$cpt_MPs]),
-          input$cpt_MPa, input$cpt_MPr,
+      trf("Profile from 1. Define profile: %s, %s \u00b1 %s, %s.",
+          input$cpt_MPs, input$cpt_MPa, input$cpt_MPr,
           tr(names(hair_choices)[hair_choices == input$cpt_MPc])),
       " ",
-      actionLink(link_id, tr("Change them there.")))
+      actionLink(link_id, tr("Edit")))
   }
 
   output$profile_banner_dist <- renderUI(profile_banner("goto_profile_dist"))
   output$profile_banner_dec <- renderUI(profile_banner("goto_profile_dec"))
 
   interpretation <- function(LR, evidence) {
-    if (LR == 0) return(tr("The observation is impossible under the stated model (exclusion)."))
-    if (LR == 1) return(tr("The observation is equally probable under both hypotheses."))
-    paste(trf(interpretation_templates[[evidence]][if (LR > 1) 1 else 2],
-              sprintf("%.4g", if (LR > 1) LR else 1 / LR)),
-          tr("This is not the probability that they are the missing person."))
+    if (LR == 0) return(tr("Impossible under H1 (exclusion)."))
+    if (LR == 1) return(tr("Equally probable under H1 and H2."))
+    trf(interpretation_templates[[evidence]][if (LR > 1) 1 else 2],
+        format(signif(if (LR > 1) LR else 1 / LR, 3), big.mark = big_mark(), scientific = FALSE))
   }
 
   output$indiv_interp <- renderText({
-    interpretation(indiv_lr(), input$indiv_type)
+    interpretation(indiv_lr(), "single")
   })
 
   output$comb_interp <- renderText({
@@ -1848,7 +1696,8 @@ server <- function(input, output, session) {
   })
 
   threshold_lr_text <- function(t) {
-    sprintf("log10(LR) \u2265 %.1f (LR \u2265 %s)", t, format(signif(10^t, 4), big.mark = big_mark(), scientific = FALSE))
+    trf("Match if %s", sprintf("log10(LR) \u2265 %.1f (LR \u2265 %s)", t,
+                                format(signif(10^t, 4), big.mark = big_mark(), scientific = FALSE)))
   }
 
   output$dec_threshold_lr <- renderText(threshold_lr_text(input$dec_threshold))
@@ -2114,9 +1963,6 @@ server <- function(input, output, session) {
     rows <- c(tr("True Positive Rate:"), tr("False Positive Rate:"),
               tr("False Negative Rate:"), tr("True Negative Rate:"))
     width <- max(nchar(rows))
-    cat(tr("At decision threshold log10(LR) ="), input$dec_threshold, "\n")
-    cat(tr("Match declared when log10(LR) >= threshold"), "\n")
-    cat("========================================\n\n")
     cat(sprintf("%s %.3f\n", formatC(rows, width = -width), c(m$TPR, m$FPR, m$FNR, m$TNR)), sep = "")
   })
 
@@ -2148,7 +1994,7 @@ server <- function(input, output, session) {
                          color = COL_THRESHOLD, size = 4.5, shape = 16) +
       ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
       ggplot2::labs(title = roc_title(auc_val),
-                    subtitle = trf("Black point: selected decision threshold (log10(LR) >= %.1f)",
+                    subtitle = trf("Black point: selected threshold (log10(LR) \u2265 %.1f)",
                                    input$dec_threshold),
                     x = tr("False Positive Rate"), y = tr("True Positive Rate")) +
       ggplot2::theme_minimal(base_size = plot_size("dec_roc_plot", 14)) +
@@ -2158,7 +2004,7 @@ server <- function(input, output, session) {
         panel.grid.minor = ggplot2::element_blank()
       )
   }, res = 100, alt = function() paste(roc_alt(),
-    trf("Black point: selected decision threshold (log10(LR) >= %.1f)", input$dec_threshold)))
+    trf("Black point: selected threshold (log10(LR) \u2265 %.1f)", input$dec_threshold)))
 
   sim_families_val <- reactiveVal(NULL)
   sim_parse_error  <- reactiveVal(NULL)
@@ -2167,18 +2013,7 @@ server <- function(input, output, session) {
     result <- tryCatch(parse_sim_upload(input$sim_file$datapath), error = function(e) NULL)
     if (is.null(result)) {
       sim_families_val(NULL)
-      sim_parse_error(c(paste0(
-        "Could not parse the uploaded file ('%s'). ",
-        "Please check the accepted formats below.\n\n",
-        "Common issues:\n",
-        "- The file must be a text file (.txt, .csv, .tsv), not Excel (.xlsx)\n",
-        "- For Familias format: Row 1 = family names, Row 2 = pedigree labels ",
-        "(e.g., 'Reference pedigree', 'Father'), then numeric LR values\n",
-        "- For FamLink format: must start with 'Raw data LR' and have ",
-        "'Pedigree (Numerator)', 'Versus (Denominator)' and 'True:' header rows\n",
-        "- For generic CSV/TSV: need at least 2 numeric columns\n",
-        "- Check that the separator is tab, comma, or semicolon"
-      ), input$sim_file$name))
+      sim_parse_error(c("Could not read '%s'. See the accepted formats below.", input$sim_file$name))
     } else {
       sim_families_val(result)
       sim_parse_error(NULL)
@@ -2401,7 +2236,7 @@ server <- function(input, output, session) {
                                  breaks = c(lab_h1, lab_h2)) +
       ggplot2::geom_vline(xintercept = 0, color = COL_REFERENCE_LINE, linewidth = 0.8) +
       ggplot2::labs(title = sim_density_title(),
-                    subtitle = tr("Vertical grey line: LR = 1 (neutral). Less overlap = better discrimination."),
+                    subtitle = tr("Grey line: LR = 1."),
                     caption = zero_caption(df),
                     x = log_axis_label(), y = tr("Density")) +
       ggplot2::theme_minimal(base_size = plot_size("sim_density_plot", 13)) +
@@ -2493,9 +2328,9 @@ server <- function(input, output, session) {
       ggplot2::labs(
         title = sim_decision_title(),
         subtitle = if (is_narrow("sim_decision_plot")) {
-          tr("Green diamond: optimal decision threshold\nBlack dot: selected decision threshold\n(match if LR >= threshold)")
+          tr("Green diamond: optimal threshold\nBlack dot: selected threshold")
         } else {
-          tr("Green diamond: optimal decision threshold | Black dot: selected decision threshold\n(match if LR >= threshold)")
+          tr("Green diamond: optimal threshold. Black dot: selected threshold.")
         },
         x = tr("False Negative Rate (FNR)"),
         y = tr("False Positive Rate (FPR)")
@@ -2569,16 +2404,12 @@ server <- function(input, output, session) {
   output$sim_rates_sentence <- renderText({
     r <- sim_rates()
     validate(sim_n_message())
-    out <- trf("With LR \u2265 %s, searching %s unrelated people you would expect about %s false matches, and you would detect the true relative %s of the time.",
-               format(input$sim_threshold, big.mark = big_mark(), scientific = FALSE),
-               format(sim_n_candidates(), big.mark = big_mark(), scientific = FALSE),
-               sprintf("%.1f", r$FPR * sim_n_candidates()),
-               sprintf("%.1f%%", 100 * r$TPR))
-    if (!is.na(sim_ppv())) {
-      out <- paste(out, trf("If one true relative is among them, a reported match is the true one %s of the time.",
-                            sprintf("%.1f%%", 100 * sim_ppv())))
-    }
-    out
+    ppv <- if (is.na(sim_ppv())) tr("undefined") else sprintf("%.1f%%", 100 * sim_ppv())
+    trf("LR \u2265 %s, N = %s: %s expected false positives; true relative detected in %s; PPV %s.",
+        format(input$sim_threshold, big.mark = big_mark(), scientific = FALSE),
+        format(sim_n_candidates(), big.mark = big_mark(), scientific = FALSE),
+        sprintf("%.1f", r$FPR * sim_n_candidates()),
+        sprintf("%.1f%%", 100 * r$TPR), ppv)
   })
 
   output$sim_advanced <- renderUI({
@@ -2589,39 +2420,13 @@ server <- function(input, output, session) {
               p(class = "text-muted small", style = "margin: 0;", help))
     }
     tagList(
-      item(tr("PPV (1 true match among N candidates)"),
-           if (is.na(sim_ppv())) tr("undefined") else sprintf("%.4f", sim_ppv()),
-           tr("Probability that a reported match is the true relative, assuming one true relative among N unrelated candidates.")),
-      item(tr("Accuracy (balanced classes)"), sprintf("%.4f", r$Accuracy),
-           tr("Proportion of correct decisions when related and unrelated comparisons are equally frequent.")),
-      item(tr("Matthews Correlation Coefficient (MCC, balanced classes)"), sprintf("%.4f", r$MCC),
-           tr(mcc_help))
+      item(tr("PPV:"), if (is.na(sim_ppv())) tr("undefined") else sprintf("%.4f", sim_ppv()),
+           tr("Share of reported matches that are the true relative, with one true relative among N.")),
+      item(tr("Accuracy:"), sprintf("%.4f", r$Accuracy),
+           tr("Share of correct decisions; balanced classes.")),
+      item("MCC:", sprintf("%.4f", r$MCC), tr(mcc_help))
     )
   })
-
-  output$sim_expected_fp <- renderText({
-    validate(sim_n_message())
-    sprintf("%.1f", sim_rates()$FPR * sim_n_candidates())
-  })
-
-  output$sim_rates_table <- renderTable({
-    r <- sim_rates()
-    out <- data.frame(
-      Metric = c(tr("True Positive Rate (TPR)"),
-                 tr("False Positive Rate (FPR)"),
-                 tr("True Negative Rate (TNR)"),
-                 tr("False Negative Rate (FNR)"),
-                 trf("Expected false positives (FPR x N, N = %s)",
-                     format(sim_n_candidates(), big.mark = big_mark()))),
-      Value = c(sprintf("%.6f", r$TPR),
-                sprintf("%.6f", r$FPR),
-                sprintf("%.6f", r$TNR),
-                sprintf("%.6f", r$FNR),
-                sprintf("%.1f", r$FPR * sim_n_candidates()))
-    )
-    names(out) <- c(tr("Metric"), tr("Value"))
-    out
-  }, striped = TRUE, hover = TRUE, bordered = TRUE)
 
   sim_opt <- reactive({
     df <- sim_data()
@@ -2645,34 +2450,17 @@ server <- function(input, output, session) {
     result <- sim_opt()
     validate(sim_n_message())
     div(class = "info-box", style = "margin-bottom: 0;",
-      p(style = "margin: 0 0 8px 0;",
-        trf("With weight w = %s, the best threshold is LR \u2265 %.2f: about %s false matches per %s people compared, and %s of true relatives detected.",
-            input$sim_weight, result$DT, sprintf("%.1f", result$FPR * sim_n_candidates()),
-            format(sim_n_candidates(), big.mark = big_mark(), scientific = FALSE),
-            sprintf("%.1f%%", 100 * (1 - result$FNR)))),
+      p(style = "margin: 0 0 4px 0;",
+        trf("Optimal: LR \u2265 %.2f; FPR %s, FNR %s; %s expected false positives per %s.",
+            result$DT, sprintf("%.4f", result$FPR), sprintf("%.4f", result$FNR),
+            sprintf("%.1f", result$FPR * sim_n_candidates()),
+            format(sim_n_candidates(), big.mark = big_mark(), scientific = FALSE))),
+      p(class = "text-muted small", style = "margin: 0 0 8px 0;", "D = sqrt(FNR^2 + (w \u00d7 FPR)^2)"),
       actionButton("sim_use_dt", tr("Use this threshold"), class = "btn-default btn-block"))
   })
 
   observeEvent(input$sim_use_dt, {
     updateNumericInput(session, "sim_threshold", value = sim_opt()$DT)
-  })
-
-  output$sim_dt_result <- renderPrint({
-    if (!sim_dt_shown()) {
-      cat(tr("Click 'Compute optimal threshold' to calculate."), "\n")
-    } else {
-      result <- sim_opt()
-      rows <- c(tr("LR threshold:"), tr("FPR at optimal threshold:"), tr("FNR at optimal threshold:"), tr("Weight used:"))
-      rows <- formatC(rows, width = -max(nchar(rows)))
-      cat(tr("Optimal decision threshold"), "\n")
-      cat("========================================\n\n")
-      cat("  ", rows[1], " ", sprintf("%.2f", result$DT), "\n", sep = "")
-      cat("  ", rows[2], " ", sprintf("%.6f", result$FPR), "\n", sep = "")
-      cat("  ", rows[3], " ", sprintf("%.6f", result$FNR), "\n", sep = "")
-      cat("  ", rows[4], " ", input$sim_weight, "\n", sep = "")
-      cat("\n  ", tr("Formula:"), " D = sqrt(FNR^2 + (w*FPR)^2)\n", sep = "")
-      cat("  ", tr("Match declared when LR >= threshold"), "\n", sep = "")
-    }
   })
 
   dbs_data <- reactiveVal(NULL)
@@ -2741,17 +2529,14 @@ server <- function(input, output, session) {
               format(above, big.mark = big_mark()), format(nrow(res), big.mark = big_mark()),
               sprintf("%.1f%%", 100 * above / nrow(res)),
               format(signif(10^input$dbs_threshold, 4), big.mark = big_mark(), scientific = FALSE)),
-          tr("All candidates in the same sex, age and hair class get the same LR, so non-genetic evidence narrows the list but cannot single out one person."))
+          tr("Candidates in the same sex, age and hair class share one LR."))
   })
 
   output$dbs_summary <- renderPrint({
     out <- dbs_lr()
     res <- out$results
     n <- nrow(res)
-    above <- sum(res$log10LR >= input$dbs_threshold)
     cat(tr("Candidates:"), n, "\n")
-    cat(trf("LR >= %s (log10(LR) >= %.1f): %d (%.4f of candidates)",
-            format(signif(10^input$dbs_threshold, 4)), input$dbs_threshold, above, above / n), "\n")
     cat(tr("LR = 0 (exclusions):"), sum(res$LR == 0), "\n\n")
     cat(tr(if (isTRUE(input$dbs_empirical)) "Frequencies estimated from the database:" else
           "Default population frequencies:"), "\n")
@@ -2760,7 +2545,7 @@ server <- function(input, output, session) {
     cat(" ", tr("Hair:"), paste(sprintf("%s %.4f", vapply(names(out$hair_freq), tr, character(1)),
                                        out$hair_freq), collapse = ", "), "\n")
     if (length(out$notes) > 0) {
-      cat("\n", paste(tr("Note:"), out$notes, collapse = "\n"), "\n", sep = "")
+      cat("\n", paste(out$notes, collapse = "\n"), "\n", sep = "")
     }
   })
 
@@ -2776,7 +2561,7 @@ server <- function(input, output, session) {
                               color = "white", linewidth = 0.3) +
       ggplot2::geom_vline(xintercept = input$dbs_threshold, linetype = "dashed",
                           color = COL_THRESHOLD, linewidth = 0.8) +
-      ggplot2::labs(title = dbs_above_title(),
+      ggplot2::labs(title = tr("Candidate log10(LR)"),
                     subtitle = tr("Black dashed line: decision threshold"),
                     x = log_axis_label(), y = tr("Probability")) +
       ggplot2::theme_minimal(base_size = plot_size("dbs_hist", 12)) +
