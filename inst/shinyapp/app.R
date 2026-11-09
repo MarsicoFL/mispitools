@@ -242,12 +242,12 @@ calc_lr_sex <- function(MPs, obsSex, eps, propF) {
   unname(LR)
 }
 
-calc_lr_age <- function(MPa, MPr, obsAge, epa) {
+calc_lr_age <- function(MPa, MPr, obsAge, epa, T1p = age_window(MPa, MPr)$T1p) {
   aw <- age_window(MPa, MPr)
   if (obsAge >= aw$min && obsAge <= aw$max) {
-    (1 - epa) / aw$T1p
+    (1 - epa) / T1p
   } else {
-    epa / (1 - aw$T1p)
+    epa / (1 - T1p)
   }
 }
 
@@ -538,6 +538,125 @@ parse_sim_upload <- function(filepath) {
     df <- df[complete.cases(df), ]
     if (nrow(df) > 0) list("Default" = df) else NULL
   }, error = function(e) NULL)
+}
+
+genetic_examples <- c(
+  "Full sibling" = "full_sibling.txt",
+  "Half sibling" = "half_sibling.txt",
+  "Grandparent" = "grandparent.txt",
+  "Uncle/Aunt" = "uncle.txt",
+  "Two uncles/aunts" = "two_uncles.txt",
+  "First cousin" = "first_cousin.txt",
+  "Two first cousins" = "two_first_cousins.txt",
+  "Uncle/aunt and first cousin" = "uncle_first_cousin.txt",
+  "Family tree (Familias example)" = "family_tree.txt"
+)
+
+genetic_example_help <- function(file) {
+  if (identical(file, "family_tree.txt")) {
+    "Familias example dataset, 10,000 simulations."
+  } else {
+    paste("Simulated with forrel 1.9.1: 10,000 replicates under H1 (the person of interest",
+          "is the missing person) and H2 (unrelated), 24 autosomal STRs, Argentina allele",
+          "frequencies, no mutation model. References are genotyped relatives of the missing person.")
+  }
+}
+
+candidates_example_path <- file.path("examples", "nongenetic", "candidates_example.csv")
+
+is_binary_file <- function(filepath) {
+  head_bytes <- readBin(filepath, "raw", n = 4096)
+  length(head_bytes) < 2 || any(head_bytes == as.raw(0)) ||
+    identical(head_bytes[1:2], charToRaw("PK"))
+}
+
+row_list <- function(rows) {
+  paste0(paste(head(rows, 5) + 1, collapse = ", "), if (length(rows) > 5) ", ..." else "")
+}
+
+read_candidates <- function(filepath) {
+  if (is.null(filepath) || !file.exists(filepath)) return("The file could not be read.")
+  if (is_binary_file(filepath)) {
+    return("The file is not a text CSV file. Excel and other binary files are not supported.")
+  }
+  first <- tryCatch(readLines(filepath, n = 1, warn = FALSE), error = function(e) character(0))
+  if (length(first) == 0) return("The file is empty.")
+  if (!validUTF8(first)) first <- iconv(first, "latin1", "UTF-8")
+  sep <- if (grepl("\t", first, fixed = TRUE)) "\t" else if (grepl(";", first, fixed = TRUE)) ";" else ","
+  data <- tryCatch(
+    utils::read.table(filepath, sep = sep, header = TRUE, colClasses = "character",
+                      quote = "\"", comment.char = "", strip.white = TRUE,
+                      check.names = FALSE, fileEncoding = if (validUTF8(first)) "" else "latin1"),
+    error = function(e) conditionMessage(e))
+  if (is.character(data)) return(paste("Could not read the file:", data))
+  names(data) <- trimws(names(data))
+  required <- c("ID", "Sex", "Age", "HairColor")
+  missing_cols <- setdiff(required, names(data))
+  if (length(missing_cols) > 0) {
+    return(sprintf("Missing required column(s): %s. Required columns: ID, Sex, Age, HairColor.",
+                   paste(missing_cols, collapse = ", ")))
+  }
+  if (nrow(data) == 0) return("The file has no candidate rows.")
+  data <- data[, required]
+  data$Sex <- toupper(data$Sex)
+  bad <- which(!nzchar(data$ID))
+  if (length(bad) > 0) return(paste("Column ID is empty in line(s)", row_list(bad)))
+  bad <- which(duplicated(data$ID))
+  if (length(bad) > 0) return(paste("Column ID has duplicated values in line(s)", row_list(bad)))
+  bad <- which(!data$Sex %in% c("F", "M"))
+  if (length(bad) > 0) return(paste("Column Sex must be F or M; invalid value in line(s)", row_list(bad)))
+  age <- suppressWarnings(as.numeric(data$Age))
+  bad <- which(is.na(age) | age < 1 | age > 80 | age != round(age))
+  if (length(bad) > 0) {
+    return(paste("Column Age must be a whole number from 1 to 80; invalid value in line(s)", row_list(bad)))
+  }
+  hair <- match(tolower(data$HairColor), tolower(names(DEFAULT_HAIR_FREQ)))
+  bad <- which(is.na(hair))
+  if (length(bad) > 0) {
+    return(paste("Column HairColor must be one of Black, Brown, Blonde, Red, Gray; invalid value in line(s)",
+                 row_list(bad)))
+  }
+  data$Age <- age
+  data$HairColor <- names(DEFAULT_HAIR_FREQ)[hair]
+  data
+}
+
+candidate_lrs <- function(cands, MPs, MPa, MPr, MPc, eps, epa, epc, empirical) {
+  aw <- age_window(MPa, MPr)
+  propF <- 0.51
+  hair_freq <- DEFAULT_HAIR_FREQ
+  T1p <- aw$T1p
+  notes <- character(0)
+  if (empirical) {
+    propF <- mean(cands$Sex == "F")
+    hair_freq <- vapply(names(DEFAULT_HAIR_FREQ), function(h) mean(cands$HairColor == h), numeric(1))
+    T1p <- mean(cands$Age >= aw$min & cands$Age <= aw$max)
+    if (propF %in% c(0, 1)) {
+      propF <- 0.51
+      notes <- c(notes, "Only one sex is present in the database: the default female proportion (0.51) is used.")
+    }
+    for (h in names(hair_freq)[hair_freq == 0]) {
+      hair_freq[h] <- DEFAULT_HAIR_FREQ[h]
+      notes <- c(notes, sprintf("No candidate has hair color %s: the default population frequency (%.2f) is used for it.",
+                                h, DEFAULT_HAIR_FREQ[h]))
+    }
+    if (T1p %in% c(0, 1)) {
+      T1p <- aw$T1p
+      notes <- c(notes, sprintf("The share of candidates inside the age range is %s: the uniform 1-80 age model is used.",
+                                if (mean(cands$Age >= aw$min & cands$Age <= aw$max) == 0) "0" else "1"))
+    }
+  }
+  hair_idx <- match(cands$HairColor, names(DEFAULT_HAIR_FREQ))
+  LR <- vapply(seq_len(nrow(cands)), function(i) {
+    calc_lr_sex(MPs, cands$Sex[i], eps, propF) *
+      calc_lr_age(MPa, MPr, cands$Age[i], epa, T1p) *
+      calc_lr_hair(MPc, hair_idx[i], epc, hair_freq)
+  }, numeric(1))
+  res <- data.frame(cands, LR = LR, log10LR = log10(LR), stringsAsFactors = FALSE)
+  res <- res[order(-res$LR, res$ID), ]
+  rownames(res) <- NULL
+  list(results = res, propF = propF, hair_freq = hair_freq, T1p = T1p, age_min = aw$min,
+       age_max = aw$max, notes = notes)
 }
 
 frac_below <- function(x, t) {
@@ -1096,6 +1215,66 @@ ui <- fluidPage(
     ),
 
     tabPanel(
+      "Database Search",
+      fluidRow(
+        column(12,
+          br(),
+          h3("Database Search"),
+          p("Compute the non-genetic LR of every candidate in a database against the missing
+            person profile, and count candidates at or above a threshold (expected false
+            positives in a database search, Marsico & Caridi 2023).")
+        )
+      ),
+      fluidRow(
+        column(3,
+          wellPanel(
+            h5("Candidate Database"),
+            fileInput("dbs_file", NULL, accept = c(".csv", ".tsv", ".txt", "text/csv", "text/plain")),
+            p(class = "text-muted small",
+              "CSV with columns ID, Sex (F/M), Age (whole number 1-80) and HairColor
+              (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab separated."),
+            actionButton("dbs_load_example", "Load example", class = "btn-info btn-block"),
+            downloadButton("dbs_download_example", "Download example",
+              class = "btn-default btn-block", style = "margin-top: 6px;"),
+            p(class = "text-muted small", style = "margin-top: 6px;",
+              "Synthetic example: 2,001 candidates. C0001 matches the default MP profile, but every candidate in the same sex, age-range and hair-colour class gets the same LR: non-genetic evidence ranks classes, it does not identify individuals."),
+            uiOutput("dbs_msg"),
+            hr(),
+            h5("Missing Person"),
+            selectInput("dbs_MPs", "Sex:", sex_choices),
+            numericInput("dbs_MPa", "Age:", 40, 1, 80),
+            numericInput("dbs_MPr", "Age range:", 6, 1, 20),
+            selectInput("dbs_MPc", "Hair color:", hair_choices, selected = 2),
+            hr(),
+            h5("Error Rates"),
+            numericInput("dbs_eps", "Sex:", 0.05, 0, 0.5, 0.01),
+            numericInput("dbs_epa", "Age:", 0.05, 0, 0.5, 0.01),
+            numericInput("dbs_epc", "Hair (total):", 0.05, 0, 0.5, 0.01),
+            p(class = "text-muted small", hair_error_help),
+            hr(),
+            checkboxInput("dbs_empirical", "Estimate population frequencies from the database", TRUE),
+            p(class = "text-muted small",
+              "Unchecked: female proportion 0.51, default hair color frequencies and the
+              uniform 1-80 age model.")
+          )
+        ),
+        column(9,
+          wellPanel(
+            sliderInput("dbs_threshold", HTML("log<sub>10</sub>(LR) threshold:"),
+              min = -3, max = 3, value = 0, step = 0.1),
+            verbatimTextOutput("dbs_summary")
+          ),
+          plotOutput("dbs_hist", height = "350px"),
+          fluidRow(
+            column(6, numericInput("dbs_top", "Top candidates shown:", 20, 1, 500)),
+            column(6, br(), downloadButton("dbs_download_results", "Download results"))
+          ),
+          div(style = "overflow-x: auto;", tableOutput("dbs_table"))
+        )
+      )
+    ),
+
+    tabPanel(
       "Decision Analysis",
       fluidRow(
         column(12,
@@ -1179,11 +1358,15 @@ ui <- fluidPage(
                 "Accepted: Familias, FamLink, forrel, mispitools, or any CSV/TSV
                  with Unrelated & Related columns."),
               hr(),
-              actionButton("sim_load_example", "Load Example Data",
+              selectInput("sim_example", "Example dataset", genetic_examples),
+              actionButton("sim_load_example", "Load example",
                 class = "btn-info btn-block",
                 style = "border-radius: 8px; font-weight: 600;"),
+              downloadButton("sim_download_example", "Download example",
+                class = "btn-default btn-block",
+                style = "border-radius: 8px; margin-top: 6px;"),
               p(class = "text-muted small", style = "margin-top: 6px;",
-                "Loads a 10,000-simulation Familias example dataset.")
+                textOutput("sim_example_help", inline = TRUE))
             ),
             uiOutput("sim_parse_msg"),
             uiOutput("sim_family_ui"),
@@ -1732,23 +1915,29 @@ server <- function(input, output, session) {
     }
   })
 
+  output$sim_example_help <- renderText({
+    genetic_example_help(input$sim_example)
+  })
+
+  sim_example_path <- reactive({
+    req(input$sim_example %in% genetic_examples)
+    file.path("examples", "genetic", input$sim_example)
+  })
+
   observeEvent(input$sim_load_example, {
-    candidates <- c(
-      "familias_example.csv",
-      system.file("extdata", "familias_example.csv", package = "mispitools"),
-      normalizePath(file.path("..", "extdata", "familias_example.csv"), mustWork = FALSE)
-    )
-    example_path <- ""
-    for (p in candidates) {
-      if (nzchar(p) && file.exists(p)) { example_path <- p; break }
-    }
-    if (nzchar(example_path)) {
-      sim_families_val(parse_sim_upload(example_path))
+    path <- sim_example_path()
+    if (file.exists(path)) {
+      sim_families_val(parse_sim_upload(path))
       sim_parse_error(NULL)
     } else {
       sim_parse_error("The example dataset could not be found on the server.")
     }
   })
+
+  output$sim_download_example <- downloadHandler(
+    filename = function() input$sim_example,
+    content = function(file) file.copy(sim_example_path(), file)
+  )
 
   output$sim_family_ui <- renderUI({
     fams <- sim_families_val()
@@ -2153,6 +2342,130 @@ server <- function(input, output, session) {
       cat("  Match declared when LR >= threshold\n")
     }
   })
+
+  dbs_data <- reactiveVal(NULL)
+  dbs_error <- reactiveVal(NULL)
+
+  dbs_set <- function(result) {
+    if (is.character(result)) {
+      dbs_data(NULL)
+      dbs_error(result)
+    } else {
+      dbs_data(result)
+      dbs_error(NULL)
+    }
+  }
+
+  observeEvent(input$dbs_file, {
+    dbs_set(tryCatch(read_candidates(input$dbs_file$datapath),
+                     error = function(e) "The file could not be read."))
+  })
+
+  observeEvent(input$dbs_load_example, {
+    dbs_set(read_candidates(candidates_example_path))
+  })
+
+  output$dbs_download_example <- downloadHandler(
+    filename = function() "candidates_example.csv",
+    content = function(file) file.copy(candidates_example_path, file)
+  )
+
+  output$dbs_msg <- renderUI({
+    err <- dbs_error()
+    if (!is.null(err)) {
+      div(class = "warning-box", style = "padding: 10px;", tags$b("File error: "), err)
+    } else if (!is.null(dbs_data())) {
+      div(class = "success-box", style = "padding: 10px;",
+          sprintf("Loaded %s candidates.", format(nrow(dbs_data()), big.mark = ",")))
+    }
+  })
+
+  dbs_lr <- reactive({
+    cands <- dbs_data()
+    validate(need(!is.null(cands), "Upload a candidate database or load the example."))
+    validate(
+      check_num(input$dbs_MPa, "Age", 1, 80, whole = TRUE),
+      check_num(input$dbs_MPr, "Age range", 1, 20, whole = TRUE),
+      check_num(input$dbs_eps, "Sex error rate", 0, 0.5),
+      check_num(input$dbs_epa, "Age error rate", 0, 0.5),
+      check_num(input$dbs_epc, "Hair error rate", 0, 0.5)
+    )
+    candidate_lrs(cands, input$dbs_MPs, input$dbs_MPa, input$dbs_MPr, as.numeric(input$dbs_MPc),
+                  input$dbs_eps, input$dbs_epa, input$dbs_epc, isTRUE(input$dbs_empirical))
+  })
+
+  output$dbs_summary <- renderPrint({
+    out <- dbs_lr()
+    res <- out$results
+    n <- nrow(res)
+    above <- sum(res$log10LR >= input$dbs_threshold)
+    cat("Candidates:", n, "\n")
+    cat(sprintf("LR >= %s (log10(LR) >= %.1f): %d (%.4f of candidates)\n",
+                format(signif(10^input$dbs_threshold, 4)), input$dbs_threshold, above, above / n))
+    cat("LR = 0 (exclusions):", sum(res$LR == 0), "\n\n")
+    cat(if (isTRUE(input$dbs_empirical)) "Frequencies estimated from the database:\n" else
+          "Default population frequencies:\n")
+    cat(sprintf("  P(F) = %.4f\n", out$propF))
+    cat(sprintf("  P(age %g-%g | H2) = %.4f\n", out$age_min, out$age_max, out$T1p))
+    cat("  Hair:", paste(sprintf("%s %.4f", names(out$hair_freq), out$hair_freq), collapse = ", "), "\n")
+    if (length(out$notes) > 0) cat("\nNote:", paste(out$notes, collapse = "\nNote: "), "\n")
+  })
+
+  output$dbs_hist <- renderPlot({
+    res <- dbs_lr()$results
+    res$w <- 1 / nrow(res)
+    fin <- res[is.finite(res$log10LR), ]
+    p0 <- sum(res$LR == 0) / nrow(res)
+    binwidth <- 0.25
+    validate(need(nrow(fin) > 0, "All candidates have LR = 0."))
+    p <- ggplot2::ggplot(fin, ggplot2::aes(x = log10LR, weight = w)) +
+      ggplot2::geom_histogram(binwidth = binwidth, fill = "#cb181d", alpha = 0.65,
+                              color = "white", linewidth = 0.3) +
+      ggplot2::geom_vline(xintercept = input$dbs_threshold, linetype = "dashed",
+                          color = "gray30", linewidth = 0.8) +
+      ggplot2::labs(title = "Candidate log10(LR)",
+                    subtitle = "Dashed line: threshold",
+                    x = expression(log[10](LR)), y = "Probability") +
+      ggplot2::theme_minimal(base_size = plot_size("dbs_hist", 12)) +
+      ggplot2::theme(plot.title.position = "plot",
+                     plot.title = ggplot2::element_text(face = "bold"),
+                     panel.grid.minor = ggplot2::element_blank())
+    if (p0 > 0) {
+      zx <- min(fin$log10LR) - 3 * binwidth
+      zero <- data.frame(log10LR = zx, w = p0)
+      p <- p +
+        ggplot2::geom_col(data = zero, ggplot2::aes(x = log10LR, y = w), inherit.aes = FALSE,
+                          width = binwidth, fill = "#cb181d", alpha = 0.65) +
+        ggplot2::geom_text(data = zero, ggplot2::aes(x = log10LR, y = w,
+                           label = sprintf("LR = 0\nP = %.3f", w)),
+                           inherit.aes = FALSE, vjust = -0.3, size = 3.2) +
+        ggplot2::geom_vline(xintercept = zx + 1.5 * binwidth, linetype = "dotted", color = "gray50") +
+        ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.2))) +
+        ggplot2::labs(subtitle = "Dashed line: threshold. Left bar: LR = 0 (exclusion)")
+    }
+    p
+  }, res = 100)
+
+  output$dbs_table <- renderTable({
+    res <- dbs_lr()$results
+    validate(check_num(input$dbs_top, "Top candidates shown", 1, 500, whole = TRUE))
+    top <- utils::head(res, input$dbs_top)
+    data.frame(
+      Rank = seq_len(nrow(top)),
+      ID = top$ID, Sex = top$Sex, Age = as.integer(top$Age), HairColor = top$HairColor,
+      LR = sub("LR = ", "", vapply(top$LR, format_lr, character(1)), fixed = TRUE),
+      log10LR = ifelse(top$LR == 0, "LR = 0 (exclusion)", sprintf("%.3f", top$log10LR)),
+      check.names = FALSE
+    )
+  }, striped = TRUE, hover = TRUE, bordered = TRUE)
+
+  output$dbs_download_results <- downloadHandler(
+    filename = function() "database_search_results.csv",
+    content = function(file) {
+      res <- dbs_lr()$results
+      utils::write.csv(data.frame(Rank = seq_len(nrow(res)), res), file, row.names = FALSE)
+    }
+  )
 }
 
 shinyApp(ui = ui, server = server)
