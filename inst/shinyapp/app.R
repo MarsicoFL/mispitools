@@ -103,7 +103,7 @@ create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
 
   p1 <- ggplot2::ggplot(dfPOP, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
-    ggplot2::scale_fill_gradient(low = "#f7fbff", high = "#08519c",
+    ggplot2::scale_fill_gradient(low = "#ffffff", high = "#7f93ad",
                                  limits = c(0, max(dfPOP$value) * 1.1)) +
     ggplot2::geom_text(ggplot2::aes(label = sprintf("%.3f", value)),
                        size = 2.8, color = "black") +
@@ -113,7 +113,7 @@ create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
 
   p2 <- ggplot2::ggplot(dfMP, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
-    ggplot2::scale_fill_gradient(low = "#f7fbff", high = "#08519c",
+    ggplot2::scale_fill_gradient(low = "#ffffff", high = "#7f93ad",
                                  limits = c(0, max(dfMP$value) * 1.1)) +
     ggplot2::geom_text(ggplot2::aes(label = sprintf("%.3f", value)),
                        size = 2.8, color = "black") +
@@ -123,7 +123,7 @@ create_cpt_plots <- function(CPT_POP, CPT_MP, narrow = FALSE) {
 
   p3 <- ggplot2::ggplot(dfLR, ggplot2::aes(x = Var2, y = Var1, fill = value)) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5) +
-    ggplot2::scale_fill_gradient2(low = "#d73027", mid = "#ffffbf", high = "#1a9850",
+    ggplot2::scale_fill_gradient2(low = "#c9827f", mid = "#ffffff", high = "#7f93ad",
                                   midpoint = 0, na.value = "gray80",
                                   labels = function(x) sprintf("%.1f", x)) +
     ggplot2::geom_text(ggplot2::aes(label = label),
@@ -161,8 +161,8 @@ create_dist_plot <- function(distH1, distH2, binwidth = 0.25, base_size = 12) {
   p <- ggplot2::ggplot(dFinite, ggplot2::aes(x = logLR, weight = w, fill = Hypothesis)) +
     ggplot2::geom_histogram(binwidth = binwidth, position = "identity",
                             alpha = 0.65, color = "white", linewidth = 0.3) +
-    ggplot2::scale_fill_manual(values = c("H1: Person IS the MP" = "#2171b5",
-                                          "H2: Person is NOT the MP" = "#cb181d")) +
+    ggplot2::scale_fill_manual(values = c("H1: Person IS the MP" = "#1f3a5f",
+                                          "H2: Person is NOT the MP" = "#999999")) +
     ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray30", linewidth = 0.8) +
     ggplot2::labs(title = expression("Distribution of " * log[10](LR)),
                   subtitle = "Vertical line: LR = 1 (uninformative)",
@@ -682,198 +682,216 @@ compute_optimal_dt <- function(sim_df, weight = 10) {
 }
 
 ui <- fluidPage(
-  theme = shinythemes::shinytheme("flatly"),
-
   tags$head(
     tags$style(HTML("
-      @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap');
-
       body {
-        font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background-color: #f8f9fa;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        color: #222;
+        background-color: #ffffff;
       }
 
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        color: #222;
+      }
+
+      h2 { font-size: 22px; }
+      h3 { font-size: 19px; }
+      h4 { font-size: 16px; }
+      h5 { font-size: 14px; }
+
+      a { color: #1f3a5f; }
+
       .main-header {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
-        color: white;
-        padding: 20px 30px;
-        margin: -15px -15px 25px -15px;
+        background: #1f3a5f;
+        color: #ffffff;
+        padding: 10px 20px;
+        margin: 0 -15px 15px -15px;
         display: flex;
         align-items: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
       }
 
       .main-header img {
-        height: 60px;
-        margin-right: 20px;
+        height: 40px;
+        margin-right: 14px;
+        background: #ffffff;
+        border-radius: 2px;
       }
 
       .main-header h1 {
         margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
+        font-size: 20px;
+        font-weight: 600;
+        color: #ffffff;
       }
 
       .main-header p {
-        margin: 5px 0 0 0;
-        opacity: 0.9;
-        font-size: 14px;
+        margin: 2px 0 0 0;
+        font-size: 13px;
+        font-weight: normal;
       }
 
-      .info-box {
+      .info-box, .warning-box, .success-box, .tutorial-section {
         background: #ffffff;
-        border-left: 4px solid #2c5282;
-        padding: 15px 20px;
-        margin: 15px 0;
-        border-radius: 0 8px 8px 0;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        margin: 12px 0;
+        border-radius: 2px;
+      }
+
+      .warning-box {
+        background: #fafafa;
       }
 
       .result-box {
-        background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
-        border: 2px solid #2c5282;
-        padding: 25px;
-        margin: 15px 0;
-        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 12px 0;
+        border-radius: 2px;
         text-align: center;
       }
 
       .result-box h2 {
-        margin: 10px 0;
-        color: #1e3a5f;
-        font-size: 32px;
-        font-weight: 700;
+        margin: 6px 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #222;
       }
 
       .result-box h4 {
         margin: 0;
-        color: #4a5568;
-        font-weight: 600;
-      }
-
-      .warning-box {
-        background: #fffaf0;
-        border-left: 4px solid #dd6b20;
-        padding: 15px 20px;
-        margin: 15px 0;
-        border-radius: 0 8px 8px 0;
-      }
-
-      .success-box {
-        background: #f0fff4;
-        border-left: 4px solid #38a169;
-        padding: 15px 20px;
-        margin: 15px 0;
-        border-radius: 0 8px 8px 0;
+        font-weight: normal;
+        color: #555;
       }
 
       .formula-box {
-        background: #2d3748;
-        color: #e2e8f0;
-        padding: 15px 20px;
-        font-family: 'Fira Code', 'Consolas', monospace;
-        border-radius: 8px;
-        margin: 15px 0;
-        font-size: 14px;
+        background: #f7f7f7;
+        color: #222;
+        border: 1px solid #ddd;
+        padding: 12px 15px;
+        border-radius: 2px;
+        margin: 12px 0;
       }
 
-      .tutorial-section {
-        background: white;
-        padding: 25px;
-        margin: 15px 0;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      }
-
-      .tutorial-section h4 {
-        color: #1e3a5f;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 10px;
-        margin-bottom: 15px;
-      }
-
-      .nav-tabs {
-        border-bottom: 2px solid #e2e8f0;
-      }
-
-      .nav-tabs > li > a {
-        font-weight: 600;
-        color: #4a5568;
-        border: none;
-        padding: 12px 20px;
-      }
-
-      .nav-tabs > li.active > a {
-        color: #2c5282;
-        border-bottom: 3px solid #2c5282;
-        background: transparent;
-      }
-
-      .nav-tabs > li > a:hover {
-        background: #f7fafc;
-        border: none;
+      .formula-box pre, .shiny-text-output, pre {
+        border-radius: 2px;
       }
 
       .well {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        box-shadow: none;
       }
 
       .interpretation-text {
-        font-size: 16px;
-        line-height: 1.6;
-        color: #2d3748;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #222;
       }
 
       .metric-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        padding: 10px;
         text-align: center;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-        margin-bottom: 15px;
+        margin-bottom: 12px;
       }
 
       .metric-card .metric-value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1e3a5f;
-        margin: 8px 0;
+        font-size: 22px;
+        font-weight: 600;
+        color: #222;
+        margin: 6px 0;
       }
 
       .metric-card .metric-label {
-        font-size: 12px;
-        color: #718096;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 13px;
+        color: #555;
       }
 
       .upload-zone {
-        border: 2px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 25px;
-        background: #f7fafc;
-        transition: border-color 0.3s;
+        padding: 0;
       }
 
-      .upload-zone:hover {
-        border-color: #2c5282;
+      .nav-tabs {
+        border-bottom: 1px solid #ddd;
       }
 
-      .sim-subtab .nav-pills > li > a {
-        border-radius: 8px;
+      .nav-tabs > li > a, .nav-tabs > li > a:hover, .nav-tabs > li > a:focus {
+        color: #444;
+        border-radius: 2px 2px 0 0;
+        background: transparent;
+      }
+
+      .nav-tabs > li.active > a, .nav-tabs > li.active > a:hover, .nav-tabs > li.active > a:focus {
+        color: #1f3a5f;
         font-weight: 600;
-        color: #4a5568;
-        margin: 2px;
+        border: 1px solid #ddd;
+        border-bottom-color: #ffffff;
       }
 
-      .sim-subtab .nav-pills > li.active > a {
-        background: #2c5282;
-        color: white;
+      .nav-pills {
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 8px;
+      }
+
+      .nav-pills > li > a, .nav-pills > li > a:hover, .nav-pills > li > a:focus {
+        color: #444;
+        background: transparent;
+        border-radius: 0;
+        border-bottom: 2px solid transparent;
+        padding: 6px 12px;
+      }
+
+      .nav-pills > li.active > a, .nav-pills > li.active > a:hover, .nav-pills > li.active > a:focus {
+        color: #1f3a5f;
+        background: transparent;
+        font-weight: 600;
+        border-bottom: 2px solid #1f3a5f;
+      }
+
+      .btn {
+        border-radius: 2px;
+        box-shadow: none;
+        transition: none;
+      }
+
+      .btn-primary, .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+        background: #1f3a5f;
+        border-color: #1f3a5f;
+        color: #ffffff;
+      }
+
+      .btn-default {
+        background: #ffffff;
+        border-color: #bbb;
+        color: #222;
+      }
+
+      .form-control, .selectize-input, .selectize-dropdown {
+        border-radius: 2px;
+        box-shadow: none;
+        border-color: #ccc;
+      }
+
+      .irs-bar, .irs-bar-edge, .irs-single, .irs-from, .irs-to,
+      .irs--shiny .irs-bar, .irs--shiny .irs-bar-edge, .irs--shiny .irs-single,
+      .irs--shiny .irs-from, .irs--shiny .irs-to {
+        background: #1f3a5f;
+        border-color: #1f3a5f;
+      }
+
+      .table {
+        color: #222;
+      }
+
+      .progress {
+        border-radius: 2px;
+        box-shadow: none;
       }
     "))
   ),
@@ -955,8 +973,12 @@ ui <- fluidPage(
           ),
 
           hr(),
-          div(style = "text-align: center; color: #718096; padding: 20px;",
+          div(style = "color: #444; padding: 10px 0;",
             p(strong("References")),
+            p("Egeland T., Marsico F.L. (2026). Using all available evidence to solve kinship cases.
+              International Journal of Legal Medicine 140(4):1981-1996. ",
+              tags$a(href = "https://doi.org/10.1007/s00414-026-03773-6", target = "_blank",
+                     "https://doi.org/10.1007/s00414-026-03773-6")),
             p("Marsico F.L., Caridi I. (2023). Incorporating non-genetic evidence in large scale
               missing person searches: A general approach beyond filtering.
               Forensic Science International: Genetics 66:102891"),
@@ -1045,7 +1067,7 @@ ui <- fluidPage(
             p(textOutput("indiv_lr_log"))
           ),
           div(class = "formula-box",
-            h5(style = "color: #a0aec0; margin-top: 0;", "Calculation Details"),
+            h5(style = "margin-top: 0;", "Calculation Details"),
             verbatimTextOutput("indiv_formula")
           )
         )
@@ -1096,8 +1118,8 @@ ui <- fluidPage(
               ),
               column(4,
                 strong("log10(LR):"),
-                span(style = "color: #38a169;", " Green = supports H1,"),
-                span(style = "color: #e53e3e;", " Red = supports H2")
+                span(" Blue = supports H1,"),
+                span(" red = supports H2, grey = LR = 0")
               )
             )
           )
@@ -1203,7 +1225,7 @@ ui <- fluidPage(
           )
         ),
         column(3,
-          div(class = "result-box", style = "min-height: 320px;",
+          div(class = "result-box",
             h4("Combined Result"),
             h2(textOutput("comb_lr_total")),
             p(textOutput("comb_lr_log")),
@@ -1233,7 +1255,7 @@ ui <- fluidPage(
             p(class = "text-muted small",
               "CSV with columns ID, Sex (F/M), Age (whole number 1-80) and HairColor
               (Black, Brown, Blonde, Red, Gray). Comma, semicolon or tab separated."),
-            actionButton("dbs_load_example", "Load example", class = "btn-info btn-block"),
+            actionButton("dbs_load_example", "Load example", class = "btn-primary btn-block"),
             downloadButton("dbs_download_example", "Download example",
               class = "btn-default btn-block", style = "margin-top: 6px;"),
             p(class = "text-muted small", style = "margin-top: 6px;",
@@ -1360,11 +1382,9 @@ ui <- fluidPage(
               hr(),
               selectInput("sim_example", "Example dataset", genetic_examples),
               actionButton("sim_load_example", "Load example",
-                class = "btn-info btn-block",
-                style = "border-radius: 8px; font-weight: 600;"),
+                class = "btn-primary btn-block"),
               downloadButton("sim_download_example", "Download example",
-                class = "btn-default btn-block",
-                style = "border-radius: 8px; margin-top: 6px;"),
+                class = "btn-default btn-block", style = "margin-top: 6px;"),
               p(class = "text-muted small", style = "margin-top: 6px;",
                 textOutput("sim_example_help", inline = TRUE)),
               uiOutput("sim_example_pedigree")
@@ -1388,8 +1408,7 @@ ui <- fluidPage(
               p(class = "text-muted small",
                 "Weight > 1 penalizes false positives more. Default: 10 (FP is 10x worse than FN)."),
               actionButton("sim_calc_dt", "Compute Optimal DT",
-                class = "btn-primary btn-block",
-                style = "border-radius: 8px; font-weight: 600;"),
+                class = "btn-primary btn-block"),
               br(), br(),
               verbatimTextOutput("sim_dt_result")
             )
@@ -1545,11 +1564,10 @@ ui <- fluidPage(
           ),
           conditionalPanel(
             condition = "!output.sim_has_data",
-            div(style = "text-align: center; padding: 40px 30px; color: #a0aec0;",
-              tags$i(class = "fa fa-cloud-upload-alt", style = "font-size: 48px;"),
+            div(style = "padding: 10px 0; color: #555;",
               h4("Upload simulation data to begin analysis")
             ),
-            div(class = "info-box", style = "text-align: left; margin: 0 20px;",
+            div(class = "info-box",
               h5("Accepted file formats:"),
               tags$ol(
                 tags$li(tags$b("Familias (single family):"),
@@ -1570,11 +1588,11 @@ ui <- fluidPage(
               ),
               hr(),
               h5("Example format (Familias, tab-separated):"),
-              tags$pre(style = "background: #f1f5f9; padding: 10px; font-size: 12px; overflow-x: auto;",
+              tags$pre(style = "background: #f7f7f7; padding: 10px; font-size: 12px; overflow-x: auto;",
                 "FamilyName\\tFamilyName\nReference pedigree\\tFather\n3.33333\\t5\n2.5\\t3.33333\n1.25\\t2.08333"
               ),
               h5("Example format (Generic CSV):"),
-              tags$pre(style = "background: #f1f5f9; padding: 10px; font-size: 12px; overflow-x: auto;",
+              tags$pre(style = "background: #f7f7f7; padding: 10px; font-size: 12px; overflow-x: auto;",
                 "Unrelated,Related\n0.5,3.2\n0.8,5.1\n0.3,2.7"
               ),
               p(class = "text-muted small",
@@ -1751,7 +1769,7 @@ server <- function(input, output, session) {
     }
 
     ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
-      ggplot2::geom_path(color = "#2c5282", linewidth = 1.2) +
+      ggplot2::geom_path(color = "#1f3a5f", linewidth = 1) +
       ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed",
                            color = "gray50", linewidth = 0.8) +
       ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
@@ -1871,9 +1889,9 @@ server <- function(input, output, session) {
     current_point <- data.frame(FPR = m$FPR, TPR = m$TPR)
 
     ggplot2::ggplot(df_roc, ggplot2::aes(x = FPR, y = TPR)) +
-      ggplot2::geom_path(color = "#2c5282", linewidth = 1.5) +
+      ggplot2::geom_path(color = "#1f3a5f", linewidth = 1) +
       ggplot2::geom_point(data = current_point, ggplot2::aes(x = FPR, y = TPR),
-                         color = "#e53e3e", size = 6, shape = 16) +
+                         color = "#a33a36", size = 5, shape = 16) +
       ggplot2::geom_point(data = current_point, ggplot2::aes(x = FPR, y = TPR),
                          color = "white", size = 3, shape = 16) +
       ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed",
@@ -1927,7 +1945,7 @@ server <- function(input, output, session) {
     div(style = "margin-top: 8px;",
       tags$img(src = file.path("pedigrees", img_file),
                alt = paste("Pedigree:", names(genetic_examples)[genetic_examples == input$sim_example]),
-               style = "width: 100%; height: auto; border: 1px solid #e3e6ea; border-radius: 6px; background: white;"))
+               style = "width: 100%; height: auto; border: 1px solid #ddd; background: white;"))
   })
 
   sim_example_path <- reactive({
@@ -1967,8 +1985,7 @@ server <- function(input, output, session) {
     if (!is.null(err)) {
       err_lines <- strsplit(err, "\n")[[1]]
       return(div(class = "warning-box", style = "margin-top: 10px; padding: 10px;",
-        tags$i(class = "fa fa-exclamation-triangle"),
-        tags$b(" File format error"),
+        tags$b("File format error"),
         tags$pre(style = "white-space: pre-wrap; margin-top: 8px; font-size: 12px;
                          background: transparent; border: none; padding: 0;",
           paste(err_lines, collapse = "\n")
@@ -2075,8 +2092,8 @@ server <- function(input, output, session) {
       ggplot2::geom_violin(alpha = 0.7, color = "white", linewidth = 0.3) +
       ggplot2::geom_boxplot(width = 0.15, fill = "white", alpha = 0.8,
                             outlier.size = 0.5, outlier.alpha = 0.3) +
-      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#2171b5",
-                                            "Unrelated (H2)" = "#cb181d")) +
+      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#1f3a5f",
+                                            "Unrelated (H2)" = "#999999")) +
       ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
       ggplot2::labs(title = "LR Distribution Comparison",
                     subtitle = "Dashed line: LR = 1 (neutral evidence)",
@@ -2115,8 +2132,8 @@ server <- function(input, output, session) {
 
     ggplot2::ggplot(df_dens, ggplot2::aes(x = x, y = y, fill = Hypothesis)) +
       ggplot2::geom_area(alpha = 0.55, position = "identity", color = "white", linewidth = 0.5) +
-      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#2171b5",
-                                            "Unrelated (H2)" = "#cb181d")) +
+      ggplot2::scale_fill_manual(values = c("Related (H1)" = "#1f3a5f",
+                                            "Unrelated (H2)" = "#999999")) +
       ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "gray30", linewidth = 0.8) +
       ggplot2::labs(title = "LR Distribution Density",
                     subtitle = "Vertical dashed line: LR = 1 (neutral). Less overlap = better discrimination.",
@@ -2183,24 +2200,24 @@ server <- function(input, output, session) {
     ggplot2::ggplot(curve_data, ggplot2::aes(x = FNR, y = FPR, color = log10(LR))) +
       ggplot2::geom_point(size = 2, alpha = 0.8) +
       ggplot2::scale_color_gradient2(
-        low = "#2171b5", mid = "#feb24c", high = "#e31a1c",
+        low = "#cccccc", mid = "#7f93ad", high = "#1f3a5f",
         midpoint = stats::median(log10(curve_data$LR)),
         name = expression(log[10](LR~threshold))
       ) +
       ggplot2::geom_point(data = opt_point, ggplot2::aes(x = FNR, y = FPR),
-                         color = "#38a169", size = 6, shape = 18, inherit.aes = FALSE) +
+                         color = "#222222", size = 5, shape = 18, inherit.aes = FALSE) +
       ggplot2::annotate("text",
         x = opt_point$FNR, y = opt_point$FPR,
         label = sprintf("Optimal DT\nLR = %.2f", opt_point$LR),
-        hjust = 0.5, vjust = -0.6, size = 3.5, fontface = "bold", color = "#38a169") +
+        hjust = 0.5, vjust = -0.6, size = 3.5, fontface = "bold", color = "#222222") +
       ggplot2::geom_point(data = sel_point, ggplot2::aes(x = FNR, y = FPR),
-                         color = "#e53e3e", size = 5, shape = 16, inherit.aes = FALSE) +
+                         color = "#a33a36", size = 5, shape = 16, inherit.aes = FALSE) +
       ggplot2::geom_point(data = sel_point, ggplot2::aes(x = FNR, y = FPR),
                          color = "white", size = 2.5, shape = 16, inherit.aes = FALSE) +
       ggplot2::annotate("text",
         x = sel_point$FNR, y = sel_point$FPR,
         label = sprintf("Selected\nLR = %g", input$sim_threshold),
-        hjust = 0.5, vjust = 1.5, size = 3.2, color = "#e53e3e") +
+        hjust = 0.5, vjust = 1.5, size = 3.2, color = "#a33a36") +
       ggplot2::geom_text(data = label_data,
         ggplot2::aes(x = FNR, y = FPR, label = round(LR)),
         size = 2.8, vjust = -1, color = "gray40", inherit.aes = FALSE,
@@ -2211,9 +2228,9 @@ server <- function(input, output, session) {
       ggplot2::labs(
         title = "LR Decision Threshold Plot",
         subtitle = if (is_narrow("sim_decision_plot")) {
-          "Green diamond: optimal DT\nRed dot: selected threshold\n(match if LR >= threshold)"
+          "Black diamond: optimal DT\nRed dot: selected threshold\n(match if LR >= threshold)"
         } else {
-          "Green diamond: optimal DT | Red dot: selected threshold\n(match if LR >= threshold)"
+          "Black diamond: optimal DT | Red dot: selected threshold\n(match if LR >= threshold)"
         },
         x = "False Negative Rate (FNR)",
         y = "False Positive Rate (FPR)"
@@ -2430,7 +2447,7 @@ server <- function(input, output, session) {
     binwidth <- 0.25
     validate(need(nrow(fin) > 0, "All candidates have LR = 0."))
     p <- ggplot2::ggplot(fin, ggplot2::aes(x = log10LR, weight = w)) +
-      ggplot2::geom_histogram(binwidth = binwidth, fill = "#cb181d", alpha = 0.65,
+      ggplot2::geom_histogram(binwidth = binwidth, fill = "#999999", alpha = 0.8,
                               color = "white", linewidth = 0.3) +
       ggplot2::geom_vline(xintercept = input$dbs_threshold, linetype = "dashed",
                           color = "gray30", linewidth = 0.8) +
@@ -2446,7 +2463,7 @@ server <- function(input, output, session) {
       zero <- data.frame(log10LR = zx, w = p0)
       p <- p +
         ggplot2::geom_col(data = zero, ggplot2::aes(x = log10LR, y = w), inherit.aes = FALSE,
-                          width = binwidth, fill = "#cb181d", alpha = 0.65) +
+                          width = binwidth, fill = "#999999", alpha = 0.8) +
         ggplot2::geom_text(data = zero, ggplot2::aes(x = log10LR, y = w,
                            label = sprintf("LR = 0\nP = %.3f", w)),
                            inherit.aes = FALSE, vjust = -0.3, size = 3.2) +
