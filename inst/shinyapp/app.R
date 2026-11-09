@@ -1366,7 +1366,8 @@ ui <- fluidPage(
                 class = "btn-default btn-block",
                 style = "border-radius: 8px; margin-top: 6px;"),
               p(class = "text-muted small", style = "margin-top: 6px;",
-                textOutput("sim_example_help", inline = TRUE))
+                textOutput("sim_example_help", inline = TRUE)),
+              uiOutput("sim_example_pedigree")
             ),
             uiOutput("sim_parse_msg"),
             uiOutput("sim_family_ui"),
@@ -1917,6 +1918,16 @@ server <- function(input, output, session) {
 
   output$sim_example_help <- renderText({
     genetic_example_help(input$sim_example)
+  })
+
+  output$sim_example_pedigree <- renderUI({
+    req(input$sim_example %in% genetic_examples)
+    if (identical(input$sim_example, "family_tree.txt")) return(NULL)
+    img_file <- sub("\\.txt$", ".png", input$sim_example)
+    div(style = "margin-top: 8px;",
+      tags$img(src = file.path("pedigrees", img_file),
+               alt = paste("Pedigree:", names(genetic_examples)[genetic_examples == input$sim_example]),
+               style = "width: 100%; height: auto; border: 1px solid #e3e6ea; border-radius: 6px; background: white;"))
   })
 
   sim_example_path <- reactive({

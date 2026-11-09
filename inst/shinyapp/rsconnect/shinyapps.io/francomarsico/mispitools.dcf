@@ -5,6 +5,6 @@ account: francomarsico
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16394921
-bundleId: 12798932
+bundleId: 12798962
 url: https://francomarsico.shinyapps.io/mispitools/
 version: 1
