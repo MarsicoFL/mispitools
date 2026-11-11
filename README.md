@@ -69,7 +69,7 @@ library(pedtools)
 # Define pedigree: grandparent-grandchild relationship
 ped <- linearPed(2)  # 3-generation pedigree
 ped <- setMarkers(ped, locusAttributes = NorwegianFrequencies[1:15])
-ped <- profileSim(ped, N = 1, ids = 2)  # Simulate reference profile
+ped <- profileSim(ped, N = 1, ids = 2, verbose = False)  # Simulate reference profile
 
 # Simulate LRs under both hypotheses
 lr_dna <- sim_lr_genetic(ped, missing = 5, numsims = 500)

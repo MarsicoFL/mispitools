@@ -107,17 +107,17 @@ sim_lr_genetic <- function(reference, missing, numsims = 100, seed = 123, numCor
   # Create singleton POI and transfer marker information
   poi1 <- pedtools::singleton("poi1")
   poi1 <- pedtools::transferMarkers(from = reference, to = poi1)
-  poi1 <- forrel::profileSim(poi1, numsims, numCores = numCores)
+  poi1 <- forrel::profileSim(poi1, numsims, numCores = numCores,  verbose = FALSE)
 
   # Calculate LR for each unrelated profile
   lr1 <- as.list(rep(NA, numsims))
   for (i in 1:numsims) {
-    lr1[[i]] <- forrel::missingPersonLR(reference, missing, poi = poi1[[i]])
+    lr1[[i]] <- forrel::missingPersonLR(reference, missing, poi = poi1[[i]], verbose = FALSE)
   }
 
   # === H1 Simulations (Related) ===
   # Simulate profiles for the actual missing person
-  poi2ped <- forrel::profileSim(reference, numsims, ids = missing, numCores = numCores)
+  poi2ped <- forrel::profileSim(reference, numsims, ids = missing, numCores = numCores, verbose = FALSE)
 
   # Extract the missing person as singleton
   poi2 <- as.list(rep(NA, numsims))
@@ -130,7 +130,7 @@ sim_lr_genetic <- function(reference, missing, numsims = 100, seed = 123, numCor
   # Calculate LR for each related profile
   lr2 <- as.list(rep(NA, numsims))
   for (i in 1:numsims) {
-    lr2[[i]] <- forrel::missingPersonLR(reference, missing, poi = poi2[[i]])
+    lr2[[i]] <- forrel::missingPersonLR(reference, missing, poi = poi2[[i]], verbose = FALSE)
   }
 
   # Return as list structure
