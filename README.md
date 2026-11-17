@@ -142,6 +142,41 @@ threshold_rates(lr_total, threshold)
 ```
 
 `decision_threshold()` picks the LR threshold that minimizes $\sqrt{FNR^2 + (w \cdot FPR)^2}$, where $w$ is `weight`, FNR is the share of true matches (H1) below the threshold, and FPR the share of unrelated individuals (H2) above the threshold. With `weight = 10`, an FPR of 0.01 counts as much as an FNR of 0.1. In forensic contexts, falsely identifying someone (false positive) is typically considered more serious than failing to identify (false negative).
+
+### Reading the results
+
+For the grandparent case, step 5 prints:
+```r
+#> Decision threshold is: 9.5147
+#> FNR = 0.304 ;  FPR = 0.03 ;  MCC = 0.6925
+```
+
+Even at the best threshold, about a third of true matches fall below it. The limit is the reference. A grandchild gets one allele from the parent at each marker, and that allele came from the typed grandparent only 50% of the time. Many true grandchildren share little with the reference, and since sharing nothing is also possible, no marker can rule anyone out.
+
+A parent is a much stronger reference, because a parent passes one allele to the child at every marker. If the MP's parent is typed instead, anyone who shares no allele with the parent at even one marker is excluded (LR = 0):
+
+```r
+ped_p <- linearPed(2)
+ped_p <- setMarkers(ped_p, locusAttributes = NorwegianFrequencies[1:15])
+ped_p <- profileSim(ped_p, N = 1, ids = 3, seed = 1, verbose = FALSE)  # type the parent
+lr_p <- lr_to_dataframe(sim_lr_genetic(ped_p, missing = 5, numsims = 500))
+lr_p_total <- lr_combine(lr_combine(lr_p, lr_sex), lr_age)
+
+# Error rates at the same threshold as the grandparent case
+threshold_rates(lr_p_total, threshold)
+#> FNR = 0 ;  FPR = 0 ;  MCC = 1
+
+# How many unrelated individuals were excluded (LR = 0)
+sum(lr_p$Unrelated == 0)
+#> [1] 500
+
+# Smallest DNA LR among true matches
+min(lr_p$Related)
+#> [1] 1840.707
+```
+
+All 500 unrelated individuals were excluded, and every true child had a DNA LR above 1,800. Before choosing a threshold, it's worth checking whether the available references give the case enough power at all. See Marsico et al. (2021).
+
 ### Step 6: Fragility Diagnostics
 
 Two cases with the same combined LR can have very different inferential stability. One may distribute the support evenly across markers; another may owe most of its weight to a single marker — and would collapse if that marker were challenged. **mispitools** quantifies this with the inclusion concentration index $C_W^+$ and the leave-one-out diagnostic, and provides a per-case reportable statement:
