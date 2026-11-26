@@ -1,0 +1,79 @@
+# R CMD check on Linux, macOS and Windows.
+#
+# The two arm64 jobs are there on purpose. The 2.0.1 CRAN failure (see
+# NEWS.md) only showed up on aarch64, where the compiler contracts
+# a * b + c into a fused multiply-add and rounds once instead of twice.
+# x86-64 runners never contract, so they cannot catch that class of bug.
+# macos-latest is Apple clang on arm64 (what CRAN's M1mac flavour uses),
+# ubuntu-24.04-arm is gcc on arm64.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+name: R-CMD-check
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  R-CMD-check:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    timeout-minutes: 90
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest,     r: 'release', arch: arm64}
+          - {os: windows-latest,   r: 'release', arch: x86_64}
+          - {os: ubuntu-latest,    r: 'devel',   arch: x86_64, http-user-agent: 'release'}
+          - {os: ubuntu-latest,    r: 'release', arch: x86_64}
+          - {os: ubuntu-latest,    r: 'oldrel-1', arch: x86_64}
+          - {os: ubuntu-24.04-arm, r: 'release', arch: arm64}
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::rcmdcheck
+          needs: check
+
+      # Fail loudly if a runner label ever stops meaning what the
+      # matrix says, otherwise the arm64 coverage could disappear
+      # without anyone noticing.
+      - name: Check runner architecture
+        shell: Rscript {0}
+        run: |
+          expected <- "${{ matrix.config.arch }}"
+          got <- Sys.info()[["machine"]]
+          if (got == "aarch64") got <- "arm64"
+          if (got == "x86-64") got <- "x86_64"
+          cat("R", as.character(getRversion()), "on", R.version$platform, "\n")
+          if (!identical(got, expected))
+            stop("expected ", expected, " runner, got ", got)
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
