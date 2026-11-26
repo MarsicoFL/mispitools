@@ -67,7 +67,7 @@ if (requireNamespace("pedtools", quietly = TRUE)) {
     genetic = list(
       ped = ped,
       freqs = Argentina,
-      markers = c("D3S1358", "THO1", "VWA"),
+      markers = c("D3S1358", "THO1"),
       mutation = list(model = "equal", rate = 1e-3)
     ),
     non_genetic = list(
