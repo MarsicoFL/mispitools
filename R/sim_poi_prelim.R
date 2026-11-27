@@ -168,8 +168,14 @@ sim_poi_prelim <- function(casetype = "children",
     c <- sample(sex, numsims, replace = TRUE, prob = c(femaleprop, maleprop))
     e <- sample(region, numsims, replace = TRUE, prob = regionprob)
 
-    PrelimDatasim <- cbind(a, age, c, height, e)
-    colnames(PrelimDatasim) <- c("UHR-ID", "Age", "Sex", "Height", "Region")
-    structure(as.data.frame(PrelimDatasim))
+    data.frame(
+      "UHR-ID" = a,
+      Age = age,
+      Sex = c,
+      Height = height,
+      Region = e,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
   }
 }
