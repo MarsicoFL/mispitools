@@ -296,46 +296,6 @@ mispitools_app <- function() {
          AUC = AUC_value)
   }
 
-  # Calculate LR for sex
-  calc_lr_sex <- function(MPs, obsSex, eps, propF) {
-    propS <- c(F = propF, M = 1 - propF)
-    if (MPs == obsSex) {
-      LR <- (1 - eps) / propS[obsSex]
-    } else {
-      LR <- eps / propS[obsSex]
-    }
-    LR
-  }
-
-  # Calculate LR for age
-  calc_lr_age <- function(MPa, MPr, obsAge, epa) {
-    MPmin <- max(1, MPa - MPr)
-    MPmax <- min(80, MPa + MPr)
-    T1p <- (MPmax - MPmin) / 80
-    T1p <- max(0.001, min(0.999, T1p))
-    T0p <- 1 - T1p
-
-    if (obsAge >= MPmin && obsAge <= MPmax) {
-      LR <- (1 - epa) / T1p
-    } else {
-      LR <- epa / T0p
-    }
-    LR
-  }
-
-  # Calculate LR for hair color
-  calc_lr_hair <- function(MPc, obsC, epc, propC) {
-    # Uniform error model
-    n_colors <- length(propC)
-    if (MPc == obsC) {
-      p_obs_h1 <- 1 - epc
-    } else {
-      p_obs_h1 <- epc / (n_colors - 1)
-    }
-    LR <- p_obs_h1 / propC[obsC]
-    LR
-  }
-
   # ============================================================================
   # UI DEFINITION
   # ============================================================================
@@ -1051,14 +1011,14 @@ mispitools_app <- function() {
         )
       }
       if (input$indiv_type == "sex") {
-        calc_lr_sex(input$indiv_MPs, input$indiv_obsSex,
+        app_lr_sex(input$indiv_MPs, input$indiv_obsSex,
                     input$indiv_eps_sex, input$indiv_propF)
       } else if (input$indiv_type == "age") {
-        calc_lr_age(input$indiv_MPa, input$indiv_MPr,
+        app_lr_age(input$indiv_MPa, input$indiv_MPr,
                     input$indiv_obsAge, input$indiv_epa)
       } else if (input$indiv_type == "hair") {
         propC <- DEFAULT_HAIR_FREQ
-        calc_lr_hair(as.numeric(input$indiv_MPc), as.numeric(input$indiv_obsC),
+        app_lr_hair(as.numeric(input$indiv_MPc), as.numeric(input$indiv_obsC),
                      input$indiv_epc, propC)
       } else {
         1
@@ -1205,7 +1165,7 @@ mispitools_app <- function() {
 
     comb_lr_sex_val <- shiny::reactive({
       if (input$comb_use_sex) {
-        calc_lr_sex(input$comb_MPs, input$comb_obsSex, input$comb_eps, 0.51)
+        app_lr_sex(input$comb_MPs, input$comb_obsSex, input$comb_eps, 0.51)
       } else {
         1
       }
@@ -1213,7 +1173,7 @@ mispitools_app <- function() {
 
     comb_lr_age_val <- shiny::reactive({
       if (input$comb_use_age) {
-        calc_lr_age(input$comb_MPa, input$comb_MPr, input$comb_obsAge, input$comb_epa)
+        app_lr_age(input$comb_MPa, input$comb_MPr, input$comb_obsAge, input$comb_epa)
       } else {
         1
       }
@@ -1221,7 +1181,7 @@ mispitools_app <- function() {
 
     comb_lr_hair_val <- shiny::reactive({
       if (input$comb_use_hair) {
-        calc_lr_hair(as.numeric(input$comb_MPc), as.numeric(input$comb_obsC),
+        app_lr_hair(as.numeric(input$comb_MPc), as.numeric(input$comb_obsC),
                      input$comb_epc, DEFAULT_HAIR_FREQ)
       } else {
         1
